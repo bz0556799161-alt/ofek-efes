@@ -1,0 +1,157 @@
+  html,body{margin:0;padding:0;overflow:hidden;background:#000;font-family:Arial,Helvetica,sans-serif;}
+  #canvasHolder{position:fixed;inset:0;}
+  canvas{display:block;}
+
+  #ui{position:fixed;top:16px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:10;}
+  .btn{
+    background:rgba(20,20,20,0.72);color:#e8e2d5;border:1px solid rgba(255,255,255,0.15);
+    padding:10px 14px;border-radius:6px;font-size:14px;cursor:pointer;backdrop-filter:blur(4px);
+    transition:background .15s;user-select:none;text-align:right;
+  }
+  .btn:hover{background:rgba(60,60,60,0.85);}
+  .btn.active{border:1px solid #c9a66b;box-shadow:0 0 0 1px #c9a66b;color:#c9a66b;}
+
+  #crosshair{
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6);
+    z-index:9;pointer-events:none;display:none;
+  }
+  #prompt{
+    position:fixed;bottom:14%;left:50%;transform:translate(-50%,0);
+    background:rgba(10,10,10,0.75);color:#e8e2d5;padding:8px 18px;border-radius:4px;
+    font-size:15px;letter-spacing:.5px;z-index:10;display:none;border:1px solid rgba(255,255,255,0.12);
+    text-align:center;
+  }
+  #roomLabel{
+    position:fixed;top:16px;left:50%;transform:translate(-50%,0);
+    background:rgba(10,10,10,0.65);color:#c9a66b;padding:6px 20px;border-radius:4px;
+    font-size:16px;letter-spacing:1px;z-index:10;display:none;border:1px solid rgba(201,166,107,0.3);
+  }
+  #modeLabel{
+    position:fixed;bottom:16px;right:16px;color:rgba(255,255,255,0.35);
+    font-size:12px;letter-spacing:2px;z-index:10;text-transform:uppercase;
+  }
+  #loadingOverlay{
+    position:fixed;inset:0;background:#050505;z-index:30;color:#c9a66b;
+    display:flex;align-items:center;justify-content:center;font-size:15px;letter-spacing:2px;
+  }
+  #minimap{
+    position:fixed;bottom:16px;left:16px;width:260px;height:260px;
+    background:rgba(10,10,10,0.7);border:1px solid rgba(255,255,255,0.15);border-radius:6px;z-index:10;
+    cursor:grab;
+  }
+  #minimap.dragging{ cursor:grabbing; }
+  #miniMapLabel{
+    position:fixed;bottom:22px;left:22px;width:248px;color:#e8e2d5;font-size:12px;
+    text-align:center;z-index:11;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,0.9);
+  }
+  #mapControls{
+    position:fixed;bottom:284px;left:16px;width:260px;box-sizing:border-box;
+    background:rgba(10,10,10,0.7);border:1px solid rgba(255,255,255,0.15);border-radius:6px;z-index:10;
+    color:#e8e2d5;font-size:12px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;
+  }
+  #mapControls label{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;}
+  #mapControls input[type=checkbox]{width:15px;height:15px;}
+  #mapControls input[type=range]{width:120px;accent-color:#c9a66b;}
+  #mapControls .btn{width:100%;box-sizing:border-box;text-align:center;font-size:12px;padding:6px 8px;}
+  #mapControls .divider{border-top:1px solid rgba(255,255,255,0.12);margin:2px 0;}
+  #hourDialRow{display:flex;align-items:center;justify-content:center;gap:12px;padding:2px 0 4px;}
+  #hourDial{
+    position:relative;width:64px;height:64px;border-radius:50%;flex:none;
+    background:radial-gradient(circle at 50% 42%, rgba(201,166,107,0.18), rgba(0,0,0,0.35) 78%);
+    border:1px solid rgba(201,166,107,0.5);cursor:grab;touch-action:none;user-select:none;
+  }
+  #hourDial:active{cursor:grabbing;}
+  #hourDial > div{position:absolute;pointer-events:none;}
+  .hourDialTick{width:2px;height:6px;background:rgba(201,166,107,0.55);left:50%;top:2px;transform-origin:1px 30px;margin-left:-1px;}
+  #hourDialTick0,#hourDialTick6,#hourDialTick12,#hourDialTick18{width:2px;height:6px;background:rgba(201,166,107,0.6);left:50%;top:3px;margin-left:-1px;}
+  #hourDialTick0{transform-origin:1px 29px;transform:rotate(0deg);}
+  #hourDialTick6{transform-origin:1px 29px;transform:rotate(90deg);}
+  #hourDialTick12{transform-origin:1px 29px;transform:rotate(180deg);}
+  #hourDialTick18{transform-origin:1px 29px;transform:rotate(270deg);}
+  #hourDialHand{
+    width:2px;height:26px;background:#c9a66b;left:50%;top:6px;margin-left:-1px;
+    transform-origin:1px 26px;transform:rotate(0deg);border-radius:2px;
+  }
+  #hourDialKnob{
+    width:8px;height:8px;border-radius:50%;background:#c9a66b;left:50%;top:50%;
+    margin-left:-4px;margin-top:-4px;box-shadow:0 0 4px rgba(201,166,107,0.7);
+  }
+  #mapHourReadout{color:#c9a66b;font-size:13px;letter-spacing:0.5px;}
+  #mapHint{
+    color:rgba(255,255,255,0.45);font-size:11px;text-align:center;pointer-events:none;
+  }
+  #searchBox{
+    position:fixed;top:16px;left:50%;transform:translate(-50%,0);z-index:11;
+    width:220px;display:none;
+  }
+  #searchInput{
+    width:100%;box-sizing:border-box;background:rgba(15,15,15,0.82);color:#e8e2d5;
+    border:1px solid rgba(255,255,255,0.18);border-radius:6px;padding:9px 12px;
+    font-size:13px;outline:none;text-align:right;
+  }
+  #searchInput:focus{border-color:#c9a66b;}
+  #starChartOverlay{
+    position:fixed;inset:0;background:rgba(4,5,10,0.94);z-index:40;
+    display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  }
+  #starChartCanvas{
+    background:#03040a;border-radius:10px;box-shadow:0 0 60px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.08);
+    max-width:min(92vw,92vh);max-height:min(92vw,92vh);width:820px;height:820px;
+  }
+  #starChartCaption{
+    position:fixed;top:22px;left:50%;transform:translate(-50%,0);color:#c9a66b;
+    font-size:17px;letter-spacing:1px;text-align:center;
+  }
+  #starChartHint{
+    position:fixed;bottom:22px;left:50%;transform:translate(-50%,0);color:rgba(255,255,255,0.45);
+    font-size:12px;text-align:center;
+  }
+  #btnCloseChart{position:fixed;top:16px;right:16px;}
+  #chartControls{
+    position:fixed;top:16px;left:16px;background:rgba(10,12,20,0.9);border:1px solid rgba(255,255,255,0.12);
+    border-radius:10px;padding:12px 14px;color:#e8e6df;font-size:13px;z-index:41;
+    display:flex;flex-direction:column;gap:8px;min-width:190px;
+  }
+  #chartControls label{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;}
+  #chartControls input[type=checkbox]{width:16px;height:16px;}
+  #chartControls input[type=range]{width:110px;accent-color:#c9a66b;}
+
+  #ui{width:236px;max-height:calc(100vh - 32px);overflow-y:auto;}
+  #ui .btn{box-sizing:border-box;width:100%;}
+  .uiGroup{display:flex;flex-direction:column;gap:8px;}
+  .sliderPanel{
+    background:rgba(15,15,15,0.82);border:1px solid rgba(255,255,255,0.14);border-radius:6px;
+    padding:8px 12px 10px;display:flex;flex-direction:column;gap:10px;color:#cfc9bc;font-size:12.5px;
+  }
+  .sliderPanel label{display:flex;flex-direction:column;gap:4px;}
+  .sliderPanel input[type=range]{width:100%;accent-color:#c9a66b;margin:0;}
+  .sliderPanel b{color:#c9a66b;font-weight:600;}
+  #modeLabel{right:auto;left:50%;transform:translateX(-50%);bottom:12px;}
+  #adminPanel{
+    position:fixed;top:16px;left:16px;width:300px;max-height:calc(100vh - 300px);overflow:hidden;
+    display:none;flex-direction:column;gap:8px;z-index:12;box-sizing:border-box;
+    background:#121212;border:1px solid rgba(201,166,107,0.4);border-radius:8px;
+    padding:12px 14px;color:#cfc9bc;font-size:12.5px;
+  }
+  #adminPanel h3{margin:0;color:#c9a66b;font-size:14px;}
+  #adminNote{line-height:1.6;color:#a9a396;font-size:11.5px;}
+  .adminRow{display:flex;gap:6px;}
+  .adminRow .btn{flex:1;text-align:center;font-size:12px;padding:7px 6px;}
+  #adminFilter{
+    background:rgba(0,0,0,0.4);color:#e8e2d5;border:1px solid rgba(255,255,255,0.2);
+    border-radius:5px;padding:6px 8px;font-size:12.5px;outline:none;text-align:right;
+  }
+  #adminList{overflow-y:auto;flex:1;min-height:80px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;}
+  #adminList label{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 2px;cursor:pointer;}
+  #adminList label:hover{background:rgba(255,255,255,0.06);}
+  #adminList input{width:15px;height:15px;accent-color:#7fd17f;}
+  #adminCount,#adminStatus{font-size:11.5px;color:#a9a396;}
+  #adminStatus.err{color:#ff9d8a;}
+  #mapHint.hidden{display:none;}
+  #roomLockMsg{
+    position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:25;display:none;
+    background:rgba(90,20,20,0.85);color:#ffd6cb;border:1px solid rgba(255,150,120,0.45);
+    border-radius:6px;padding:8px 18px;font-size:14px;
+  }
+  .sliderPanel .srow{display:flex;justify-content:space-between;align-items:baseline;}

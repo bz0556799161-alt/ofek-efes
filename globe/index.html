@@ -1,0 +1,138 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>המבנה הכדורי</title>
+<link rel="stylesheet" href="css/style.css">
+<script>document.documentElement.lang="he";document.documentElement.dir="rtl";</script>
+<div id="loadingOverlay">בונה את המבנה הכדורי… (89 חדרים)</div>
+<div id="canvasHolder"></div>
+<div id="crosshair"></div>
+<div id="prompt"></div>
+<div id="roomLabel"></div>
+<div id="modeLabel"></div>
+<canvas id="minimap" width="260" height="260"></canvas>
+<div id="miniMapLabel"></div>
+<div id="mapControls">
+  <div id="mapHint">גרור כדי לסובב, לחץ על חדר כדי להיכנס</div>
+  <label data-i18n="setMapTilt">נטיית הכדור במפה
+    <input type="range" id="setMapTilt" min="0" max="90" step="0.5" value="23.4">
+  </label>
+  <label data-i18n="setMapNorthUp">בטל נטיה — צפון תמיד למעלה
+    <input type="checkbox" id="setMapNorthUp">
+  </label>
+  <label data-i18n="setShowEclipticOnMap">הצג מישור המילקה במפה
+    <input type="checkbox" id="setShowEclipticOnMap" checked>
+  </label>
+  <label data-i18n="setMapAlignEcliptic">יישר כדור למישור המילקה
+    <input type="checkbox" id="setMapAlignEcliptic">
+  </label>
+  <label data-i18n="setShowEquatorGridOnMap">הצג רשת משוונית (טורקיז)
+    <input type="checkbox" id="setShowEquatorGridOnMap">
+  </label>
+  <label data-i18n="setMapGravity">הישמעות לכח כבידה
+    <input type="checkbox" id="setMapGravity">
+  </label>
+  <div class="divider"></div>
+  <div id="hourDialRow">
+    <div id="hourDial" title="גרור כדי לסובב את השעה">
+      <div id="hourDialTick0"></div>
+      <div id="hourDialTick6"></div>
+      <div id="hourDialTick12"></div>
+      <div id="hourDialTick18"></div>
+      <div id="hourDialHand"></div>
+      <div id="hourDialKnob"></div>
+    </div>
+    <div id="mapHourReadout" title="לחץ כדי להזין שעה ידנית">12:00</div>
+  </div>
+  <div class="btn" id="btnHideMapControls" data-i18n="btnHideMapControls">הסתר הגדרות מפה</div>
+</div>
+<div class="btn" id="btnShowMapControls" data-i18n="btnShowMapControls" style="display:none;position:fixed;bottom:284px;left:16px;width:260px;box-sizing:border-box;z-index:10;">הצג הגדרות מפה ⚙</div>
+
+<div id="searchBox">
+  <input type="text" id="searchInput" list="roomList" placeholder="חיפוש קבוצת כוכבים…" autocomplete="off">
+  <datalist id="roomList"></datalist>
+</div>
+
+<div id="ui">
+  <a class="btn" href="../" style="text-decoration:none;display:block">⌂ לדף הבית של אופק אפס</a>
+  <div class="btn" id="btnMode">🌐 מבט מתוך המבנה</div>
+  <div class="btn" id="btnSearch">🔍 חיפוש</div>
+  <div class="uiGroup" id="grpOutside">
+    <div class="btn active" id="btnGround">🟫 הצג קרקע חיצונית</div>
+    <div class="btn" id="btnStoneWall">🧱 הצג קיר אבן חיצוני</div>
+  </div>
+  <div class="uiGroup" id="grpInside" style="display:none;">
+    <div class="btn" id="btnStarChart">🌌 הצג תבנית כוכבים</div>
+    <div class="btn" id="btnLines">✨ הצג / הסתר קווי חיבור בין כוכבים</div>
+    <div class="btn active" id="btnEcliptic">🟡 הצג / הסתר מישור המילקה</div>
+    <div class="btn active" id="btnBody">🧍 הצג דמות גוף</div>
+    <div class="btn" id="btnNoGravity">🪂 ביטול כבידה</div>
+    <div class="sliderPanel" id="sliderPanel">
+      <label><span data-i18n="setStarBrightness">בהירות כוכבים</span>
+        <input type="range" id="setStarBrightness" min="0.2" max="2.5" step="0.05" value="1.0">
+      </label>
+      <label><span data-i18n="setWalkSpeed">מהירות הליכה</span>
+        <input type="range" id="setWalkSpeed" min="0.4" max="8.0" step="0.1" value="4.5">
+      </label>
+      <label><div class="srow"><span data-i18n="setMaxSlope">שיפוע ללא החלקה</span><b id="setMaxSlopeVal">45°</b></div>
+        <input type="range" id="setMaxSlope" min="5" max="85" step="1" value="45">
+      </label>
+    </div>
+  </div>
+  <div class="btn" id="btnAdmin" style="display:none;">🔒 ניהול חדרים</div>
+  <div id="langButtons" style="display:flex;gap:6px;">
+    <div class="btn" id="setLangHe" style="flex:1;text-align:center;">עברית</div>
+    <div class="btn" id="setLangEn" style="flex:1;text-align:center;">English</div>
+  </div>
+</div>
+
+<div id="roomLockMsg"></div>
+<div id="adminPanel" style="display:none;">
+  <h3 id="adminTitle">🔒 ניהול גישה לחדרים</h3>
+  <div id="adminNote">סמן את החדרים שיהיו פתוחים לכולם. כשיש חדר פתוח אחד או יותר – כל שאר החדרים נעולים למבקרים (רק את, כמנהל, נכנס לכל מקום).</div>
+  <div class="adminRow">
+    <div class="btn" id="adminPickMap">🗺 בחירה מכדור המפה</div>
+    <div class="btn" id="adminClear">🔓 פתח הכל</div>
+  </div>
+  <input type="text" id="adminFilter" placeholder="סינון רשימה…" autocomplete="off">
+  <div id="adminCount"></div>
+  <div id="adminList"></div>
+  <div id="adminStatus"></div>
+</div>
+
+<div id="starChartOverlay">
+  <div id="chartControls">
+    <label data-i18n="setChartArt">הצג ציורי קבוצות
+      <input type="checkbox" id="setChartArt" checked>
+    </label>
+    <label data-i18n="setChartLines">הצג קווי חיבור
+      <input type="checkbox" id="setChartLines">
+    </label>
+    <label data-i18n="setChartRotation">סיבוב
+      <input type="range" id="setChartRotation" min="0" max="360" step="1" value="0">
+    </label>
+  </div>
+  <div id="starChartCaption"></div>
+  <canvas id="starChartCanvas" width="1000" height="1000"></canvas>
+  <div id="starChartHint">ESC או קליק בכל מקום כדי לסגור</div>
+  <div class="btn" id="btnCloseChart">✕ סגור</div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/earcut.min.js"></script>
+<script src="vendor/GLTFLoader.js"></script>
+<script src="js/data/boundaries.js"></script>
+<script src="js/data/stars.js"></script>
+<script src="assets/player-model.js"></script>
+<script src="js/game/01-data-and-coordinates.js"></script>
+<script src="js/game/02-scene-and-structure.js"></script>
+<script src="js/game/03-player-body.js"></script>
+<script src="js/game/04-build-world.js"></script>
+<script src="js/game/05-settings-and-player.js"></script>
+<script src="js/game/06-collision.js"></script>
+<script src="js/game/06b-body-and-camera-vs-solids.js"></script>
+<script src="js/game/07-animation-loop.js"></script>
+<script src="js/game/08-minimap-and-orientation.js"></script>
+<script src="js/game/09-init.js"></script>
+<script src="js/game/access-state.js"></script>
+<script src="js/game/10-access-and-admin.js"></script>
+
+</body></html>
