@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>אופק אפס</title>
+<meta name="description" content="אופק אפס: ספר בהמשכים על שמיים וכוכבים, משחק הדרך לכוכב הצפון, וסיור במבנה הכדורי.">
+<meta property="og:title" content="אופק אפס">
+<meta property="og:description" content="אופק אפס: ספר בהמשכים על שמיים וכוכבים, משחק הדרך לכוכב הצפון, וסיור במבנה הכדורי.">
+<meta property="og:image" content="/assets/logo.png">
+<meta name="theme-color" content="#040815">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23040815'/%3E%3Cpath d='M32 10l4.6 15.4L52 32l-15.4 4.6L32 54l-4.6-17.4L12 32l15.4-6.6z' fill='%23e8cf8a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body data-page="home">
+
+<canvas id="sky" aria-label="שמי לילה. לחצו על כוכבי הקבוצה המבוקשת"></canvas>
+
+<div class="page">
+  <header class="hero home wrap">
+    <div class="hero-text" data-solid>
+      <h1 style="margin:0"><picture><source srcset="/assets/logo.webp" type="image/webp"><img src="/assets/logo.png" alt="אופק אפס" class="logo" width="900" height="539"></picture></h1>
+      <p class="lede" data-t="home.lede">ספר בהמשכים על שמיים, כוכבים ומה שמסתתר מעבר לאופק. סביב הספר נבנו גם משחק ומבנה תלת־ממדי, כדי לראות בעיניים את מה שהדמויות לומדות.</p>
+      <p class="blocked-note" data-t="home.blocked">החלק שניסיתם להיכנס אליו לא פתוח כרגע.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="doors">
+      <article class="panel door" data-section="book" data-role="card" data-solid>
+        <span class="kicker" data-t="home.book.kicker">פרק חדש בכל מוצאי שבת</span>
+        <h2 data-t="home.book.title">הספר</h2>
+        <p data-t="home.book.text">הפרק האחרון, כל הפרקים שפורסמו עד עכשיו, וקצת על הספר.</p>
+        <a class="btn primary" href="/book/" data-section="book" data-gate><span data-t="home.book.cta">לפרקי הספר</span></a>
+      </article>
+      <article class="panel door" data-section="game" data-role="card" data-solid>
+        <span class="kicker" data-t="home.game.kicker">משחק</span>
+        <h2 data-t="home.game.title">הדרך לכוכב הצפון</h2>
+        <p data-t="home.game.text">לומדים לזהות קבוצות כוכבים ולמצוא בעזרתן את הצפון, שלב אחרי שלב.</p>
+        <a class="btn primary" href="/game/" data-section="game"><span data-t="home.game.cta">למשחק</span></a>
+      </article>
+      <article class="panel door" data-section="globe" data-role="card" data-solid>
+        <span class="kicker" data-t="home.globe.kicker">סיור תלת־ממדי</span>
+        <h2 data-t="home.globe.title">המבנה הכדורי</h2>
+        <p data-t="home.globe.text">נכנסים לתוך כדור השמיים ומטיילים בין החדרים, חדר לכל קבוצת כוכבים.</p>
+        <a class="btn primary" href="/globe/" data-section="globe"><span data-t="home.globe.cta">למבנה</span></a>
+      </article>
+    </div>
+    <p class="hero-hint" data-t="home.skyhint">ברקע מסתתרת קבוצת כוכבים. מצאו אותה ולחצו על כל הכוכבים שלה.</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span data-t="footer.name">אופק אפס</span>
+      <span data-t="footer.privacy">האתר שומר נתוני שימוש אנונימיים בלבד, בלי פרטים אישיים.</span>
+    </div>
+  </footer>
+</div>
+
+<aside class="hud" id="hud" aria-label="משחק הכוכבים" data-solid>
+  <p class="hud-toast" id="hudToast" hidden aria-live="polite"></p>
+  <button class="hud-fold" id="hudFold" aria-expanded="true" aria-label="הקטן או הגדל את לוח המשחק" title="הקטן / הגדל">⌄</button>
+  <div class="hud-top">
+    <canvas id="hudShape" width="64" height="64" aria-hidden="true"></canvas>
+    <div class="hud-info">
+      <div class="hud-ask">מצאו בשמיים את</div>
+      <div class="hud-name" id="hudName">…</div>
+      <div class="hud-prog" id="hudProgress" aria-live="polite"></div>
+      <div class="hud-note" id="hudNote"></div>
+    </div>
+    <div class="hud-score"><b id="hudScore">0</b><span>נקודות</span></div>
+  </div>
+  <div class="hud-lv"><div class="hud-lvbar"><i id="hudLvBar"></i></div><div class="hud-lvtext" id="hudLvText"></div></div>
+  <div class="hud-row">
+    <div class="lv" role="group" aria-label="שלב">
+      <button class="hb" id="lvPrev" aria-label="שלב קודם" title="שלב קודם">›</button>
+      <span id="hudLevel">שלב 1</span>
+      <button class="hb" id="lvNext" aria-label="שלב הבא" title="שלב הבא">‹</button>
+    </div>
+    <button class="hb" id="btnHint" title="רמז נחשב כטעות אחת">רמז</button>
+    <button class="hb" id="btnSwap">החלף</button>
+    <button class="hb" id="btnSkyOnly" aria-pressed="false">רק שמיים</button>
+  </div>
+</aside>
+
+<script src="/assets/site.js"></script>
+<script src="/assets/sky.js"></script>
+</body>
+</html>

@@ -146,7 +146,7 @@ select,option{color:var(--ink);background-color:#0d1630}
 </style>
 <div id="app" dir="rtl" lang="he">
   <header>
-    <div style="display:flex;align-items:center;gap:10px"><a href="../" class="icon" aria-label="לדף הבית של אופק אפס" title="לדף הבית" style="display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#e9edf7;text-decoration:none;font-size:18px">⌂</a>
+    <div style="display:flex;align-items:center;gap:10px"><a href="/game/" class="icon" aria-label="חזרה לאתר אופק אפס" title="לדף הבית" style="display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#e9edf7;text-decoration:none;font-size:18px">⌂</a>
     <h1 class="title">הדרך ל<span>כוכב הצפון</span></h1></div>
     <div class="hright">
       <div class="levelbox">
@@ -231,6 +231,7 @@ select,option{color:var(--ink);background-color:#0d1630}
 </div>
 <div id="overlay" dir="rtl" lang="he"><div class="card" id="card"></div></div>
 
+<script src="/assets/site.js" data-app="game"></script>
 <script id="gameScript">
 "use strict";
 /* the untouched page markup, kept so the manager's save can rebuild this exact page (PART 11) */
@@ -2519,7 +2520,7 @@ function puzzleScore(){const p=State.p;return Math.max(SCORE.floor,SCORE.base-p.
 function puzzleSolved(){
   State.solved=true; const pz=State.puzzle, score=puzzleScore(); sfx("win");
   State.p.time=(performance.now()-State.p.start)/1000; State.p.score=score;
-  if(State.kind==="level"){ const id=LEVELS[State.levelIdx].id; Save.best[id]=Math.max(Save.best[id]||0,score); writeSave(); }
+  if(State.kind==="level"){ const id=LEVELS[State.levelIdx].id; Save.best[id]=Math.max(Save.best[id]||0,score); writeSave(); if(window.ofekTrack) ofekTrack("game-done",{level:State.levelIdx+1,chapter:LEVELS[State.levelIdx].chapter+1,score:score,mistakes:State.p.mistakes,hints:State.p.hints}); }
   else { State.endless.score+=score; Save.endlessBest=Math.max(Save.endlessBest||0,State.endless.score); writeSave(); }
   setInstruction(pz.successTitle,true); $("explain").textContent=pz.explain; $("hinttext").textContent="";
   updateCounter(`+${score} נקודות`); $("btnHint").disabled=true;
@@ -2533,6 +2534,7 @@ function next(){
 function goLevel(i,withIntro=true){
   if(!levelUnlocked(i)){ showCard(`<h2>🔒 נעול</h2><p>${isOpen(LEVELS[i].chapter)?"צריך לסיים קודם את הרמה הקודמת.":"הפרק הזה עדיין לא נפתח."}</p><div class="btns"><button class="primary" id="cBack">חזרה</button></div>`); $("cBack").onclick=showMap; return; }
   hideOverlay(); State.kind="level"; State.levelIdx=i;
+  if(window.ofekTrack) ofekTrack("game-start",{level:i+1,chapter:LEVELS[i].chapter+1,title:CHAPTERS[LEVELS[i].chapter].title});
   const L=LEVELS[i];
   transition(()=>{ startPuzzle(levelPuzzle(i)); if(withIntro&&L.intro) showIntro(L.intro); });
 }

@@ -48,26 +48,34 @@
       lines: [[0,1],[1,2],[1,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12]] }
   ];
 
-  /* ---------- שלבים ---------- */
+  /* ---------- שלבים: כל 100 נקודות פותחות שלב חדש, עד 1,000 ---------- */
   const LEVELS = [
-    { name: "שמיים בהירים",  dim: 140, decoys: 6,  groupBoost: 1.0, rotate: false, size: 0.42 },
-    { name: "עוד כמה כוכבים", dim: 220, decoys: 14, groupBoost: 0.6, rotate: false, size: 0.38 },
-    { name: "שמיים מלאים",   dim: 300, decoys: 24, groupBoost: 0.3, rotate: false, size: 0.34 },
-    { name: "הקבוצה מסתובבת", dim: 360, decoys: 32, groupBoost: 0.15, rotate: true, size: 0.32 },
-    { name: "לילה במדבר",    dim: 460, decoys: 44, groupBoost: 0,   rotate: true,  size: 0.30 }
+    { dim: 120, decoys: 4,  groupBoost: 1.0, rot: 0,    size: 0.44 },
+    { dim: 170, decoys: 8,  groupBoost: 0.8, rot: 0,    size: 0.42 },
+    { dim: 220, decoys: 12, groupBoost: 0.6, rot: 0,    size: 0.40 },
+    { dim: 270, decoys: 16, groupBoost: 0.45,rot: 0,    size: 0.38 },
+    { dim: 320, decoys: 22, groupBoost: 0.3, rot: 0.35, size: 0.36 },
+    { dim: 370, decoys: 28, groupBoost: 0.2, rot: 0.5,  size: 0.34 },
+    { dim: 420, decoys: 34, groupBoost: 0.1, rot: 0.75, size: 0.32 },
+    { dim: 470, decoys: 40, groupBoost: 0,   rot: 1.0,  size: 0.30 },
+    { dim: 520, decoys: 48, groupBoost: 0,   rot: 1.5,  size: 0.28 },
+    { dim: 580, decoys: 56, groupBoost: 0,   rot: 3.14, size: 0.26 }
   ];
+  const PER_LEVEL = 100, MAX_SCORE = 1000;
+  const unlockedLevel = () => Math.min(LEVELS.length - 1, Math.floor(state.score / PER_LEVEL));
 
-  const STORE_KEY = "ofek-sky-v1";
+  const STORE_KEY = "ofek-sky-v2";
   const reduceMotion = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ---------- מצב ---------- */
-  const state = { score: 0, solved: 0, level: 0, groupIdx: -1, recent: [] };
+  const state = { score: 0, solved: 0, perfect: 0, level: 0, groupIdx: -1, recent: [] };
   try {
     const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
-    if (saved) Object.assign(state, { score: saved.score | 0, solved: saved.solved | 0, level: Math.min(LEVELS.length - 1, saved.level | 0) });
+    if (saved) Object.assign(state, { score: Math.min(MAX_SCORE, saved.score | 0), solved: saved.solved | 0, perfect: saved.perfect | 0, level: saved.level | 0 });
+    state.level = Math.min(state.level, Math.min(LEVELS.length - 1, Math.floor(state.score / PER_LEVEL)));
   } catch (e) {}
   function save() {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify({ score: state.score, solved: state.solved, level: state.level })); } catch (e) {}
+    try { localStorage.setItem(STORE_KEY, JSON.stringify({ score: state.score, solved: state.solved, perfect: state.perfect, level: state.level })); } catch (e) {}
   }
 
   /* ---------- קנבס ---------- */
@@ -139,8 +147,8 @@
     if (!keepGroup || state.groupIdx < 0) pickGroup();
     const def = GROUPS[state.groupIdx];
     let pts = project(def.stars);
-    if (lv.rotate) {
-      const t = rand(-0.9, 0.9), cs = Math.cos(t), sn = Math.sin(t);
+    if (lv.rot) {
+      const t = rand(-lv.rot, lv.rot), cs = Math.cos(t), sn = Math.sin(t);
       pts = pts.map(([x, y]) => [x * cs - y * sn, x * sn + y * cs]);
     }
     const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
@@ -175,7 +183,8 @@
     group = {
       def,
       pts: pts.map(([x, y], i) => ({ x: best.ox + (x - minX) * scale, y: best.oy + (y - minY) * scale, found: prevFound ? prevFound[i] : false })),
-      done: false
+      done: false,
+      misses: prevFound ? (group.misses || 0) : 0
     };
     if (prevFound && prevFound.every(Boolean)) group.done = true;
 
@@ -241,7 +250,7 @@
       const top = Math.min(...group.pts.map(p => p.y));
       const a = Math.min(1, (now - completeAt) / 600);
       ctx.globalAlpha = a;
-      ctx.font = "600 20px 'Frank Ruhl Libre', 'David', serif";
+      ctx.font = "600 20px " + (getComputedStyle(document.documentElement).getPropertyValue("--display").trim() || "serif");
       ctx.textAlign = "center"; ctx.fillStyle = "#e8cf8a";
       ctx.fillText(group.def.name, cx, Math.max(24, top - 22));
       ctx.globalAlpha = 1;
@@ -259,8 +268,8 @@
         ctx.beginPath(); ctx.arc(m.x, m.y, 4 + k * 14, 0, 6.283); ctx.stroke();
       } else if (m.type === "plus") {
         ctx.globalAlpha = 1 - k;
-        ctx.font = "700 22px 'Assistant', sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = "#e8cf8a";
-        ctx.fillText("+10", m.x, m.y - k * 40);
+        ctx.font = "700 22px " + (getComputedStyle(document.documentElement).getPropertyValue("--body").trim() || "sans-serif"); ctx.textAlign = "center"; ctx.fillStyle = "#e8cf8a";
+        ctx.fillText(m.text || "+10", m.x, m.y - k * 40);
         ctx.globalAlpha = 1;
       }
     }
@@ -309,18 +318,37 @@
         if (group.pts.every(q => q.found)) complete(now);
         updateHud();
       }
-    } else if (!group.done) {
+    } else if (!group.done && !(hit && hit.g >= 0)) {
+      group.misses++;
       marks.push({ type: "miss", x, y, t: now, life: 600 });
+      updateHud();
     }
   });
 
-  let nextTimer = 0;
+  let nextTimer = 0, lastPts = null, toastTimer = 0;
+  function toast(msg) {
+    const el = document.getElementById("hudToast");
+    if (!el) return;
+    el.textContent = msg; el.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 3600);
+  }
   function complete(now) {
     group.done = true; completeAt = now;
-    state.score += 10; state.solved += 1; save();
+    const hits = group.pts.length;
+    const pts = Math.round(10 * hits / (hits + group.misses));   // 10 רק בלי אף טעות
+    const before = unlockedLevel();
+    state.score = Math.min(MAX_SCORE, state.score + pts); state.solved += 1;
+    if (group.misses === 0) state.perfect += 1;
+    const after = unlockedLevel();
+    if (after > before && state.level === before) state.level = after;   // עולים שלב אוטומטית
+    save();
+    lastPts = pts;
+    if (window.ofekTrack) ofekTrack("sky", { lvl: state.level + 1, pts: pts, misses: group.misses, score: state.score, group: group.def.id });
+    if (after > before) toast(state.score >= MAX_SCORE ? "הגעת ל־1,000 נקודות! כל השלבים פתוחים." : "עלית לשלב " + (after + 1) + "!");
+    else if (state.score >= MAX_SCORE && before === LEVELS.length - 1 && state.score - pts < MAX_SCORE) toast("הגעת ל־1,000 נקודות!");
     const cx = group.pts.reduce((s, p) => s + p.x, 0) / group.pts.length;
     const cy = group.pts.reduce((s, p) => s + p.y, 0) / group.pts.length;
-    marks.push({ type: "plus", x: cx, y: cy, t: now, life: 1400 });
+    marks.push({ type: "plus", x: cx, y: cy, t: now, life: 1400, text: "+" + pts });
     hud.classList.add("won");
     setTimeout(() => hud.classList.remove("won"), 1200);
     clearTimeout(nextTimer);
@@ -337,17 +365,27 @@
   const mini = document.getElementById("hudShape");
   const mctx = mini.getContext("2d");
 
+  const elLvBar = document.getElementById("hudLvBar");
+  const elLvText = document.getElementById("hudLvText");
   function updateHud() {
     if (!group) return;
     const found = group.pts.filter(p => p.found).length;
     elName.textContent = group.def.name;
-    elProg.textContent = group.done ? "נמצאה!" : `${found} מתוך ${group.pts.length}`;
-    elScore.textContent = state.score;
-    elLevel.textContent = `שלב ${state.level + 1}`;
-    elLevel.title = LEVELS[state.level].name;
-    elNote.textContent = group.def.note || LEVELS[state.level].name;
+    if (group.done) elProg.textContent = lastPts === 10 ? "בלי אף טעות! ‎+10" : "נמצאה! ‎+" + lastPts;
+    else elProg.textContent = found + " מתוך " + group.pts.length + (group.misses ? " · " + group.misses + " החטאות" : "");
+    elScore.textContent = state.score.toLocaleString("he-IL");
+    elLevel.textContent = "שלב " + (state.level + 1);
+    const top = unlockedLevel();
+    elLevel.title = "פתוחים: שלבים 1–" + (top + 1);
+    elNote.textContent = group.def.note || (group.misses ? "" : "10 נקודות אם אין אף לחיצה מיותרת");
+    if (state.score >= MAX_SCORE) { elLvText.textContent = "1,000 · כל השלבים פתוחים"; elLvBar.style.width = "100%"; }
+    else {
+      const into = state.score % PER_LEVEL;
+      elLvText.textContent = "עוד " + (PER_LEVEL - into) + " נק׳ לשלב " + (top + 2 > LEVELS.length ? LEVELS.length : top + 2);
+      elLvBar.style.width = into + "%";
+    }
     document.getElementById("lvPrev").disabled = state.level === 0;
-    document.getElementById("lvNext").disabled = state.level === LEVELS.length - 1;
+    document.getElementById("lvNext").disabled = state.level >= top;
     drawMini();
   }
 
@@ -373,11 +411,11 @@
 
   document.getElementById("btnSwap").addEventListener("click", () => { clearTimeout(nextTimer); buildScene(false); });
   document.getElementById("lvPrev").addEventListener("click", () => { if (state.level > 0) { state.level--; save(); clearTimeout(nextTimer); buildScene(false); } });
-  document.getElementById("lvNext").addEventListener("click", () => { if (state.level < LEVELS.length - 1) { state.level++; save(); clearTimeout(nextTimer); buildScene(false); } });
+  document.getElementById("lvNext").addEventListener("click", () => { if (state.level < unlockedLevel()) { state.level++; save(); clearTimeout(nextTimer); buildScene(false); } });
   document.getElementById("btnHint").addEventListener("click", () => {
     if (!group || group.done) return;
     const p = group.pts.find(q => !q.found);
-    if (p) marks.push({ type: "ring", x: p.x, y: p.y, t: performance.now(), life: 1600 });
+    if (p) { group.misses++; marks.push({ type: "ring", x: p.x, y: p.y, t: performance.now(), life: 1600 }); updateHud(); }
   });
   const btnSky = document.getElementById("btnSkyOnly");
   btnSky.addEventListener("click", () => {
@@ -386,9 +424,17 @@
     btnSky.textContent = on ? "החזר את העמוד" : "רק שמיים";
   });
   const btnFold = document.getElementById("hudFold");
-  btnFold.addEventListener("click", () => {
-    const folded = hud.classList.toggle("folded");
+  function setFolded(folded) {
+    hud.classList.toggle("folded", folded);
     btnFold.setAttribute("aria-expanded", folded ? "false" : "true");
+  }
+  let foldPref = null;
+  try { foldPref = localStorage.getItem("ofek-hud-folded"); } catch (e) {}
+  setFolded(foldPref === null ? true : foldPref === "1");   // בפעם הראשונה הלוח מוקטן
+  btnFold.addEventListener("click", () => {
+    const folded = !hud.classList.contains("folded");
+    setFolded(folded);
+    try { localStorage.setItem("ofek-hud-folded", folded ? "1" : "0"); } catch (e) {}
   });
 
   /* ---------- גודל מסך ---------- */

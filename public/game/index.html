@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>הדרך לכוכב הצפון · אופק אפס</title>
+<meta name="description" content="משחק שמלמד לזהות קבוצות כוכבים ולמצוא את כוכב הצפון.">
+<meta property="og:title" content="הדרך לכוכב הצפון · אופק אפס">
+<meta property="og:description" content="משחק שמלמד לזהות קבוצות כוכבים ולמצוא את כוכב הצפון.">
+<meta property="og:image" content="/assets/logo.png">
+<meta name="theme-color" content="#040815">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23040815'/%3E%3Cpath d='M32 10l4.6 15.4L52 32l-15.4 4.6L32 54l-4.6-17.4L12 32l15.4-6.6z' fill='%23e8cf8a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body data-page="game">
+
+<canvas id="sky" aria-label="שמי לילה. לחצו על כוכבי הקבוצה המבוקשת"></canvas>
+
+<div class="page">
+  <div class="topbar wrap">
+    <a class="home-link" href="/" aria-label="לדף הבית"><picture><source srcset="/assets/logo.webp" type="image/webp"><img src="/assets/logo.png" alt="אופק אפס" class="" width="900" height="539"></picture></a>
+    <nav class="topnav" aria-label="ניווט"><a class="btn" href="/book/" data-section="book" data-gate>הספר</a><a class="btn" href="/game/" data-section="game" data-role="card" aria-current="page">המשחק</a><a class="btn" href="/globe/" data-section="globe" data-role="card">המבנה</a></nav>
+  </div>
+  <header class="page-head wrap" data-solid>
+    <h1 data-t="game.title">הדרך לכוכב הצפון</h1>
+    <p class="lede" data-t="game.lede">לפני מצפן ולפני GPS, אנשים מצאו את הצפון בעזרת כוכב אחד קטן. במשחק הזה לומדים לעשות את זה בעצמכם.</p>
+  </header>
+  <main>
+    <section class="wrap" data-section="game" data-role="page" hidden>
+      <div class="panel info unavailable" data-solid>
+        <h2 data-t="game.closed.title">עוד לא פתוח</h2>
+        <p data-t="game.closed.text">החלק הזה ייפתח בקרוב. בינתיים אפשר לקרוא את הספר ולחפש קבוצות כוכבים ברקע.</p>
+      </div>
+    </section>
+    <section class="wrap">
+      <div class="panel info" data-solid>
+        <h2 data-t="game.how.title">איך משחקים</h2>
+        <ol class="steps">
+          <li><b>1</b><span data-t="game.how.1">בכל רמה מופיעים שמי לילה, עם הכוכבים במקומם האמיתי.</span></li>
+          <li><b>2</b><span data-t="game.how.2">מחפשים את קבוצת הכוכבים שהמשחק מבקש ולוחצים על הכוכבים שלה.</span></li>
+          <li><b>3</b><span data-t="game.how.3">מקבוצה לקבוצה מתקדמים, עד שמוצאים את כוכב הצפון.</span></li>
+        </ol>
+        <p data-t="game.more">המשחק בנוי בפרקים, ופרקים חדשים נפתחים לאורך הזמן, כמו הספר. ההתקדמות נשמרת בדפדפן, אז אפשר להפסיק ולחזור.</p>
+        <p class="note" data-t="game.note">אפשר לשחק במחשב ובטלפון.</p>
+        <div class="cta"><a class="btn primary" href="/game/play/" data-section="game" data-gate><span data-t="game.cta">להתחיל לשחק</span></a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span data-t="footer.name">אופק אפס</span>
+      <span data-t="footer.privacy">האתר שומר נתוני שימוש אנונימיים בלבד, בלי פרטים אישיים.</span>
+    </div>
+  </footer>
+</div>
+
+<aside class="hud" id="hud" aria-label="משחק הכוכבים" data-solid>
+  <p class="hud-toast" id="hudToast" hidden aria-live="polite"></p>
+  <button class="hud-fold" id="hudFold" aria-expanded="true" aria-label="הקטן או הגדל את לוח המשחק" title="הקטן / הגדל">⌄</button>
+  <div class="hud-top">
+    <canvas id="hudShape" width="64" height="64" aria-hidden="true"></canvas>
+    <div class="hud-info">
+      <div class="hud-ask">מצאו בשמיים את</div>
+      <div class="hud-name" id="hudName">…</div>
+      <div class="hud-prog" id="hudProgress" aria-live="polite"></div>
+      <div class="hud-note" id="hudNote"></div>
+    </div>
+    <div class="hud-score"><b id="hudScore">0</b><span>נקודות</span></div>
+  </div>
+  <div class="hud-lv"><div class="hud-lvbar"><i id="hudLvBar"></i></div><div class="hud-lvtext" id="hudLvText"></div></div>
+  <div class="hud-row">
+    <div class="lv" role="group" aria-label="שלב">
+      <button class="hb" id="lvPrev" aria-label="שלב קודם" title="שלב קודם">›</button>
+      <span id="hudLevel">שלב 1</span>
+      <button class="hb" id="lvNext" aria-label="שלב הבא" title="שלב הבא">‹</button>
+    </div>
+    <button class="hb" id="btnHint" title="רמז נחשב כטעות אחת">רמז</button>
+    <button class="hb" id="btnSwap">החלף</button>
+    <button class="hb" id="btnSkyOnly" aria-pressed="false">רק שמיים</button>
+  </div>
+</aside>
+
+<script src="/assets/site.js"></script>
+<script src="/assets/sky.js"></script>
+</body>
+</html>

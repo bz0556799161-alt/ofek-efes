@@ -286,6 +286,7 @@ function updateInterior(dt){
     cachedRoom = currentRoom();
     roomCheckTimer = 0.35;
     if(cachedRoom !== prevRoom) updateSkyOverlayVisibility(); // only redraw this when the room actually changed
+    if(cachedRoom && cachedRoom !== prevRoom && window.ofekTrack){ try{ const R = typeof cachedRoom==='object' ? cachedRoom : roomById[cachedRoom]; ofekTrack('globe-room',{room:(R&&(R.nameHe||R.id))||String(cachedRoom)}); }catch(e){} }
   }
   const roomLabelEl = document.getElementById('roomLabel');
   if(cachedRoom){
