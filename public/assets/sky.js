@@ -62,7 +62,10 @@
     { dim: 580, decoys: 56, groupBoost: 0,   rot: 3.14, size: 0.26 }
   ];
   const PER_LEVEL = 100, MAX_SCORE = 1000;
-  const unlockedLevel = () => Math.min(LEVELS.length - 1, Math.floor(state.score / PER_LEVEL));
+  let adminDevice = false;
+  try { adminDevice = localStorage.getItem("ofek-admin-device") === "1"; } catch (e) {}
+  // במכשיר של המנהל כל השלבים פתוחים, כדי לבדוק את רמות הקושי
+  const unlockedLevel = () => adminDevice ? LEVELS.length - 1 : Math.min(LEVELS.length - 1, Math.floor(state.score / PER_LEVEL));
 
   const STORE_KEY = "ofek-sky-v2";
   const reduceMotion = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -72,11 +75,13 @@
   try {
     const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
     if (saved) Object.assign(state, { score: Math.min(MAX_SCORE, saved.score | 0), solved: saved.solved | 0, perfect: saved.perfect | 0, level: saved.level | 0 });
-    state.level = Math.min(state.level, Math.min(LEVELS.length - 1, Math.floor(state.score / PER_LEVEL)));
+    state.level = Math.min(state.level, LEVELS.length - 1);
   } catch (e) {}
   function save() {
     try { localStorage.setItem(STORE_KEY, JSON.stringify({ score: state.score, solved: state.solved, perfect: state.perfect, level: state.level })); } catch (e) {}
   }
+
+  if (!adminDevice) state.level = Math.min(state.level, unlockedLevel());
 
   /* ---------- קנבס ---------- */
   const canvas = document.getElementById("sky");
@@ -209,11 +214,14 @@
       minD = Math.min(minD, Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]));
     scale = Math.max(scale, 30 / minD);
     scale = Math.min(scale, (Math.min(W, H) * 0.7) / span);
-    const bw = (maxX - minX) * scale, bh = (maxY - minY) * scale;
+    let bw = (maxX - minX) * scale, bh = (maxY - minY) * scale;
 
     // מיקום: מחפשים מקום פנוי שלא מוסתר ע"י תוכן
     const rects = solidRects(), pad = 28;
     let best = null;
+    // מחפשים מקום פנוי; אם אין, מקטינים מעט את הקבוצה ומנסים שוב
+    for (let shrink = 0; shrink < 4; shrink++) {
+    if (shrink) { scale *= 0.84; bw = (maxX - minX) * scale; bh = (maxY - minY) * scale; best = null; }
     for (let tries = 0; tries < 80; tries++) {
       const ox = rand(pad, Math.max(pad, W - bw - pad));
       const oy = rand(pad + 10, Math.max(pad + 10, H - bh - pad));
@@ -226,6 +234,8 @@
       }
       if (!best || overlap < best.overlap) best = { ox, oy, overlap };
       if (overlap === 0) break;
+    }
+    if (best.overlap === 0) break;
     }
     const prevFound = keepGroup && group && group.def === def ? group.pts.map(p => p.found) : null;
     group = {
@@ -270,7 +280,7 @@
       for (const [a, b] of group.def.lines) {
         const A = group.pts[a], B = group.pts[b];
         if (!(A.found && B.found)) continue;
-        ctx.strokeStyle = group.done ? "rgba(239,227,207,.75)" : "rgba(143,180,185,.55)";
+        ctx.strokeStyle = group.done ? "rgba(214,180,108,.75)" : "rgba(143,180,185,.55)";
         ctx.lineWidth = group.done ? 1.6 : 1.2;
         ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
       }
@@ -282,13 +292,13 @@
       const found = s.g >= 0 && group.pts[s.g].found;
       const r = s.r * (found ? 1.25 : 1);
       const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, r * 5);
-      glow.addColorStop(0, found ? "rgba(250,240,222,.55)" : `rgba(205,228,230,${0.32 * tw})`);
+      glow.addColorStop(0, found ? "rgba(244,226,180,.55)" : `rgba(205,228,230,${0.32 * tw})`);
       glow.addColorStop(1, "rgba(205,228,230,0)");
       ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(s.x, s.y, r * 5, 0, 6.283); ctx.fill();
-      ctx.fillStyle = found ? "#fbf3e6" : `rgba(242,248,248,${0.75 + 0.25 * tw})`;
+      ctx.fillStyle = found ? "#f4e3b8" : `rgba(242,248,248,${0.75 + 0.25 * tw})`;
       ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, 6.283); ctx.fill();
       if (found) {
-        ctx.strokeStyle = "rgba(239,227,207,.85)"; ctx.lineWidth = 1.2;
+        ctx.strokeStyle = "rgba(214,180,108,.85)"; ctx.lineWidth = 1.2;
         ctx.beginPath(); ctx.arc(s.x, s.y, r + 6, 0, 6.283); ctx.stroke();
       }
     }
@@ -300,7 +310,7 @@
       const a = Math.min(1, (now - completeAt) / 600);
       ctx.globalAlpha = a;
       ctx.font = "600 20px " + (getComputedStyle(document.documentElement).getPropertyValue("--display").trim() || "serif");
-      ctx.textAlign = "center"; ctx.fillStyle = "#efe3cf";
+      ctx.textAlign = "center"; ctx.fillStyle = "#d6b46c";
       ctx.fillText(group.def.name, cx, Math.max(24, top - 22));
       ctx.globalAlpha = 1;
     }
@@ -310,14 +320,14 @@
     for (const m of marks) {
       const k = (now - m.t) / m.life;
       if (m.type === "ring") {
-        ctx.strokeStyle = `rgba(239,227,207,${1 - k})`; ctx.lineWidth = 1.5;
+        ctx.strokeStyle = `rgba(214,180,108,${1 - k})`; ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.arc(m.x, m.y, 6 + k * 26, 0, 6.283); ctx.stroke();
       } else if (m.type === "miss") {
         ctx.strokeStyle = `rgba(143,180,185,${0.45 * (1 - k)})`; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.arc(m.x, m.y, 4 + k * 14, 0, 6.283); ctx.stroke();
       } else if (m.type === "plus") {
         ctx.globalAlpha = 1 - k;
-        ctx.font = "700 22px " + (getComputedStyle(document.documentElement).getPropertyValue("--body").trim() || "sans-serif"); ctx.textAlign = "center"; ctx.fillStyle = "#efe3cf";
+        ctx.font = "700 22px " + (getComputedStyle(document.documentElement).getPropertyValue("--body").trim() || "sans-serif"); ctx.textAlign = "center"; ctx.fillStyle = "#d6b46c";
         ctx.fillText(m.text || "+10", m.x, m.y - k * 40);
         ctx.globalAlpha = 1;
       }
@@ -427,9 +437,10 @@
     elScore.textContent = state.score.toLocaleString("he-IL");
     elLevel.textContent = "שלב " + (state.level + 1);
     const top = unlockedLevel();
-    elLevel.title = "פתוחים: שלבים 1–" + (top + 1);
+    elLevel.title = adminDevice ? "מצב מנהל: כל השלבים פתוחים" : "פתוחים: שלבים 1–" + (top + 1);
     elNote.textContent = group.def.note || (group.misses ? "" : "10 נקודות אם אין אף לחיצה מיותרת");
-    if (state.score >= MAX_SCORE) { elLvText.textContent = "1,000 · כל השלבים פתוחים"; elLvBar.style.width = "100%"; }
+    if (adminDevice) { elLvText.textContent = "מצב מנהל: אפשר לעבור בין כל 10 השלבים"; elLvBar.style.width = Math.min(100, state.score % PER_LEVEL) + "%"; }
+    else if (state.score >= MAX_SCORE) { elLvText.textContent = "1,000 · כל השלבים פתוחים"; elLvBar.style.width = "100%"; }
     else {
       const into = state.score % PER_LEVEL;
       elLvText.textContent = "עוד " + (PER_LEVEL - into) + " נק׳ לשלב " + (top + 2 > LEVELS.length ? LEVELS.length : top + 2);
@@ -455,7 +466,7 @@
     mctx.strokeStyle = "rgba(143,180,185,.5)"; mctx.lineWidth = 1;
     for (const [a, b] of group.def.lines) { mctx.beginPath(); mctx.moveTo(...P[a]); mctx.lineTo(...P[b]); mctx.stroke(); }
     P.forEach((p, i) => {
-      mctx.fillStyle = group.pts[i] && group.pts[i].found ? "#efe3cf" : "#e8eeee";
+      mctx.fillStyle = group.pts[i] && group.pts[i].found ? "#d6b46c" : "#e8eeee";
       mctx.beginPath(); mctx.arc(p[0], p[1], 2.2, 0, 6.283); mctx.fill();
     });
   }
@@ -478,7 +489,51 @@
   function setFolded(folded) {
     hud.classList.toggle("folded", folded);
     btnFold.setAttribute("aria-expanded", folded ? "false" : "true");
+    btnFold.title = folded ? "פתח את לוח המשחק" : "הקטן את לוח המשחק";
+    requestAnimationFrame(clampHud);
   }
+
+  /* ---------- לוח צף: אפשר לגרור אותו לכל מקום במסך ---------- */
+  const HUD_POS = "ofek-hud-pos";
+  function placeHud(x, y) {
+    const r = hud.getBoundingClientRect();
+    x = Math.max(6, Math.min(window.innerWidth - r.width - 6, x));
+    y = Math.max(6, Math.min(window.innerHeight - r.height - 6, y));
+    hud.style.left = x + "px"; hud.style.top = y + "px"; hud.style.bottom = "auto"; hud.style.right = "auto";
+  }
+  function clampHud() {
+    if (!hud.style.top) return;
+    const r = hud.getBoundingClientRect();
+    placeHud(r.left, r.top);
+  }
+  try {
+    const pos = JSON.parse(localStorage.getItem(HUD_POS) || "null");
+    if (pos) requestAnimationFrame(() => placeHud(pos.x * window.innerWidth, pos.y * window.innerHeight));
+  } catch (e) {}
+  let drag = null;
+  hud.addEventListener("pointerdown", (e) => {
+    if (e.target.closest("button")) return;
+    const r = hud.getBoundingClientRect();
+    drag = { dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false };
+    try { hud.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  hud.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    drag.moved = true; hud.classList.add("dragging");
+    placeHud(e.clientX - drag.dx, e.clientY - drag.dy);
+  });
+  function endDrag() {
+    if (!drag) return;
+    hud.classList.remove("dragging");
+    if (drag.moved) {
+      const r = hud.getBoundingClientRect();
+      try { localStorage.setItem(HUD_POS, JSON.stringify({ x: r.left / window.innerWidth, y: r.top / window.innerHeight })); } catch (e) {}
+    }
+    drag = null;
+  }
+  hud.addEventListener("pointerup", endDrag);
+  hud.addEventListener("pointercancel", endDrag);
+  window.addEventListener("resize", clampHud);
   let foldPref = null;
   try { foldPref = localStorage.getItem("ofek-hud-folded"); } catch (e) {}
   setFolded(foldPref === null ? true : foldPref === "1");   // בפעם הראשונה הלוח מוקטן

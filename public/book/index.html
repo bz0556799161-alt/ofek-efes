@@ -59,7 +59,8 @@
 
 <aside class="hud" id="hud" aria-label="משחק הכוכבים" data-solid>
   <p class="hud-toast" id="hudToast" hidden aria-live="polite"></p>
-  <button class="hud-fold" id="hudFold" aria-expanded="true" aria-label="הקטן או הגדל את לוח המשחק" title="הקטן / הגדל">⌄</button>
+  <div class="hud-grip" aria-hidden="true" title="גרור כדי להזיז את הלוח"></div>
+  <button class="hud-fold" id="hudFold" aria-expanded="true" aria-label="הקטן או הגדל את לוח המשחק" title="הקטן את לוח המשחק"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
   <div class="hud-top">
     <canvas id="hudShape" width="64" height="64" aria-hidden="true"></canvas>
     <div class="hud-info">
