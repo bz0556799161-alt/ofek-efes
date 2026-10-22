@@ -14,7 +14,7 @@ def head(title, desc):
 <meta name="description" content="{desc}">
 <meta property="og:title" content="{title}">
 <meta property="og:description" content="{desc}">
-<meta property="og:image" content="/assets/logo.png">
+<meta property="og:image" content="/assets/og.jpg">
 <meta name="theme-color" content="#040815">
 <link rel="icon" href="{FAVICON}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,7 +24,7 @@ def head(title, desc):
 </head>
 '''
 
-LOGO = '<picture><source srcset="/assets/logo.webp" type="image/webp"><img src="/assets/logo.png" alt="אופק אפס" class="{cls}" width="900" height="539"></picture>'
+LOGO = '<picture><source type="image/webp" srcset="/assets/logo-640.webp 640w, /assets/logo-1100.webp 1100w, /assets/logo-2200.webp 2200w" sizes="{sizes}"><img src="/assets/logo.png" alt="אופק אפס" class="{cls}" width="1100" height="659" decoding="async"></picture>'
 
 def topbar(current):
     links = [("book", "/book/", "הספר"), ("game", "/game/", "המשחק"), ("globe", "/globe/", "המבנה")]
@@ -32,7 +32,7 @@ def topbar(current):
         f'<a class="btn" href="{h}" data-section="{k}"{" data-gate" if k == "book" else " data-role=\"card\""}{" aria-current=\"page\"" if k == current else ""}>{t}</a>'
         for k, h, t in links)
     return f'''  <div class="topbar wrap">
-    <a class="home-link" href="/" aria-label="לדף הבית">{LOGO.format(cls="")}</a>
+    <a class="home-link" href="/" aria-label="לדף הבית">{LOGO.format(cls="", sizes="92px")}</a>
     <nav class="topnav" aria-label="ניווט">{nav}</nav>
   </div>
 '''
@@ -100,7 +100,7 @@ def door(sec, href, kicker_key, kicker, title_key, title, text_key, text, cta_ke
 
 home_body = f'''  <header class="hero home wrap">
     <div class="hero-text" data-solid>
-      <h1 style="margin:0">{LOGO.format(cls="logo")}</h1>
+      <h1 class="logo-wrap">{LOGO.format(cls="logo", sizes="(max-width: 600px) 86vw, 560px")}</h1>
       <p class="lede" data-t="home.lede">ספר בהמשכים על שמיים, כוכבים ומה שמסתתר מעבר לאופק. סביב הספר נבנו גם משחק ומבנה תלת־ממדי, כדי לראות בעיניים את מה שהדמויות לומדות.</p>
       <p class="blocked-note" data-t="home.blocked">החלק שניסיתם להיכנס אליו לא פתוח כרגע.</p>
     </div>
