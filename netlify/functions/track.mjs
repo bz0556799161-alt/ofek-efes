@@ -1,5 +1,7 @@
 // Anonymous usage stats. Each browser has a random id; nothing personal is stored.
-import { visitorStore, json, israelDay } from "../lib/common.mjs";
+import { visitorStore, json, israelDay, isAdmin } from "../lib/common.mjs";
+
+const BOT_RE = /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|preview|screenshot|puppeteer|playwright|selenium|phantom|prerender|facebookexternalhit|whatsapp|telegram|discord|skype|embedly|bing|yandex|baidu|duckduck|semrush|ahrefs|mj12|petal|gptbot|claude|anthropic|chatgpt|perplexity|netlify/i;
 
 const PAGES = ["home", "book", "game", "globe", "site"];
 const num = (v, max = 1e6) => {
@@ -21,6 +23,9 @@ function emptyDoc(now) {
 
 export default async (req) => {
   if (req.method !== "POST") return json({ error: "method" }, 405);
+  // robots and the site's admin are not counted
+  if (BOT_RE.test(req.headers.get("user-agent") || "")) return json({ ok: true, skipped: "bot" });
+  if (await isAdmin(req)) return json({ ok: true, skipped: "admin" });
   let body;
   try { body = JSON.parse((await req.text()).slice(0, 20000)); } catch (e) { return json({ error: "bad" }, 400); }
   const vid = String(body.vid || "");

@@ -225,6 +225,23 @@ export default async (req, context) => {
 
   if (route === "stats" && method === "GET") return json(await stats());
 
+  // forget this admin's own device (called when the admin logs in)
+  if (route === "visitor" && method === "DELETE") {
+    const vid = s(url.searchParams.get("vid"), 40);
+    if (/^[a-z0-9]{12,40}$/.test(vid)) await visitorStore().delete(vid);
+    return json({ ok: true });
+  }
+
+  // wipe all stats and start counting from now
+  if (route === "stats-reset" && method === "POST") {
+    const store = visitorStore();
+    let n = 0;
+    for await (const page of store.list({ paginate: true })) {
+      for (const b of page.blobs) { await store.delete(b.key); n++; }
+    }
+    return json({ ok: true, deleted: n });
+  }
+
   return json({ error: "not found" }, 404);
 };
 export const config = { path: "/api/admin/*" };

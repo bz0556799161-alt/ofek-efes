@@ -157,6 +157,13 @@ td.num{font-variant-numeric:tabular-nums}
     <!-- stats -->
     <section role="tabpanel" id="tab-stats">
       <div class="row"><p class="faint" id="statsWhen" style="margin:0;margin-inline-end:auto"></p><button class="btn small" id="statsRefresh">רענון</button></div>
+      <div class="card">
+        <h2>מי לא נספר</h2>
+        <p class="muted">רובוטים ודפדפנים אוטומטיים לא נספרים, וגם מבקר שלא הזיז עכבר, לא נגע במסך ולא גלל. כל מכשיר שנכנסת ממנו לניהול מסומן ולא נספר יותר, גם אחרי שתצא. כדאי להיכנס לניהול פעם אחת גם מהטלפון שלך.</p>
+        <div class="row" style="margin-top:8px"><span class="pill ok" id="deviceExcluded">המכשיר הזה לא נספר</span>
+          <button class="btn small danger" id="statsReset" style="margin-inline-start:auto">איפוס כל הסטטיסטיקה</button></div>
+        <p class="status" id="resetStatus" aria-live="polite"></p>
+      </div>
       <div class="card"><h2>מבקרים</h2><div class="kpis" id="kpiVisitors"></div></div>
       <div class="card"><h2>מבקרים בכל יום, 30 הימים האחרונים</h2><div class="bars" id="dailyBars"></div><div class="bars-x" id="dailyX"></div></div>
       <div class="card"><h2>דפים</h2><div class="tbl-wrap"><table id="pagesTbl"></table></div></div>
@@ -269,7 +276,15 @@ td.num{font-variant-numeric:tabular-nums}
 
   /* ---------- login ---------- */
   function showLogin(){ $("appView").hidden = true; $("loginView").hidden = false; }
-  function showApp(){ $("loginView").hidden = true; $("appView").hidden = false; }
+  function showApp(){
+    $("loginView").hidden = true; $("appView").hidden = false;
+    // this device belongs to the admin: stop counting it, and drop what it already sent
+    try {
+      localStorage.setItem("ofek-notrack", "1");
+      var vid = localStorage.getItem("ofek-vid");
+      if (vid) api("visitor?vid=" + encodeURIComponent(vid), { method:"DELETE" }).catch(function(){});
+    } catch (e) {}
+  }
   api("me").then(function(me){
     if (me.admin) { showApp(); loadAll(); }
     else { showLogin(); $("noPassword").hidden = me.passwordSet; }
@@ -324,6 +339,15 @@ td.num{font-variant-numeric:tabular-nums}
     api("stats").then(renderStats).catch(function(err){ $("statsWhen").textContent = err.message; });
   }
   $("statsRefresh").onclick = loadStats;
+  $("statsReset").onclick = function(){
+    var b = $("statsReset");
+    if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "בטוח? כל הנתונים יימחקו. לחץ שוב"; return; }
+    b.disabled = true; $("resetStatus").textContent = "מוחק…";
+    api("stats-reset", { method:"POST" }).then(function(j){
+      $("resetStatus").textContent = "נמחקו " + j.deleted + " רשומות. הספירה מתחילה מעכשיו."; $("resetStatus").className = "status ok";
+      b.dataset.confirm = ""; b.textContent = "איפוס כל הסטטיסטיקה"; b.disabled = false; loadStats();
+    }).catch(function(err){ $("resetStatus").textContent = err.message; $("resetStatus").className = "status err"; b.disabled = false; });
+  };
   function renderStats(s){
     $("statsWhen").textContent = "עודכן " + fmtDate(s.generatedAt);
     var v = s.visitors;

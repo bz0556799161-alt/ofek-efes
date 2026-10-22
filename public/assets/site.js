@@ -23,10 +23,24 @@
     for (var i = 0; i < 20; i++) vid += chars[(rnd ? rnd[i] : Math.floor(Math.random() * 256)) % 36];
     lsSet(LS_VID, vid);
   }
+  /* לא סופרים: רובוטים, דפדפנים אוטומטיים, ומכשירים של המנהל (מסומנים בכניסה לניהול) */
+  var BOT_RE = /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|preview|screenshot|puppeteer|playwright|selenium|phantom|prerender|facebookexternalhit|whatsapp|telegram|discord|skype|embedly|bing|yandex|baidu|duckduck|semrush|ahrefs|mj12|petal|gptbot|claude|anthropic|chatgpt|perplexity|netlify/i;
+  var noTrack = location.hostname === "localhost" || location.hostname === "127.0.0.1" ||
+    navigator.webdriver === true || BOT_RE.test(navigator.userAgent || "") || lsGet("ofek-notrack") === "1";
+  /* נספרים רק אחרי סימן של אדם אמיתי: תנועת עכבר, נגיעה, גלילה או מקש */
+  var human = false;
+  function markHuman() {
+    if (human) return;
+    human = true;
+    ["pointermove", "pointerdown", "touchstart", "scroll", "wheel", "keydown"].forEach(function (t) { window.removeEventListener(t, markHuman, true); });
+    if (queue.length && !timer) timer = setTimeout(function () { flush(false); }, 1500);
+  }
+  ["pointermove", "pointerdown", "touchstart", "scroll", "wheel", "keydown"].forEach(function (t) { window.addEventListener(t, markHuman, { capture: true, passive: true }); });
+
   var queue = [], timer = 0;
   function flush(useBeacon) {
     clearTimeout(timer); timer = 0;
-    if (!queue.length) return;
+    if (!queue.length || !human || noTrack) return;
     var body = JSON.stringify({
       vid: vid,
       device: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? "mobile" : "desktop",
@@ -38,11 +52,11 @@
     } catch (e) {}
   }
   window.ofekTrack = function (type, data) {
-    if (location.hostname === "localhost" || location.hostname === "127.0.0.1") return;
+    if (noTrack) return;
     var ev = { t: String(type).slice(0, 20), at: Date.now() };
     if (data) for (var k in data) ev[k] = data[k];
     queue.push(ev);
-    if (!timer) timer = setTimeout(function () { flush(false); }, 4000);
+    if (human && !timer) timer = setTimeout(function () { flush(false); }, 4000);
   };
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") flush(true); });
   window.addEventListener("pagehide", function () { flush(true); });
