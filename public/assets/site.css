@@ -120,8 +120,12 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-betw
 .hb:hover:not(:disabled){background:rgba(255,255,255,.1)}
 .hb:disabled{opacity:.35;cursor:default}
 .lv{display:flex;align-items:center;gap:2px;margin-inline-end:auto}
-.lv .hb{width:34px;padding:0;font-size:16px}
-.lv span{min-width:52px;text-align:center;font-weight:700;color:var(--ink-soft)}
+.lv .hb{width:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);
+  border-color:rgba(169,198,255,.4);background:rgba(169,198,255,.10)}
+.lv .hb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.lv .hb:hover:not(:disabled){background:rgba(169,198,255,.2);border-color:rgba(169,198,255,.6)}
+.lv .hb:disabled{opacity:.5}
+.lv span{min-width:52px;text-align:center;font-weight:700;color:var(--ink)}
 .hud-fold{position:absolute;top:6px;left:6px;width:28px;height:28px;border-radius:50%;border:0;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:16px;line-height:1}
 .hud-fold:hover{color:var(--ink)}
 .hud.folded{width:auto;padding:8px 40px 8px 12px}

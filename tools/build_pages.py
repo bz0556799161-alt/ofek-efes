@@ -53,9 +53,9 @@ HUD = '''<aside class="hud" id="hud" aria-label="משחק הכוכבים" data-s
   <div class="hud-lv"><div class="hud-lvbar"><i id="hudLvBar"></i></div><div class="hud-lvtext" id="hudLvText"></div></div>
   <div class="hud-row">
     <div class="lv" role="group" aria-label="שלב">
-      <button class="hb" id="lvPrev" aria-label="שלב קודם" title="שלב קודם">›</button>
+      <button class="hb" id="lvPrev" aria-label="שלב קודם" title="שלב קודם"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
       <span id="hudLevel">שלב 1</span>
-      <button class="hb" id="lvNext" aria-label="שלב הבא" title="שלב הבא">‹</button>
+      <button class="hb" id="lvNext" aria-label="שלב הבא" title="שלב הבא (נפתח כל 100 נקודות)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
     </div>
     <button class="hb" id="btnHint" title="רמז נחשב כטעות אחת">רמז</button>
     <button class="hb" id="btnSwap">החלף</button>

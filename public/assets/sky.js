@@ -120,16 +120,7 @@
     return out;
   }
 
-  function buildScene(keepGroup) {
-    const lv = LEVELS[state.level];
-    const area = (W * H) / (1280 * 800);
-
-    // כוכבים עמומים
-    dimStars = [];
-    const nDim = Math.round(lv.dim * Math.max(0.45, area));
-    for (let i = 0; i < nDim; i++) {
-      dimStars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.pow(Math.random(), 2.2) * 1.1 + 0.35, a: rand(0.18, 0.62) });
-    }
+  function paintDim() {
     dimLayer.width = W * DPR; dimLayer.height = H * DPR;
     dctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     dctx.clearRect(0, 0, W, H);
@@ -142,6 +133,63 @@
       dctx.beginPath(); dctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); dctx.fill();
     }
     dctx.globalAlpha = 1;
+  }
+
+  /* ---------- שמירת המצב בין דפים: אותם שמיים, אותה קבוצה, אותם כוכבים שנמצאו ---------- */
+  const SCENE_KEY = "ofek-sky-scene-v1";
+  const r4 = (n) => Math.round(n * 10000) / 10000;
+  function snapshot() {
+    if (!group || !W || !H) return null;
+    return {
+      t: Date.now(), level: state.level, groupIdx: state.groupIdx, recent: state.recent,
+      misses: group.misses, done: group.done,
+      pts: group.pts.map(p => [r4(p.x / W), r4(p.y / H), p.found ? 1 : 0]),
+      dim: dimStars.map(d => [r4(d.x / W), r4(d.y / H), r4(d.r), r4(d.a)]),
+      br: brights.map(b => [r4(b.x / W), r4(b.y / H), r4(b.r), r4(b.ph), b.g])
+    };
+  }
+  function persist() {
+    const snap = snapshot();
+    if (!snap) return;
+    const txt = JSON.stringify(snap);
+    try { sessionStorage.setItem(SCENE_KEY, txt); } catch (e) {}
+    try { localStorage.setItem(SCENE_KEY, txt); } catch (e) {}
+  }
+  function readSaved() {
+    let txt = null;
+    try { txt = sessionStorage.getItem(SCENE_KEY); } catch (e) {}
+    if (!txt) try { txt = localStorage.getItem(SCENE_KEY); } catch (e) {}
+    try { return txt ? JSON.parse(txt) : null; } catch (e) { return null; }
+  }
+  function restore(snap) {
+    if (!snap || !GROUPS[snap.groupIdx] || !Array.isArray(snap.pts) || snap.pts.length !== GROUPS[snap.groupIdx].stars.length) return false;
+    state.groupIdx = snap.groupIdx;
+    if (Array.isArray(snap.recent)) state.recent = snap.recent.slice(-5);
+    dimStars = snap.dim.map(d => ({ x: d[0] * W, y: d[1] * H, r: d[2], a: d[3] }));
+    paintDim();
+    group = {
+      def: GROUPS[snap.groupIdx],
+      pts: snap.pts.map(p => ({ x: p[0] * W, y: p[1] * H, found: !!p[2] })),
+      done: !!snap.done, misses: snap.misses | 0
+    };
+    brights = snap.br.map(b => ({ x: b[0] * W, y: b[1] * H, r: b[2], ph: b[3], g: b[4] }));
+    updateHud();
+    return true;
+  }
+  window.addEventListener("pagehide", persist);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) persist(); });
+
+  function buildScene(keepGroup) {
+    const lv = LEVELS[state.level];
+    const area = (W * H) / (1280 * 800);
+
+    // כוכבים עמומים
+    dimStars = [];
+    const nDim = Math.round(lv.dim * Math.max(0.45, area));
+    for (let i = 0; i < nDim; i++) {
+      dimStars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.pow(Math.random(), 2.2) * 1.1 + 0.35, a: rand(0.18, 0.62) });
+    }
+    paintDim();
 
     // בחירת קבוצה
     if (!keepGroup || state.groupIdx < 0) pickGroup();
@@ -199,6 +247,7 @@
       brights.push({ x, y, r: rand(1.5, 2.1 + lv.groupBoost * 0.2 + (state.level >= 2 ? 0.9 : 0)), ph: Math.random() * 6.28, g: -1 });
     }
     updateHud();
+    persist();
   }
 
   function pickGroup() {
@@ -317,11 +366,13 @@
         marks.push({ type: "ring", x: p.x, y: p.y, t: now, life: 700 });
         if (group.pts.every(q => q.found)) complete(now);
         updateHud();
+        persist();
       }
     } else if (!group.done && !(hit && hit.g >= 0)) {
       group.misses++;
       marks.push({ type: "miss", x, y, t: now, life: 600 });
       updateHud();
+      persist();
     }
   });
 
@@ -415,7 +466,7 @@
   document.getElementById("btnHint").addEventListener("click", () => {
     if (!group || group.done) return;
     const p = group.pts.find(q => !q.found);
-    if (p) { group.misses++; marks.push({ type: "ring", x: p.x, y: p.y, t: performance.now(), life: 1600 }); updateHud(); }
+    if (p) { group.misses++; marks.push({ type: "ring", x: p.x, y: p.y, t: performance.now(), life: 1600 }); updateHud(); persist(); }
   });
   const btnSky = document.getElementById("btnSkyOnly");
   btnSky.addEventListener("click", () => {
@@ -439,11 +490,13 @@
 
   /* ---------- גודל מסך ---------- */
   function resize(keep) {
+    const snap = keep ? snapshot() : null;   // המיקומים נשמרים יחסית לגודל המסך
     DPR = Math.min(window.devicePixelRatio || 1, 2);
     W = window.innerWidth; H = window.innerHeight;
     canvas.width = W * DPR; canvas.height = H * DPR;
     canvas.style.width = W + "px"; canvas.style.height = H + "px";
-    buildScene(keep);
+    if (snap && restore(snap)) { persist(); return; }
+    buildScene(false);
   }
   let rt = 0, lastW = 0;
   window.addEventListener("resize", () => {
@@ -455,6 +508,14 @@
     }, 200);
   });
 
-  function start() { lastW = window.innerWidth; resize(false); raf = requestAnimationFrame(loop); }
+  function start() {
+    const saved = readSaved();   // נקרא לפני שבונים שמיים חדשים, כי הבנייה שומרת מעליו
+    lastW = window.innerWidth;
+    resize(false);
+    // ממשיכים בדיוק מאיפה שהפסיקו בדף הקודם
+    if (saved && !saved.done && saved.level === state.level && Date.now() - saved.t < 12 * 3600e3) restore(saved);
+    persist();
+    raf = requestAnimationFrame(loop);
+  }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(start); else start();
 })();
