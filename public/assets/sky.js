@@ -126,10 +126,10 @@
     dctx.clearRect(0, 0, W, H);
     // שביל עמום של אור, לאורך האלכסון
     const g = dctx.createLinearGradient(0, H * 0.85, W, H * 0.15);
-    g.addColorStop(0, "rgba(120,140,200,0)"); g.addColorStop(0.5, "rgba(120,140,200,0.06)"); g.addColorStop(1, "rgba(120,140,200,0)");
+    g.addColorStop(0, "rgba(90,150,158,0)"); g.addColorStop(0.5, "rgba(90,150,158,0.06)"); g.addColorStop(1, "rgba(90,150,158,0)");
     dctx.fillStyle = g; dctx.fillRect(0, 0, W, H);
     for (const s of dimStars) {
-      dctx.globalAlpha = s.a; dctx.fillStyle = "#dfe7ff";
+      dctx.globalAlpha = s.a; dctx.fillStyle = "#e2ecec";
       dctx.beginPath(); dctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); dctx.fill();
     }
     dctx.globalAlpha = 1;
@@ -270,7 +270,7 @@
       for (const [a, b] of group.def.lines) {
         const A = group.pts[a], B = group.pts[b];
         if (!(A.found && B.found)) continue;
-        ctx.strokeStyle = group.done ? "rgba(232,207,138,.75)" : "rgba(169,198,255,.55)";
+        ctx.strokeStyle = group.done ? "rgba(239,227,207,.75)" : "rgba(143,180,185,.55)";
         ctx.lineWidth = group.done ? 1.6 : 1.2;
         ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
       }
@@ -282,13 +282,13 @@
       const found = s.g >= 0 && group.pts[s.g].found;
       const r = s.r * (found ? 1.25 : 1);
       const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, r * 5);
-      glow.addColorStop(0, found ? "rgba(255,240,200,.55)" : `rgba(210,225,255,${0.32 * tw})`);
-      glow.addColorStop(1, "rgba(210,225,255,0)");
+      glow.addColorStop(0, found ? "rgba(250,240,222,.55)" : `rgba(205,228,230,${0.32 * tw})`);
+      glow.addColorStop(1, "rgba(205,228,230,0)");
       ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(s.x, s.y, r * 5, 0, 6.283); ctx.fill();
-      ctx.fillStyle = found ? "#fff3cf" : `rgba(244,247,255,${0.75 + 0.25 * tw})`;
+      ctx.fillStyle = found ? "#fbf3e6" : `rgba(242,248,248,${0.75 + 0.25 * tw})`;
       ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, 6.283); ctx.fill();
       if (found) {
-        ctx.strokeStyle = "rgba(232,207,138,.85)"; ctx.lineWidth = 1.2;
+        ctx.strokeStyle = "rgba(239,227,207,.85)"; ctx.lineWidth = 1.2;
         ctx.beginPath(); ctx.arc(s.x, s.y, r + 6, 0, 6.283); ctx.stroke();
       }
     }
@@ -300,7 +300,7 @@
       const a = Math.min(1, (now - completeAt) / 600);
       ctx.globalAlpha = a;
       ctx.font = "600 20px " + (getComputedStyle(document.documentElement).getPropertyValue("--display").trim() || "serif");
-      ctx.textAlign = "center"; ctx.fillStyle = "#e8cf8a";
+      ctx.textAlign = "center"; ctx.fillStyle = "#efe3cf";
       ctx.fillText(group.def.name, cx, Math.max(24, top - 22));
       ctx.globalAlpha = 1;
     }
@@ -310,14 +310,14 @@
     for (const m of marks) {
       const k = (now - m.t) / m.life;
       if (m.type === "ring") {
-        ctx.strokeStyle = `rgba(232,207,138,${1 - k})`; ctx.lineWidth = 1.5;
+        ctx.strokeStyle = `rgba(239,227,207,${1 - k})`; ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.arc(m.x, m.y, 6 + k * 26, 0, 6.283); ctx.stroke();
       } else if (m.type === "miss") {
-        ctx.strokeStyle = `rgba(169,198,255,${0.45 * (1 - k)})`; ctx.lineWidth = 1;
+        ctx.strokeStyle = `rgba(143,180,185,${0.45 * (1 - k)})`; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.arc(m.x, m.y, 4 + k * 14, 0, 6.283); ctx.stroke();
       } else if (m.type === "plus") {
         ctx.globalAlpha = 1 - k;
-        ctx.font = "700 22px " + (getComputedStyle(document.documentElement).getPropertyValue("--body").trim() || "sans-serif"); ctx.textAlign = "center"; ctx.fillStyle = "#e8cf8a";
+        ctx.font = "700 22px " + (getComputedStyle(document.documentElement).getPropertyValue("--body").trim() || "sans-serif"); ctx.textAlign = "center"; ctx.fillStyle = "#efe3cf";
         ctx.fillText(m.text || "+10", m.x, m.y - k * 40);
         ctx.globalAlpha = 1;
       }
@@ -452,10 +452,10 @@
     const span = Math.max(maxX - minX, maxY - minY) || 1, k = (S - 16) / span;
     const ox = (S - (maxX - minX) * k) / 2, oy = (S - (maxY - minY) * k) / 2;
     const P = pts.map(([x, y]) => [ox + (x - minX) * k, oy + (y - minY) * k]);
-    mctx.strokeStyle = "rgba(169,198,255,.5)"; mctx.lineWidth = 1;
+    mctx.strokeStyle = "rgba(143,180,185,.5)"; mctx.lineWidth = 1;
     for (const [a, b] of group.def.lines) { mctx.beginPath(); mctx.moveTo(...P[a]); mctx.lineTo(...P[b]); mctx.stroke(); }
     P.forEach((p, i) => {
-      mctx.fillStyle = group.pts[i] && group.pts[i].found ? "#e8cf8a" : "#e9edf7";
+      mctx.fillStyle = group.pts[i] && group.pts[i].found ? "#efe3cf" : "#e8eeee";
       mctx.beginPath(); mctx.arc(p[0], p[1], 2.2, 0, 6.283); mctx.fill();
     });
   }
