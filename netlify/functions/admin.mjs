@@ -4,7 +4,7 @@ import {
   loadConfig, saveConfig, isAdmin, adminCookie, adminPassword, cookie, json, sleep, safeEqual,
   sha256, randomHex, hashCode, visitorStore, fontStore, israelDay, SECTIONS, MODES
 } from "../lib/common.mjs";
-import { syncProg, loadProg } from "../lib/prog.mjs";
+import { syncProg, loadProg, importProg } from "../lib/prog.mjs";
 
 const FONT_EXT = ["woff2", "woff", "ttf", "otf"];
 const FONT_FORMAT = { woff2: "woff2", woff: "woff", ttf: "truetype", otf: "opentype" };
@@ -313,6 +313,15 @@ export default async (req, context) => {
 
   // the book's chapters from prog.co.il: read the stored list, or refresh it now
   if (route === "prog" && method === "GET") return json((await loadProg()) || { items: [], syncedAt: 0 });
+  if (route === "prog-import" && method === "POST") {
+    let body = {};
+    try { body = JSON.parse((await req.text()).slice(0, 3e6)); } catch (e) { return json({ error: "bad" }, 400); }
+    try {
+      const data = await importProg(body.items);
+      try { await purgeCache({ tags: ["chapters"] }); } catch (e) {}
+      return json(data);
+    } catch (e) { return json({ error: e.message }, 400); }
+  }
   if (route === "prog" && method === "POST") {
     try {
       const data = await syncProg({ force: url.searchParams.get("force") === "1" });

@@ -119,7 +119,7 @@ td.num{font-variant-numeric:tabular-nums}
 .login{max-width:420px;margin:12vh auto 0;display:flex;flex-direction:column;gap:12px}
 .login img{width:220px;height:auto;align-self:center}
 .steps{margin:0;padding-inline-start:20px;display:grid;gap:4px;color:var(--soft)}
-.steps code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:6px;direction:ltr;unicode-bidi:isolate}
+.steps code,.muted code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:6px;direction:ltr;unicode-bidi:isolate}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -279,6 +279,15 @@ td.num{font-variant-numeric:tabular-nums}
         <div class="row" style="margin-top:10px"><button class="btn primary" id="progSync">רענון מפרוג</button><button class="btn small" id="progForce" title="קורא מחדש גם תמונות ותקצירים של פרקים ישנים">רענון מלא</button><span class="status" id="progMsg" aria-live="polite"></span></div>
         <p class="faint" id="progWhen" style="margin-top:6px"></p>
       </div>
+      <div class="card" id="importCard">
+        <h2>ייבוא בלחיצה מתוך פרוג</h2>
+        <p class="muted">פרוג מגן על עצמו מפני שרתים (שגיאה 403), ולכן הרענון האוטומטי לא תמיד מצליח. הדרך הבטוחה: כפתור קטן בסרגל הסימניות שקורא את הפרקים מתוך הדפדפן שלך.</p>
+        <ol class="steps" style="margin-top:8px">
+          <li><b>פעם אחת:</b> גרור את הכפתור הזה אל סרגל הסימניות של הדפדפן (אם הסרגל לא מופיע: <code>Ctrl+Shift+B</code>).
+            <div style="margin:8px 0"><a class="btn primary" id="bmLink" href="#" onclick="return false" title="גרור אותי לסרגל הסימניות">⇩ ייבוא לאופק אפס</a></div></li>
+          <li><b>כל מוצאי שבת, אחרי שהעלית פרק:</b> היכנס לפרוג ולחץ על הסימנייה "ייבוא לאופק אפס". היא קוראת את כל הפרקים ומעבירה אותך לכאן, והם נשמרים באתר.</li>
+        </ol>
+      </div>
       <div class="card"><h2>הפרקים באתר</h2><p class="faint">אפשר לשנות כאן שם או תקציר, או להסתיר פרק מהאתר. שינוי כאן לא משנה כלום בפרוג. שדה ריק = מה שכתוב בפרוג.</p><div id="chapList"></div></div>
     </section>
 
@@ -369,6 +378,7 @@ td.num{font-variant-numeric:tabular-nums}
 
   function loadAll(){
     loadStats();
+    pendingImport();
     api("config").then(function(j){ PUB = j.public; CODES_SET = j.codesSet || {}; GAME_PLAIN = j.gameCodesPlain || {}; renderAccess(); renderChapters(); renderFonts(); renderGame(); renderGlobe(); renderTextsTab(); });
   }
 
@@ -593,12 +603,31 @@ td.num{font-variant-numeric:tabular-nums}
       });
     });
   }
+  // the bookmark button: built from the shared import code, pointed at this site
+  fetch("/assets/prog-import-src.js", { cache: "no-store" }).then(function(r){ return r.text(); }).then(function(src){
+    $("bmLink").href = "javascript:" + encodeURIComponent(src.replace("__ORIGIN__", location.origin).replace(/\n\s*/g, " "));
+    $("bmLink").removeAttribute("onclick");
+    $("bmLink").addEventListener("click", function(e){ e.preventDefault(); $("progMsg").textContent = "את הכפתור הזה גוררים לסרגל הסימניות, ולוחצים עליו כשנמצאים בפרוג."; });
+  }).catch(function(){});
+  // chapters that the bookmark brought back from prog
+  function pendingImport(){
+    var h = location.hash || "";
+    if (h.indexOf("#import=") !== 0) return;
+    var items; try { items = JSON.parse(decodeURIComponent(h.slice(8))); } catch (e) { return; }
+    try { history.replaceState(null, "", location.pathname + "#chapters"); } catch (e) {}
+    document.querySelector('.tab[data-tab="chapters"]').click();
+    $("progMsg").textContent = "שומר " + items.length + " פרקים מפרוג…"; $("progMsg").className = "status";
+    api("prog-import", { method:"POST", body: JSON.stringify({ items: items }) }).then(function(j){
+      PROG = j; $("progMsg").textContent = "יובאו " + j.items.length + " פרקים" + (j.added ? ", מהם " + j.added + " חדשים" : "") + ". דף הספר יתעדכן תוך דקה."; $("progMsg").className = "status ok"; renderChapters();
+    }).catch(function(e){ $("progMsg").textContent = e.message; $("progMsg").className = "status err"; });
+  }
+  window.addEventListener("hashchange", function(){ if (!$("appView").hidden) pendingImport(); });
   function progSync(force){
     $("progMsg").textContent = "קורא את פרוג…"; $("progMsg").className = "status";
     $("progSync").disabled = $("progForce").disabled = true;
     api("prog" + (force ? "?force=1" : ""), { method:"POST" }).then(function(j){
       PROG = j; $("progMsg").textContent = j.added ? "נוספו " + j.added + " פרקים חדשים." : "הכל מעודכן."; $("progMsg").className = "status ok"; renderChapters();
-    }).catch(function(e){ $("progMsg").textContent = e.message; $("progMsg").className = "status err"; })
+    }).catch(function(e){ $("progMsg").textContent = e.message + " · השתמש בייבוא בלחיצה שמתחת."; $("progMsg").className = "status err"; $("importCard").scrollIntoView({ behavior:"smooth", block:"start" }); })
       .finally(function(){ $("progSync").disabled = $("progForce").disabled = false; });
   }
   $("progSync").onclick = function(){ progSync(false); };
