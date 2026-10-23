@@ -27,7 +27,7 @@ def head(title, desc):
 LOGO = '<picture><source type="image/webp" srcset="/assets/logo-640.webp 640w, /assets/logo-1100.webp 1100w, /assets/logo-2200.webp 2200w" sizes="{sizes}"><img src="/assets/logo.png" alt="אופק אפס" class="{cls}" width="1100" height="659" decoding="async"></picture>'
 
 def topbar(current):
-    links = [("book", "/book/", "הספר"), ("game", "/game/", "המשחק"), ("globe", "/globe/", "המבנה")]
+    links = [("book", "/book/", "הספר"), ("game", "/game/", "כבוש את השמים"), ("globe", "/globe/", "המבנה")]
     nav = "".join(
         f'<a class="btn" href="{h}" data-section="{k}"{" data-gate" if k == "book" else " data-role=\"card\""}{" aria-current=\"page\"" if k == current else ""}>{t}</a>'
         for k, h, t in links)
@@ -37,21 +37,21 @@ def topbar(current):
   </div>
 '''
 
-HUD = '''<aside class="hud" id="hud" aria-label="משחק הכוכבים" data-solid>
+HUD = '''<aside class="hud" id="hud" aria-label="תפוס כוכב" data-solid>
   <p class="hud-toast" id="hudToast" hidden aria-live="polite"></p>
   <div class="hud-grip" aria-hidden="true" title="גרור כדי להזיז את הלוח"></div>
-  <button class="hud-fold" id="hudFold" aria-expanded="true" aria-label="הקטן או הגדל את לוח המשחק" title="הקטן את לוח המשחק"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+  <button class="hud-fold" id="hudFold" aria-expanded="true" aria-label="הקטן או הגדל את לוח תפוס כוכב" title="הקטן את לוח המשחק"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
   <div class="hud-top">
     <canvas id="hudShape" width="64" height="64" aria-hidden="true"></canvas>
     <div class="hud-info">
-      <div class="hud-ask">מצאו בשמיים את</div>
+      <div class="hud-ask"><b class="hud-game">תפוס כוכב</b> · מצאו בשמיים את</div>
       <div class="hud-name" id="hudName">…</div>
       <div class="hud-prog" id="hudProgress" aria-live="polite"></div>
       <div class="hud-note" id="hudNote"></div>
     </div>
     <div class="hud-score"><b id="hudScore">0</b><span>נקודות</span></div>
   </div>
-  <div class="hud-lv"><div class="hud-lvbar"><i id="hudLvBar"></i></div><div class="hud-lvtext" id="hudLvText"></div></div>
+  <div class="hud-lv"><div class="hud-lvbar"><i id="hudLvBar"></i></div><div class="hud-lvtext"><b id="hudRank" class="hud-rank"></b> · <span id="hudLvText"></span></div></div>
   <div class="hud-row">
     <div class="lv" role="group" aria-label="שלב">
       <button class="hb" id="lvPrev" aria-label="שלב קודם" title="שלב קודם"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
@@ -76,7 +76,7 @@ FOOT = '''  <footer>
 def page(name, title, desc, body, extra_scripts=""):
     return head(title, desc) + f'''<body data-page="{name}">
 
-<canvas id="sky" aria-label="שמי לילה. לחצו על כוכבי הקבוצה המבוקשת"></canvas>
+<canvas id="sky" aria-label="תפוס כוכב: שמי לילה. לחצו על כוכבי הקבוצה המבוקשת"></canvas>
 
 <div class="page">
 {body}
@@ -84,6 +84,7 @@ def page(name, title, desc, body, extra_scripts=""):
 
 {HUD}
 {extra_scripts}<script src="/assets/site.js"></script>
+<script src="/assets/sky-figures.js"></script>
 <script src="/assets/sky.js"></script>
 </body>
 </html>
@@ -109,8 +110,8 @@ home_body = f'''  <header class="hero home wrap">
 
   <main class="wrap">
     <div class="doors">
-{door("book", "/book/", "home.book.kicker", "פרק חדש בכל מוצאי שבת", "home.book.title", "הספר", "home.book.text", "הפרק האחרון, כל הפרקים שפורסמו עד עכשיו, וקצת על הספר.", "home.book.cta", "לפרקי הספר")}{door("game", "/game/", "home.game.kicker", "משחק", "home.game.title", "הדרך לכוכב הצפון", "home.game.text", "לומדים לזהות קבוצות כוכבים ולמצוא בעזרתן את הצפון, שלב אחרי שלב.", "home.game.cta", "למשחק")}{door("globe", "/globe/", "home.globe.kicker", "סיור תלת־ממדי", "home.globe.title", "המבנה הכדורי", "home.globe.text", "נכנסים לתוך כדור השמיים ומטיילים בין החדרים, חדר לכל קבוצת כוכבים.", "home.globe.cta", "למבנה")}    </div>
-    <p class="hero-hint" data-t="home.skyhint">ברקע מסתתרת קבוצת כוכבים. מצאו אותה ולחצו על כל הכוכבים שלה.</p>
+{door("book", "/book/", "home.book.kicker", "פרק חדש בכל מוצאי שבת", "home.book.title", "הספר", "home.book.text", "הפרק האחרון, כל הפרקים שפורסמו עד עכשיו, וקצת על הספר.", "home.book.cta", "לפרקי הספר")}{door("game", "/game/", "home.game.kicker", "המשחק המלא", "home.game.title", "כבוש את השמים", "home.game.text", "לומדים לזהות קבוצות כוכבים ולמצוא בעזרתן את הצפון, שלב אחרי שלב.", "home.game.cta", "למשחק")}{door("globe", "/globe/", "home.globe.kicker", "סיור תלת־ממדי", "home.globe.title", "המבנה הכדורי", "home.globe.text", "נכנסים לתוך כדור השמיים ומטיילים בין החדרים, חדר לכל קבוצת כוכבים.", "home.globe.cta", "למבנה")}    </div>
+    <p class="hero-hint" data-t="home.skyhint">תפוס כוכב: ברקע מסתתרת קבוצת כוכבים. מצאו אותה ולחצו על כל הכוכבים שלה.</p>
   </main>
 '''
 
@@ -126,7 +127,7 @@ book_body = topbar("book") + '''  <header class="page-head wrap" data-solid>
     <section id="chapters" class="wrap" aria-labelledby="chaptersTitle">
       <div class="panel" data-solid>
         <h2 id="chaptersTitle" data-t="book.list.title">כל הפרקים</h2>
-        <p class="sub" data-t="book.list.sub">לחיצה על פרק פותחת אותו בפרוג.</p>
+        <p class="sub" data-t="book.list.sub">מהחדש לישן. לחיצה על פרק פותחת אותו בפרוג.</p>
         <ol class="chapters" id="chapterList"></ol>
         <p class="series-link"><span data-t="book.series.before">לכל הסדרה ולתגובות הקוראים:</span> <a id="seriesLink" href="https://www.prog.co.il/articles/series/%D7%90%D7%95%D7%A4%D7%A7-%D7%90%D7%A4%D7%A1.28/" target="_blank" rel="noopener"><span data-t="book.series.link">אופק אפס בפרוג</span> ↗</a></p>
       </div>
@@ -145,30 +146,40 @@ BOOK_SCRIPT = '''<script src="/assets/chapters.js"></script>
 <script>
 (function(){
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, function(m){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]; }); }
-  function render(){
+  var live = null;   // the chapters read from prog.co.il
+  function list(){
+    if (live && live.length) return live;
     var cfg = window.OFEK_CONFIG || {};
-    var ch = (cfg.chapters && cfg.chapters.length) ? cfg.chapters : (window.OFEK_CHAPTERS || []);
-    var last = ch[ch.length-1];
-    var label = function(c){ return +c.num === 0 ? "מבוא" : "פרק " + c.num; };
+    return (cfg.chapters && cfg.chapters.length) ? cfg.chapters : (window.OFEK_CHAPTERS || []);
+  }
+  function render(){
+    var ch = list(), last = ch[ch.length-1];
+    var label = function(c){ return +c.num === 0 ? "מבוא" : (c.num ? "פרק " + c.num : ""); };
     var mark = function(c){ return +c.num === 0 ? "◦" : esc(c.num); };
-    document.getElementById("latestCard").innerHTML = last ?
-      '<div class="num" aria-hidden="true">' + mark(last) + '</div>' +
-      '<p class="label">הפרק החדש · ' + esc(label(last)) + '</p>' +
+    var sum = function(c){ return c.summary != null ? c.summary : (c.teaser || ""); };
+    var latest = document.getElementById("latestCard");
+    latest.classList.toggle("has-img", !!(last && last.image));
+    latest.innerHTML = last ?
+      (last.image ? '<a class="cover" href="' + esc(last.url) + '" target="_blank" rel="noopener"><img src="' + esc(last.image) + '" alt="" loading="lazy"></a>' : '<div class="num" aria-hidden="true">' + mark(last) + '</div>') +
+      '<div class="latest-text"><p class="label">הפרק החדש' + (label(last) ? ' · ' + esc(label(last)) : '') + '</p>' +
       '<h3>' + esc(last.title) + '</h3>' +
-      '<p>' + esc(last.teaser) + '</p>' +
+      (last.summaryLabel ? '<p class="sumlabel">' + esc(last.summaryLabel) + '</p>' : '') +
+      '<p class="summary">' + esc(sum(last)) + '</p>' +
       '<p class="meta">' + esc([last.heDate, last.date].filter(Boolean).join(" · ")) + '</p>' +
-      '<a class="btn primary" href="' + esc(last.url) + '" target="_blank" rel="noopener">לקריאת הפרק ↗</a>' : "";
-    document.getElementById("chapterList").innerHTML = ch.map(function(c, i){
+      '<a class="btn primary" href="' + esc(last.url) + '" target="_blank" rel="noopener">לקריאת הפרק ↗</a></div>' : "";
+    document.getElementById("chapterList").innerHTML = ch.slice().reverse().map(function(c, i){
       return '<li><a href="' + esc(c.url) + '" target="_blank" rel="noopener">' +
-        '<span class="n">' + mark(c) + '</span>' +
-        '<span class="t">' + esc(c.title) + (i === ch.length-1 ? '<span class="new">חדש</span>' : '') +
-        '<small>' + esc(c.teaser) + '</small></span>' +
+        (c.image ? '<img class="thumb" src="' + esc(c.image) + '" alt="" loading="lazy">' : '<span class="n">' + mark(c) + '</span>') +
+        '<span class="t">' + (label(c) ? '<em>' + esc(label(c)) + '</em>' : '') + esc(c.title) + (i === 0 ? '<span class="new">חדש</span>' : '') +
+        '<small>' + esc(sum(c)) + '</small></span>' +
         '<span class="d"><b>' + esc(c.heDate) + '</b>' + esc(c.date) + '</span></a></li>';
     }).join("");
+    var cfg = window.OFEK_CONFIG || {};
     if (cfg.seriesUrl) document.getElementById("seriesLink").href = cfg.seriesUrl;
   }
   render();
   document.addEventListener("ofek:config", render);
+  fetch("/api/chapters").then(function(r){ return r.ok ? r.json() : null; }).then(function(j){ if (j && j.items && j.items.length) { live = j.items; render(); } }).catch(function(){});
 })();
 </script>
 '''
@@ -184,7 +195,7 @@ def unavailable(sec, key):
 '''
 
 game_body = topbar("game") + '''  <header class="page-head wrap" data-solid>
-    <h1 data-t="game.title">הדרך לכוכב הצפון</h1>
+    <h1 data-t="game.title">כבוש את השמים</h1>
     <p class="lede" data-t="game.lede">לפני מצפן ולפני GPS, אנשים מצאו את הצפון בעזרת כוכב אחד קטן. במשחק הזה לומדים לעשות את זה בעצמכם.</p>
   </header>
   <main>
@@ -227,9 +238,9 @@ globe_body = topbar("globe") + '''  <header class="page-head wrap" data-solid>
 '''
 
 files = {
-  "index.html": page("home", "אופק אפס", "אופק אפס: ספר בהמשכים על שמיים וכוכבים, משחק הדרך לכוכב הצפון, וסיור במבנה הכדורי.", home_body),
+  "index.html": page("home", "אופק אפס", "אופק אפס: ספר בהמשכים על שמיים וכוכבים, משחק כבוש את השמים, וסיור במבנה הכדורי.", home_body),
   "book/index.html": page("book", "אופק אפס · הספר", "כל פרקי הספר אופק אפס. פרק חדש בכל מוצאי שבת.", book_body, BOOK_SCRIPT),
-  "game/index.html": page("game", "הדרך לכוכב הצפון · אופק אפס", "משחק שמלמד לזהות קבוצות כוכבים ולמצוא את כוכב הצפון.", game_body),
+  "game/index.html": page("game", "כבוש את השמים · אופק אפס", "משחק שמלמד לזהות קבוצות כוכבים ולמצוא את כוכב הצפון.", game_body),
   "globe/index.html": page("globe", "המבנה הכדורי · אופק אפס", "סיור תלת־ממדי בתוך כדור השמיים, חדר לכל קבוצת כוכבים.", globe_body),
 }
 for path, html in files.items():

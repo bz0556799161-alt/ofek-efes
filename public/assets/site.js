@@ -118,14 +118,30 @@
     st.textContent = css;
   }
 
+  /* ---------------- עיצוב טקסט שנקבע בעריכה במקום ---------------- */
+  window.ofekApplyStyle = function (el, st) {
+    st = st || {};
+    if (!el.hasAttribute("data-fs")) { el.style.fontSize = ""; el.setAttribute("data-fs", parseFloat(getComputedStyle(el).fontSize) || 16); }
+    el.style.fontWeight = st.b === 1 ? "700" : st.b === 0 ? "400" : "";
+    el.style.fontStyle = st.i ? "italic" : "";
+    el.style.textDecoration = st.u ? "underline" : "";
+    el.style.fontSize = st.s ? (parseFloat(el.getAttribute("data-fs")) * st.s) + "px" : "";
+    el.style.color = st.c || "";
+    el.style.fontFamily = st.f === "display" ? "var(--display)" : st.f === "body" ? "var(--body)" : "";
+    el.style.textAlign = st.a || "";
+    if (st.a && getComputedStyle(el).display === "inline") el.style.display = "inline-block"; else if (!st.a) el.style.display = "";
+  };
+
   /* ---------------- טקסטים ---------------- */
   function applyTexts(cfg) {
     var t = (cfg && cfg.texts) || {};
+    var editingNow = document.documentElement.classList.contains("ofek-editing");
     document.querySelectorAll("[data-t]").forEach(function (el) {
       var k = el.getAttribute("data-t");
       if (!el.hasAttribute("data-t-default")) el.setAttribute("data-t-default", el.textContent);
       var v = Object.prototype.hasOwnProperty.call(t, k) && t[k] !== "" ? t[k] : el.getAttribute("data-t-default");
-      if (el.textContent !== v) el.textContent = v;
+      if (!editingNow && el.textContent !== v) el.textContent = v;
+      if (!editingNow) window.ofekApplyStyle(el, ((cfg && cfg.textStyles) || {})[k]);
     });
   }
 
@@ -214,4 +230,10 @@
     }).catch(function () {});
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
+
+  /* כלי המנהל (עריכת טקסטים במקום) נטענים רק במכשיר שנכנס לניהול */
+  if (APP === "site" && lsGet("ofek-admin-device") === "1") {
+    var ed = document.createElement("script"); ed.src = "/assets/editor.js"; ed.defer = true;
+    document.head.appendChild(ed);
+  }
 })();

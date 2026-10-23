@@ -4,6 +4,7 @@ import {
   loadConfig, saveConfig, isAdmin, adminCookie, adminPassword, cookie, json, sleep, safeEqual,
   sha256, randomHex, hashCode, visitorStore, fontStore, israelDay, SECTIONS, MODES
 } from "../lib/common.mjs";
+import { syncProg, loadProg } from "../lib/prog.mjs";
 
 const FONT_EXT = ["woff2", "woff", "ttf", "otf"];
 const FONT_FORMAT = { woff2: "woff2", woff: "woff", ttf: "truetype", otf: "opentype" };
@@ -49,7 +50,49 @@ function cleanPublic(input, current) {
     } else out.chapters = null;
   }
   if ("seriesUrl" in input) out.seriesUrl = /^https?:\/\//.test(input.seriesUrl || "") ? s(input.seriesUrl, 600) : null;
+  if ("game" in input) out.game = cleanGame(input.game);
+  if (input.chapterEdits && typeof input.chapterEdits === "object") {
+    const ce = {};
+    Object.entries(input.chapterEdits).slice(0, 500).forEach(([id, e]) => {
+      if (!/^\d{1,9}$/.test(id) || !e) return;
+      const x = {};
+      if (e.hidden) x.hidden = true;
+      if (e.title) x.title = s(e.title, 200);
+      if (e.summary) x.summary = s(e.summary, 2000);
+      if (Object.keys(x).length) ce[id] = x;
+    });
+    out.chapterEdits = ce;
+  }
+  if ("globe" in input) out.globe = input.globe && Array.isArray(input.globe.open)
+    ? { open: [...new Set(input.globe.open.map((x) => s(x, 12)).filter((x) => /^[A-Za-z0-9]{2,12}$/.test(x)))].slice(0, 120) }
+    : null;
   return out;
+}
+function cleanStyle(v) {
+  if (!v || typeof v !== "object") return null;
+  const o = {};
+  if (v.b === 1 || v.b === 0) o.b = v.b;
+  if (v.i === 1) o.i = 1;
+  if (v.u === 1) o.u = 1;
+  if (Number.isFinite(+v.s) && +v.s !== 1) o.s = Math.max(0.5, Math.min(3, Math.round(+v.s * 100) / 100));
+  if (typeof v.c === "string" && /^#[0-9a-f]{6}$/i.test(v.c)) o.c = v.c;
+  if (v.f === "display" || v.f === "body") o.f = v.f;
+  if (["right", "center", "left"].includes(v.a)) o.a = v.a;
+  return Object.keys(o).length ? o : null;
+}
+const KEY_RE = /^[a-z0-9]{2,20}$/;
+function cleanGame(g) {
+  if (!g || typeof g !== "object") return null;
+  const keys = (arr) => [...new Set((Array.isArray(arr) ? arr : []).map((k) => s(k, 20)).filter((k) => k === "*" || KEY_RE.test(k)))].slice(0, 80);
+  return {
+    open: keys(g.open),
+    schedule: (Array.isArray(g.schedule) ? g.schedule : []).slice(0, 100)
+      .filter((e) => e && KEY_RE.test(String(e.key)) && Number.isFinite(+e.at))
+      .map((e) => ({ key: s(e.key, 20), at: Math.round(+e.at) })),
+    codes: (Array.isArray(g.codes) ? g.codes : []).slice(0, 100)
+      .filter((e) => e && /^[0-9a-f]{16}$/.test(String(e.h)))
+      .map((e) => ({ h: String(e.h), name: s(e.name, 40), ch: keys(e.ch), free: !!e.free }))
+  };
 }
 
 /* ---------------- stats ---------------- */
@@ -70,7 +113,7 @@ async function stats() {
     visitors: { total: docs.length, today: 0, last7: 0, last30: 0, newToday: 0, mobile: 0, desktop: 0 },
     daily: lastDays.map((d) => ({ day: d, visitors: 0 })),
     pages: {},
-    sky: { players: 0, levels: Array.from({ length: 10 }, (_, i) => ({ level: i + 1, players: 0 })), groups: 0, perfect: 0, top: [], reached1000: 0 },
+    sky: { players: 0, levels: Array.from({ length: Math.max(10, ...docs.map((d) => (d.sky && d.sky.lvl) || 1)) }, (_, i) => ({ level: i + 1, players: 0 })), groups: 0, perfect: 0, top: [], reached1000: 0 },
     game: { players: 0, levels: {}, chapterTitles: {}, finishedAny: 0 },
     globe: { visitors: 0, entries: 0, rooms: {} },
     unlocks: {},
@@ -93,7 +136,7 @@ async function stats() {
     if (sky.groups) {
       out.sky.players++;
       out.sky.groups += sky.groups; out.sky.perfect += sky.perfect || 0;
-      const lvl = Math.min(10, Math.max(1, sky.lvl || 1));
+      const lvl = Math.max(1, sky.lvl || 1);
       out.sky.levels[lvl - 1].players++;
       if (sky.score >= 1000) out.sky.reached1000++;
       out.sky.top.push({ id: d.id.slice(0, 6), score: sky.score, groups: sky.groups, perfect: sky.perfect || 0 });
@@ -162,7 +205,43 @@ export default async (req, context) => {
     const cfg = await loadConfig();
     const codesSet = {};
     SECTIONS.forEach((sec) => { codesSet[sec] = !!cfg.private.codes[sec]; });
-    return json({ public: cfg.public, codesSet });
+    return json({ public: cfg.public, codesSet, gameCodesPlain: cfg.private.gameCodes || {} });
+  }
+
+  // texts edited directly on the site: merge, don't replace
+  if (route === "texts" && method === "POST") {
+    let body = {};
+    try { body = await req.json(); } catch (e) { return json({ error: "bad" }, 400); }
+    const cfg = await loadConfig();
+    const t = Object.assign({}, cfg.public.texts || {});
+    for (const [k, v] of Object.entries(body.set || {})) {
+      if (/^[a-z0-9._-]{1,60}$/i.test(k) && typeof v === "string" && v.trim()) t[k] = v.slice(0, 3000);
+    }
+    for (const k of Array.isArray(body.reset) ? body.reset : []) delete t[k];
+    if (body.resetAll === true) Object.keys(t).forEach((k) => delete t[k]);
+    cfg.public.texts = t;
+    const st = Object.assign({}, cfg.public.textStyles || {});
+    for (const [k, v] of Object.entries(body.styles || {})) {
+      if (!/^[a-z0-9._-]{1,60}$/i.test(k)) continue;
+      const c = cleanStyle(v);
+      if (c) st[k] = c; else delete st[k];
+    }
+    if (body.resetAll === true) Object.keys(st).forEach((k) => delete st[k]);
+    cfg.public.textStyles = st;
+    await saveConfig(cfg);
+    await refreshPublicCache();
+    return json({ ok: true, texts: t, textStyles: st });
+  }
+
+  // room locks set from inside the structure (pick from the map)
+  if (route === "globe" && method === "POST") {
+    let body = {};
+    try { body = await req.json(); } catch (e) { return json({ error: "bad" }, 400); }
+    const cfg = await loadConfig();
+    cfg.public = cleanPublic({ globe: { open: body.open || [] } }, cfg.public);
+    await saveConfig(cfg);
+    await refreshPublicCache();
+    return json({ ok: true, globe: cfg.public.globe });
   }
 
   if (route === "config" && method === "PUT") {
@@ -170,6 +249,13 @@ export default async (req, context) => {
     try { body = await req.json(); } catch (e) { return json({ error: "bad" }, 400); }
     const cfg = await loadConfig();
     cfg.public = cleanPublic(body.public || {}, cfg.public);
+    if (body.gameCodesPlain && typeof body.gameCodesPlain === "object") {
+      const keep = new Set(((cfg.public.game || {}).codes || []).map((c) => c.h));
+      const plain = Object.assign({}, cfg.private.gameCodes || {});
+      for (const [h, code] of Object.entries(body.gameCodesPlain)) if (/^[0-9a-f]{16}$/.test(h)) plain[h] = s(code, 20);
+      for (const h of Object.keys(plain)) if (!keep.has(h)) delete plain[h];
+      cfg.private.gameCodes = plain;
+    }
     const codes = body.codes || {};
     for (const sec of SECTIONS) {
       if (codes[sec] === null) delete cfg.private.codes[sec];
@@ -185,7 +271,7 @@ export default async (req, context) => {
     await refreshPublicCache();
     const codesSet = {};
     SECTIONS.forEach((sec) => { codesSet[sec] = !!cfg.private.codes[sec]; });
-    return json({ ok: true, public: cfg.public, codesSet });
+    return json({ ok: true, public: cfg.public, codesSet, gameCodesPlain: cfg.private.gameCodes || {} });
   }
 
   if (route === "font" && method === "POST") {
@@ -224,6 +310,18 @@ export default async (req, context) => {
   }
 
   if (route === "stats" && method === "GET") return json(await stats());
+
+  // the book's chapters from prog.co.il: read the stored list, or refresh it now
+  if (route === "prog" && method === "GET") return json((await loadProg()) || { items: [], syncedAt: 0 });
+  if (route === "prog" && method === "POST") {
+    try {
+      const data = await syncProg({ force: url.searchParams.get("force") === "1" });
+      try { await purgeCache({ tags: ["chapters"] }); } catch (e) {}
+      return json(data);
+    } catch (e) {
+      return json({ error: "לא הצלחתי לקרוא את פרוג: " + e.message }, 502);
+    }
+  }
 
   // forget this admin's own device (called when the admin logs in)
   if (route === "visitor" && method === "DELETE") {

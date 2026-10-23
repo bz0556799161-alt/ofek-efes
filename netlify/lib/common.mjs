@@ -13,13 +13,17 @@ export function defaultConfig() {
     public: {
       sections: { book: { mode: "open" }, game: { mode: "open" }, globe: { mode: "open" } },
       texts: {},
+      textStyles: {},  // עיצוב לטקסט מסוים: {b,i,u,s,c,f,a}
       fonts: {},
       customFonts: [],
       chapters: null,
       seriesUrl: null,
+      game: null,      // כבוש את השמים: {open:[keys], schedule:[{key,at}], codes:[{h,name,ch,free}]}; null = ההגדרות שבתוך המשחק
+      chapterEdits: {}, // תיקונים לפרקים שנקראו מפרוג: {id:{title, summary, hidden}}
+      globe: null,     // המבנה הכדורי: {open:[roomIds]}; רשימה ריקה = הכל פתוח
       updatedAt: 0
     },
-    private: { codes: {} }
+    private: { codes: {}, gameCodes: {} }
   };
 }
 

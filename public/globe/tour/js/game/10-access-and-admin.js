@@ -83,7 +83,7 @@ function accessStateSource(){
   return 'window.ROOM_ACCESS = ' + JSON.stringify({open: Array.from(roomAccess.open).sort(), updatedAt: Date.now()}) + ';\n';
 }
 function saveAccess(){
-  if(!roomAccess.artifact){ setAdminStatus(settings.lang==='en' ? 'Publishing is not available in this view — the change is local only.' : 'הפרסום אינו זמין בתצוגה הזו — השינוי מקומי בלבד.', true); return; }
+  if(!roomAccess.isAdmin){ setAdminStatus(settings.lang==='en' ? 'Only the site admin can save.' : 'רק מנהל האתר יכול לשמור.', true); return; }
   setAdminStatus(settings.lang==='en' ? 'Saving…' : 'שומר…', false);
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(publishAccess, 1500);
@@ -92,8 +92,10 @@ async function publishAccess(){
   if(roomAccess.writing){ roomAccess.queued = true; return; }
   roomAccess.writing = true;
   try{
-    await roomAccess.artifact.publish({'js/game/access-state.js': {content: accessStateSource(), contentType: 'text/javascript'}});
-    setAdminStatus(settings.lang==='en' ? 'Published — visitors get the new lock on their next load.' : 'פורסם — המבקרים מקבלים את הנעילה החדשה בטעינה הבאה.', false);
+    const r = await fetch('/api/admin/globe', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'},
+      body: JSON.stringify({open: Array.from(roomAccess.open).sort()})});
+    if(!r.ok){ const j = await r.json().catch(()=>({})); throw {code: j.error || r.status}; }
+    setAdminStatus(settings.lang==='en' ? 'Saved — visitors get the new lock within half a minute.' : 'נשמר — המבקרים יקבלו את הנעילה החדשה תוך חצי דקה.', false);
   }catch(e){
     const c = e && e.code;
     setAdminStatus((settings.lang==='en' ? 'Publishing failed: ' : 'הפרסום נכשל: ') + (c || e) + (c==='conflict' ? (settings.lang==='en' ? ' (page reloads)' : ' (העמוד ייטען מחדש)') : ''), true);
@@ -141,16 +143,19 @@ function setAdminPanelVisible(v){
   note.after(prev);
   $('adminPreview').addEventListener('change', e=>{ roomAccess.previewAsVisitor = e.target.checked; enforceAccessNow(); });
 
-  // capabilities: viewer identity (owner = admin) and the shared database
-  if(!(window.claude && typeof window.claude.use==='function')) return;
-  window.claude.use('user').then(user=>{
-    if(!user) return;
-    return user.isOwner().then(owner=>{
-      roomAccess.isAdmin = !!owner;
-      if(owner) $('btnAdmin').style.display = 'block';
-    });
+  // the site's admin (logged in at /admin on this device) manages the rooms here or in /admin
+  const link = document.createElement('a');
+  link.href = '/admin/#globe'; link.textContent = 'לניהול הראשי של האתר ↗';
+  link.style.cssText = 'color:#c9a66b;font-size:12px;text-decoration:none;';
+  $('adminStatus').before(link);
+  let flag = null; try{ flag = localStorage.getItem('ofek-admin-device'); }catch(e){}
+  if(flag !== '1') return;
+  fetch('/api/admin/me', {cache:'no-store', credentials:'same-origin'}).then(r=>r.json()).then(me=>{
+    if(!me || !me.admin) return;
+    roomAccess.isAdmin = true;
+    $('btnAdmin').style.display = 'block';
+    enforceAccessNow();
   }).catch(()=>{});
-  window.claude.use('artifact').then(art=>{ roomAccess.artifact = art || null; }).catch(()=>{});
 })();
 
 // initial state: the published lock file, loaded before this script

@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>אופק אפס</title>
-<meta name="description" content="אופק אפס: ספר בהמשכים על שמיים וכוכבים, משחק הדרך לכוכב הצפון, וסיור במבנה הכדורי.">
+<meta name="description" content="אופק אפס: ספר בהמשכים על שמיים וכוכבים, משחק כבוש את השמים, וסיור במבנה הכדורי.">
 <meta property="og:title" content="אופק אפס">
-<meta property="og:description" content="אופק אפס: ספר בהמשכים על שמיים וכוכבים, משחק הדרך לכוכב הצפון, וסיור במבנה הכדורי.">
+<meta property="og:description" content="אופק אפס: ספר בהמשכים על שמיים וכוכבים, משחק כבוש את השמים, וסיור במבנה הכדורי.">
 <meta property="og:image" content="/assets/og.jpg">
 <meta name="theme-color" content="#050d10">
 <link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
@@ -17,7 +17,7 @@
 </head>
 <body data-page="home">
 
-<canvas id="sky" aria-label="שמי לילה. לחצו על כוכבי הקבוצה המבוקשת"></canvas>
+<canvas id="sky" aria-label="תפוס כוכב: שמי לילה. לחצו על כוכבי הקבוצה המבוקשת"></canvas>
 
 <div class="page">
   <header class="hero home wrap">
@@ -37,8 +37,8 @@
         <a class="btn primary" href="/book/" data-section="book" data-gate><span data-t="home.book.cta">לפרקי הספר</span></a>
       </article>
       <article class="panel door" data-section="game" data-role="card" data-solid>
-        <span class="kicker" data-t="home.game.kicker">משחק</span>
-        <h2 data-t="home.game.title">הדרך לכוכב הצפון</h2>
+        <span class="kicker" data-t="home.game.kicker">המשחק המלא</span>
+        <h2 data-t="home.game.title">כבוש את השמים</h2>
         <p data-t="home.game.text">לומדים לזהות קבוצות כוכבים ולמצוא בעזרתן את הצפון, שלב אחרי שלב.</p>
         <a class="btn primary" href="/game/" data-section="game"><span data-t="home.game.cta">למשחק</span></a>
       </article>
@@ -49,7 +49,7 @@
         <a class="btn primary" href="/globe/" data-section="globe"><span data-t="home.globe.cta">למבנה</span></a>
       </article>
     </div>
-    <p class="hero-hint" data-t="home.skyhint">ברקע מסתתרת קבוצת כוכבים. מצאו אותה ולחצו על כל הכוכבים שלה.</p>
+    <p class="hero-hint" data-t="home.skyhint">תפוס כוכב: ברקע מסתתרת קבוצת כוכבים. מצאו אותה ולחצו על כל הכוכבים שלה.</p>
   </main>
 
   <footer>
@@ -60,21 +60,21 @@
   </footer>
 </div>
 
-<aside class="hud" id="hud" aria-label="משחק הכוכבים" data-solid>
+<aside class="hud" id="hud" aria-label="תפוס כוכב" data-solid>
   <p class="hud-toast" id="hudToast" hidden aria-live="polite"></p>
   <div class="hud-grip" aria-hidden="true" title="גרור כדי להזיז את הלוח"></div>
-  <button class="hud-fold" id="hudFold" aria-expanded="true" aria-label="הקטן או הגדל את לוח המשחק" title="הקטן את לוח המשחק"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+  <button class="hud-fold" id="hudFold" aria-expanded="true" aria-label="הקטן או הגדל את לוח תפוס כוכב" title="הקטן את לוח המשחק"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
   <div class="hud-top">
     <canvas id="hudShape" width="64" height="64" aria-hidden="true"></canvas>
     <div class="hud-info">
-      <div class="hud-ask">מצאו בשמיים את</div>
+      <div class="hud-ask"><b class="hud-game">תפוס כוכב</b> · מצאו בשמיים את</div>
       <div class="hud-name" id="hudName">…</div>
       <div class="hud-prog" id="hudProgress" aria-live="polite"></div>
       <div class="hud-note" id="hudNote"></div>
     </div>
     <div class="hud-score"><b id="hudScore">0</b><span>נקודות</span></div>
   </div>
-  <div class="hud-lv"><div class="hud-lvbar"><i id="hudLvBar"></i></div><div class="hud-lvtext" id="hudLvText"></div></div>
+  <div class="hud-lv"><div class="hud-lvbar"><i id="hudLvBar"></i></div><div class="hud-lvtext"><b id="hudRank" class="hud-rank"></b> · <span id="hudLvText"></span></div></div>
   <div class="hud-row">
     <div class="lv" role="group" aria-label="שלב">
       <button class="hb" id="lvPrev" aria-label="שלב קודם" title="שלב קודם"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
@@ -88,6 +88,7 @@
 </aside>
 
 <script src="/assets/site.js"></script>
+<script src="/assets/sky-figures.js"></script>
 <script src="/assets/sky.js"></script>
 </body>
 </html>

@@ -1,13 +1,14 @@
 /* =====================================================================
-   משחק הכוכבים שברקע — "מצאו את הקבוצה"
-   כל פעם מוצגת קבוצת כוכבים אחת בשמיים. לוחצים על כל הכוכבים שלה,
-   ומקבלים 10 נקודות. אפשר להחליף קבוצה ולעבור בין שלבים.
+   תפוס כוכב — המשחק שברקע
+   כל פעם מוסתרת בשמיים צורה אחת: אחת מ־88 קבוצות הכוכבים או אסטריזם מוכר.
+   לוחצים על כל הכוכבים שלה ומקבלים עד 10 נקודות. כל 100 נקודות עולים רמה,
+   ובכל רמה יש יותר כוכבים מסביב ובתוך הצורה עצמה. המשחק לא נגמר.
    ===================================================================== */
 (function () {
   "use strict";
 
   /* ---------- קבוצות הכוכבים (מיקום אמיתי בשמיים: שעות, מעלות) ---------- */
-  const GROUPS = [
+  const OLD_GROUPS = [
     { id: "ursa-major", name: "העגלה הגדולה",
       stars: [[11.06,61.75],[11.03,56.38],[11.90,53.69],[12.26,57.03],[12.90,55.96],[13.40,54.93],[13.79,49.31]],
       lines: [[0,1],[1,2],[2,3],[3,0],[3,4],[4,5],[5,6]] },
@@ -48,34 +49,36 @@
       lines: [[0,1],[1,2],[1,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12]] }
   ];
 
-  /* ---------- שלבים: כל 100 נקודות פותחות שלב חדש, עד 1,000 ---------- */
-  const LEVELS = [
-    { dim: 120, decoys: 4,  groupBoost: 1.0, rot: 0,    size: 0.44 },
-    { dim: 170, decoys: 8,  groupBoost: 0.8, rot: 0,    size: 0.42 },
-    { dim: 220, decoys: 12, groupBoost: 0.6, rot: 0,    size: 0.40 },
-    { dim: 270, decoys: 16, groupBoost: 0.45,rot: 0,    size: 0.38 },
-    { dim: 320, decoys: 22, groupBoost: 0.3, rot: 0.35, size: 0.36 },
-    { dim: 370, decoys: 28, groupBoost: 0.2, rot: 0.5,  size: 0.34 },
-    { dim: 420, decoys: 34, groupBoost: 0.1, rot: 0.75, size: 0.32 },
-    { dim: 470, decoys: 40, groupBoost: 0,   rot: 1.0,  size: 0.30 },
-    { dim: 520, decoys: 48, groupBoost: 0,   rot: 1.5,  size: 0.28 },
-    { dim: 580, decoys: 56, groupBoost: 0,   rot: 3.14, size: 0.26 }
-  ];
-  const PER_LEVEL = 100, MAX_SCORE = 1000;
+  // כל הצורות: 88 קבוצות הכוכבים ואסטריזמים (נטען מ־sky-figures.js)
+  const GROUPS = (window.SKY_FIGURES && window.SKY_FIGURES.length) ? window.SKY_FIGURES : OLD_GROUPS.map(g => Object.assign({ from: 1, kind: "a" }, g));
+
+  /* ---------- רמות: כל 100 נקודות עולים רמה, בלי סוף ---------- */
+  const RANKS = ["צופה מתחיל", "מתבונן", "חובב כוכבים", "מגלה", "חוקר", "נווט", "מנווט לילה", "אסטרונום", "שומר השמים", "כובש השמים"];
+  const rankName = (lvl) => lvl < RANKS.length ? RANKS[lvl] : "כובש השמים · " + (lvl + 1);
+  function levelParams(L) {          // L מתחיל מ־0
+    return {
+      dim: Math.min(900, 120 + 55 * L),
+      decoys: Math.min(90, 4 + 5 * L),
+      inside: L < 2 ? 0 : Math.min(26, (L - 1) * 2),     // כוכבים זרים בתוך הצורה עצמה
+      groupBoost: Math.max(0, 1 - L * 0.16),
+      rot: L < 4 ? 0 : Math.min(Math.PI, 0.35 * (L - 3)),
+      size: Math.max(0.24, 0.44 - 0.02 * L)
+    };
+  }
+  const PER_LEVEL = 100, ADMIN_TOP = 19;
   let adminDevice = false;
   try { adminDevice = localStorage.getItem("ofek-admin-device") === "1"; } catch (e) {}
-  // במכשיר של המנהל כל השלבים פתוחים, כדי לבדוק את רמות הקושי
-  const unlockedLevel = () => adminDevice ? LEVELS.length - 1 : Math.min(LEVELS.length - 1, Math.floor(state.score / PER_LEVEL));
+  // במכשיר של המנהל אפשר לקפוץ לכל רמה, כדי לבדוק את רמות הקושי
+  const unlockedLevel = () => adminDevice ? Math.max(ADMIN_TOP, Math.floor(state.score / PER_LEVEL)) : Math.floor(state.score / PER_LEVEL);
 
-  const STORE_KEY = "ofek-sky-v2";
+  const STORE_KEY = "ofek-sky-v2";   // הניקוד נשמר מהגרסה הקודמת
   const reduceMotion = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ---------- מצב ---------- */
-  const state = { score: 0, solved: 0, perfect: 0, level: 0, groupIdx: -1, recent: [] };
+  const state = { score: 0, solved: 0, perfect: 0, level: 0, groupId: null, recent: [] };
   try {
     const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
-    if (saved) Object.assign(state, { score: Math.min(MAX_SCORE, saved.score | 0), solved: saved.solved | 0, perfect: saved.perfect | 0, level: saved.level | 0 });
-    state.level = Math.min(state.level, LEVELS.length - 1);
+    if (saved) Object.assign(state, { score: Math.max(0, saved.score | 0), solved: saved.solved | 0, perfect: saved.perfect | 0, level: Math.max(0, saved.level | 0) });
   } catch (e) {}
   function save() {
     try { localStorage.setItem(STORE_KEY, JSON.stringify({ score: state.score, solved: state.solved, perfect: state.perfect, level: state.level })); } catch (e) {}
@@ -111,7 +114,7 @@
     const e = [-Math.sin(ra0), Math.cos(ra0), 0];
     const n = [-Math.sin(dec0) * Math.cos(ra0), -Math.sin(dec0) * Math.sin(ra0), Math.cos(dec0)];
     const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-    return v.map(p => { const k = dot(p, c); return [-dot(p, e) / k, -dot(p, n) / k]; });
+    return v.map(p => { const k = 1 + dot(p, c); return [-dot(p, e) / k, -dot(p, n) / k]; });
   }
 
   /* אזורים בעמוד שמסתירים את השמיים (כרטיסים, כותרת, לוח הניקוד) */
@@ -146,7 +149,7 @@
   function snapshot() {
     if (!group || !W || !H) return null;
     return {
-      t: Date.now(), level: state.level, groupIdx: state.groupIdx, recent: state.recent,
+      t: Date.now(), level: state.level, groupId: state.groupId, recent: state.recent,
       misses: group.misses, done: group.done,
       pts: group.pts.map(p => [r4(p.x / W), r4(p.y / H), p.found ? 1 : 0]),
       dim: dimStars.map(d => [r4(d.x / W), r4(d.y / H), r4(d.r), r4(d.a)]),
@@ -167,13 +170,14 @@
     try { return txt ? JSON.parse(txt) : null; } catch (e) { return null; }
   }
   function restore(snap) {
-    if (!snap || !GROUPS[snap.groupIdx] || !Array.isArray(snap.pts) || snap.pts.length !== GROUPS[snap.groupIdx].stars.length) return false;
-    state.groupIdx = snap.groupIdx;
-    if (Array.isArray(snap.recent)) state.recent = snap.recent.slice(-5);
+    const sdef = snap && byId(snap.groupId);
+    if (!sdef || !Array.isArray(snap.pts) || snap.pts.length !== sdef.stars.length) return false;
+    state.groupId = snap.groupId;
+    if (Array.isArray(snap.recent)) state.recent = snap.recent.slice(-12);
     dimStars = snap.dim.map(d => ({ x: d[0] * W, y: d[1] * H, r: d[2], a: d[3] }));
     paintDim();
     group = {
-      def: GROUPS[snap.groupIdx],
+      def: sdef,
       pts: snap.pts.map(p => ({ x: p[0] * W, y: p[1] * H, found: !!p[2] })),
       done: !!snap.done, misses: snap.misses | 0
     };
@@ -185,7 +189,7 @@
   document.addEventListener("visibilitychange", () => { if (document.hidden) persist(); });
 
   function buildScene(keepGroup) {
-    const lv = LEVELS[state.level];
+    const lv = levelParams(state.level);
     const area = (W * H) / (1280 * 800);
 
     // כוכבים עמומים
@@ -197,8 +201,8 @@
     paintDim();
 
     // בחירת קבוצה
-    if (!keepGroup || state.groupIdx < 0) pickGroup();
-    const def = GROUPS[state.groupIdx];
+    if (!keepGroup || !byId(state.groupId)) pickGroup();
+    const def = byId(state.groupId);
     let pts = project(def.stars);
     if (lv.rot) {
       const t = rand(-lv.rot, lv.rot), cs = Math.cos(t), sn = Math.sin(t);
@@ -256,16 +260,31 @@
       if (brights.some(b => Math.hypot(b.x - x, b.y - y) < 30)) continue;
       brights.push({ x, y, r: rand(1.5, 2.1 + lv.groupBoost * 0.2 + (state.level >= 2 ? 0.9 : 0)), ph: Math.random() * 6.28, g: -1 });
     }
+    // כוכבים זרים גם בתוך הצורה: מזהים אותה לפי הצורה בלבד
+    if (lv.inside) {
+      const gx = group.pts.map(p => p.x), gy = group.pts.map(p => p.y);
+      const bx0 = Math.min(...gx) - 20, bx1 = Math.max(...gx) + 20, by0 = Math.min(...gy) - 20, by1 = Math.max(...gy) + 20;
+      let added = 0; guard = 0;
+      while (added < lv.inside && guard++ < 2000) {
+        const x = rand(bx0, bx1), y = rand(by0, by1);
+        if (x < 6 || y < 6 || x > W - 6 || y > H - 6) continue;
+        if (brights.some(b => Math.hypot(b.x - x, b.y - y) < 26)) continue;
+        brights.push({ x, y, r: rand(1.6, 2.6 + lv.groupBoost), ph: Math.random() * 6.28, g: -1 });
+        added++;
+      }
+    }
     updateHud();
     persist();
   }
 
+  function byId(id) { for (let i = 0; i < GROUPS.length; i++) if (GROUPS[i].id === id) return GROUPS[i]; return null; }
   function pickGroup() {
-    let idx, guard = 0;
-    do { idx = Math.floor(Math.random() * GROUPS.length); }
-    while ((idx === state.groupIdx || state.recent.includes(idx)) && guard++ < 50);
-    state.groupIdx = idx;
-    state.recent.push(idx); if (state.recent.length > 5) state.recent.shift();
+    const pool = GROUPS.filter(g => (g.from || 1) <= state.level + 1);
+    const fresh = pool.filter(g => g.id !== state.groupId && !state.recent.includes(g.id));
+    const list = fresh.length ? fresh : pool;
+    const g = list[Math.floor(Math.random() * list.length)];
+    state.groupId = g.id;
+    state.recent.push(g.id); if (state.recent.length > 12) state.recent.shift();
   }
 
   /* ---------- ציור ---------- */
@@ -398,15 +417,14 @@
     const hits = group.pts.length;
     const pts = Math.round(10 * hits / (hits + group.misses));   // 10 רק בלי אף טעות
     const before = unlockedLevel();
-    state.score = Math.min(MAX_SCORE, state.score + pts); state.solved += 1;
+    state.score = state.score + pts; state.solved += 1;
     if (group.misses === 0) state.perfect += 1;
     const after = unlockedLevel();
     if (after > before && state.level === before) state.level = after;   // עולים שלב אוטומטית
     save();
     lastPts = pts;
     if (window.ofekTrack) ofekTrack("sky", { lvl: state.level + 1, pts: pts, misses: group.misses, score: state.score, group: group.def.id });
-    if (after > before) toast(state.score >= MAX_SCORE ? "הגעת ל־1,000 נקודות! כל השלבים פתוחים." : "עלית לשלב " + (after + 1) + "!");
-    else if (state.score >= MAX_SCORE && before === LEVELS.length - 1 && state.score - pts < MAX_SCORE) toast("הגעת ל־1,000 נקודות!");
+    if (after > before) toast("התקדמת לרמת " + rankName(after) + "!");
     const cx = group.pts.reduce((s, p) => s + p.x, 0) / group.pts.length;
     const cy = group.pts.reduce((s, p) => s + p.y, 0) / group.pts.length;
     marks.push({ type: "plus", x: cx, y: cy, t: now, life: 1400, text: "+" + pts });
@@ -428,6 +446,7 @@
 
   const elLvBar = document.getElementById("hudLvBar");
   const elLvText = document.getElementById("hudLvText");
+  const elRank = document.getElementById("hudRank") || document.createElement("span");
   function updateHud() {
     if (!group) return;
     const found = group.pts.filter(p => p.found).length;
@@ -435,17 +454,15 @@
     if (group.done) elProg.textContent = lastPts === 10 ? "בלי אף טעות! ‎+10" : "נמצאה! ‎+" + lastPts;
     else elProg.textContent = found + " מתוך " + group.pts.length + (group.misses ? " · " + group.misses + " החטאות" : "");
     elScore.textContent = state.score.toLocaleString("he-IL");
-    elLevel.textContent = "שלב " + (state.level + 1);
+    elLevel.textContent = "רמה " + (state.level + 1);
     const top = unlockedLevel();
-    elLevel.title = adminDevice ? "מצב מנהל: כל השלבים פתוחים" : "פתוחים: שלבים 1–" + (top + 1);
-    elNote.textContent = group.def.note || (group.misses ? "" : "10 נקודות אם אין אף לחיצה מיותרת");
-    if (adminDevice) { elLvText.textContent = "מצב מנהל: אפשר לעבור בין כל 10 השלבים"; elLvBar.style.width = Math.min(100, state.score % PER_LEVEL) + "%"; }
-    else if (state.score >= MAX_SCORE) { elLvText.textContent = "1,000 · כל השלבים פתוחים"; elLvBar.style.width = "100%"; }
-    else {
-      const into = state.score % PER_LEVEL;
-      elLvText.textContent = "עוד " + (PER_LEVEL - into) + " נק׳ לשלב " + (top + 2 > LEVELS.length ? LEVELS.length : top + 2);
-      elLvBar.style.width = into + "%";
-    }
+    elLevel.title = rankName(state.level);
+    elRank.textContent = rankName(state.level);
+    const d = group.def;
+    elNote.textContent = d.kind === "c" ? "קבוצת כוכבים" + (d.latin ? " · " + d.latin : "") : "אסטריזם" + (d.note ? " · " + d.note : "");
+    const into = state.score % PER_LEVEL;
+    elLvBar.style.width = into + "%";
+    elLvText.textContent = adminDevice ? "מצב מנהל: אפשר לקפוץ בין הרמות" : "עוד " + (PER_LEVEL - into) + " נק׳ לרמת " + rankName(Math.floor(state.score / PER_LEVEL) + 1);
     document.getElementById("lvPrev").disabled = state.level === 0;
     document.getElementById("lvNext").disabled = state.level >= top;
     drawMini();

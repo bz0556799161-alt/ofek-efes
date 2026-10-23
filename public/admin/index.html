@@ -84,6 +84,20 @@ td.num{font-variant-numeric:tabular-nums}
 .textrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;padding:10px 0;border-bottom:1px solid var(--edge)}
 .textrow .k{font-size:12.5px;color:var(--faint);margin-bottom:4px;direction:ltr;text-align:right}
 .textrow.changed textarea{border-color:var(--gold)}
+.sitebox{border:1px solid var(--edge);border-radius:14px;overflow:hidden;background:#000;height:calc(100vh - 260px);min-height:520px}
+.sitebox iframe{width:100%;height:100%;border:0;display:block}
+.btn.on-page{background:var(--gold);color:#1b1407;border-color:var(--gold)}
+.pchap{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;padding:14px 0;border-bottom:1px solid var(--edge)}
+.pchap img,.pchap .noimg{width:96px;height:96px;border-radius:10px;object-fit:cover;background:var(--panel-2)}
+.pchap .noimg{display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--faint)}
+.pchap .pbody{display:grid;gap:8px;min-width:0}
+.pchap.hiddenc{opacity:.5}
+@media (max-width:560px){.pchap{grid-template-columns:1fr}}
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:2px 14px}
+.chk{display:flex;align-items:center;gap:9px;padding:6px 2px;cursor:pointer;border-bottom:1px solid rgba(205,216,218,.06)}
+.chk input{width:18px;height:18px;accent-color:#d6b46c;flex:none}
+.chk .n{margin-inline-start:auto;color:var(--faint);font-size:12.5px;white-space:nowrap}
+.codeval{font:600 15px ui-monospace,Menlo,Consolas,monospace;letter-spacing:2px;color:var(--gold);direction:ltr;unicode-bidi:isolate}
 .chap{display:grid;grid-template-columns:70px minmax(0,1fr) minmax(0,1fr) 120px;gap:8px;padding:12px 0;border-bottom:1px solid var(--edge)}
 .chap .wide{grid-column:1/-1}
 .chap .tools{grid-column:1/-1;display:flex;gap:6px;justify-content:flex-end}
@@ -146,7 +160,9 @@ td.num{font-variant-numeric:tabular-nums}
       <nav class="tabs" role="tablist" aria-label="חלקי הניהול">
         <button class="tab" role="tab" data-tab="stats" aria-selected="true">סטטיסטיקה</button>
         <button class="tab" role="tab" data-tab="access" aria-selected="false">כפתורים וגישה</button>
-        <button class="tab" role="tab" data-tab="texts" aria-selected="false">טקסטים</button>
+        <button class="tab" role="tab" data-tab="game" aria-selected="false">כבוש את השמים</button>
+        <button class="tab" role="tab" data-tab="globe" aria-selected="false">המבנה הכדורי</button>
+        <button class="tab" role="tab" data-tab="texts" aria-selected="false">עריכת טקסטים</button>
         <button class="tab" role="tab" data-tab="chapters" aria-selected="false">פרקים</button>
         <button class="tab" role="tab" data-tab="fonts" aria-selected="false">פונטים</button>
       </nav>
@@ -156,25 +172,18 @@ td.num{font-variant-numeric:tabular-nums}
   <main class="wrap">
     <!-- stats -->
     <section role="tabpanel" id="tab-stats">
-      <div class="row"><p class="faint" id="statsWhen" style="margin:0;margin-inline-end:auto"></p><button class="btn small" id="statsRefresh">רענון</button></div>
-      <div class="card">
-        <h2>מי לא נספר</h2>
-        <p class="muted">רובוטים ודפדפנים אוטומטיים לא נספרים, וגם מבקר שלא הזיז עכבר, לא נגע במסך ולא גלל. כל מכשיר שנכנסת ממנו לניהול מסומן ולא נספר יותר, גם אחרי שתצא. כדאי להיכנס לניהול פעם אחת גם מהטלפון שלך.</p>
-        <div class="row" style="margin-top:8px"><span class="pill ok" id="deviceExcluded">המכשיר הזה לא נספר</span>
-          <button class="btn small danger" id="statsReset" style="margin-inline-start:auto">איפוס כל הסטטיסטיקה</button></div>
-        <p class="status" id="resetStatus" aria-live="polite"></p>
-      </div>
+      <div class="row"><p class="faint" id="statsWhen" style="margin:0;margin-inline-end:auto"></p><span class="status" id="resetStatus" aria-live="polite"></span><button class="btn small" id="statsRefresh">רענון</button><button class="btn small danger" id="statsReset">איפוס כל הסטטיסטיקה</button></div>
       <div class="card"><h2>מבקרים</h2><div class="kpis" id="kpiVisitors"></div></div>
       <div class="card"><h2>מבקרים בכל יום, 30 הימים האחרונים</h2><div class="bars" id="dailyBars"></div><div class="bars-x" id="dailyX"></div></div>
       <div class="card"><h2>דפים</h2><div class="tbl-wrap"><table id="pagesTbl"></table></div></div>
       <div class="card">
-        <h2>הדרך לכוכב הצפון: מי הגיע לאיזו רמה</h2>
+        <h2>כבוש את השמים: מי הגיע לאיזו רמה</h2>
         <p class="faint">"התחילו" = כמה מבקרים נכנסו לרמה. "סיימו" = כמה השלימו אותה. הניקוד הממוצע הוא מתוך 100.</p>
         <div class="kpis" id="kpiGame" style="margin-bottom:12px"></div>
         <div class="tbl-wrap"><table id="gameTbl"></table></div>
       </div>
       <div class="card">
-        <h2>משחק הכוכבים שברקע</h2>
+        <h2>תפוס כוכב (המשחק שברקע)</h2>
         <div class="kpis" id="kpiSky" style="margin-bottom:12px"></div>
         <h3>באיזה שלב נמצאים השחקנים</h3>
         <div class="hbars" id="skyLevels"></div>
@@ -203,26 +212,74 @@ td.num{font-variant-numeric:tabular-nums}
       </div>
     </section>
 
-    <!-- texts -->
+    <!-- game -->
+    <section role="tabpanel" id="tab-game" hidden>
+      <div class="card">
+        <h2>פרקים פתוחים לשחקנים</h2>
+        <p class="muted">סמן אילו פרקים פתוחים לכולם. בפרק פתוח השחקנים מתקדמים רמה אחרי רמה. אתה, במכשיר שנכנסת ממנו לניהול, רואה ויכול לשחק גם בפרקים הנעולים.</p>
+        <div class="row" style="margin:8px 0"><button class="btn small" id="gmAll">סמן הכל</button><button class="btn small" id="gmNone">נקה הכל</button><a class="btn small" href="/game/play/" target="_blank" rel="noopener">לפתוח את המשחק ↗</a></div>
+        <div class="checks" id="gmChapters"></div>
+      </div>
+      <div class="card">
+        <h2>פתיחה לפי זמן</h2>
+        <p class="muted">פרק נעול ייפתח מעצמו לכולם בזמן שתבחר. הזמן לפי שעון ישראל.</p>
+        <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:10px">
+          <label><span class="faint">פרק</span><select id="schKey"></select></label>
+          <label><span class="faint">מתי</span><input type="datetime-local" id="schAt" dir="ltr"></label>
+        </div>
+        <div class="row" style="margin-top:10px"><button class="btn" id="schAdd">+ הוספת פתיחה</button><span class="status" id="schMsg"></span></div>
+        <div class="tbl-wrap" style="margin-top:10px"><table id="schTbl"></table></div>
+      </div>
+      <div class="card">
+        <h2>קודי גישה</h2>
+        <p class="muted">קוד פותח פרקים נעולים רק למי שמקליד אותו, במכשיר שבו הקליד. השחקן מקליד אותו בכפתור "יש לי קוד" שבמפת המשחק.</p>
+        <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:10px">
+          <label><span class="faint">למי הקוד (בלי פרטים אישיים)</span><input type="text" id="cdName" maxlength="40" placeholder="למשל: קבוצת הבודקים"></label>
+        </div>
+        <label class="chk" style="margin-top:10px"><input type="checkbox" id="cdAll"> <b>כל הפרקים הנעולים והמסע האינסופי</b></label>
+        <div class="checks" id="cdChapters" style="margin-top:6px"></div>
+        <label class="chk"><input type="checkbox" id="cdFree"> לפתוח מיד את כל הרמות בפרקים האלה (בלי לסיים קודם את הקודמות)</label>
+        <div class="row" style="margin-top:10px"><button class="btn" id="cdMake">+ יצירת קוד</button><span class="status" id="cdMsg"></span></div>
+        <div class="tbl-wrap" style="margin-top:10px"><table id="cdTbl"></table></div>
+      </div>
+    </section>
+
+    <!-- globe -->
+    <section role="tabpanel" id="tab-globe" hidden>
+      <div class="card">
+        <h2>חדרים פתוחים במבנה</h2>
+        <p class="muted">כשאין אף חדר מסומן, כל החדרים פתוחים. כשמסמנים חדרים, רק הם פתוחים למבקרים וכל השאר נעולים. אפשר גם לבחור חדרים ישר מהמפה בתוך המבנה, בכפתור "ניהול חדרים".</p>
+        <div class="row" style="margin:8px 0"><input type="text" id="glFilter" placeholder="חיפוש קבוצת כוכבים…" style="max-width:260px"><button class="btn small" id="glClear">פתח הכל</button><a class="btn small" href="/globe/tour/" target="_blank" rel="noopener">לבחור מתוך המבנה ↗</a><span class="pill mute" id="glCount"></span></div>
+        <div class="checks" id="glRooms"></div>
+      </div>
+    </section>
+
+    <!-- texts: edited right on the site -->
     <section role="tabpanel" id="tab-texts" hidden>
       <div class="card">
-        <h2>טקסטים באתר</h2>
-        <p class="muted">כל טקסט מופיע כאן לפי הדף שבו הוא נמצא. שינוי מסומן בצהוב. שדה ריק מחזיר את הטקסט המקורי.</p>
-        <input type="text" id="textFilter" placeholder="חיפוש טקסט…" style="margin-top:8px">
+        <div class="row">
+          <div role="group" aria-label="איזה דף לערוך" class="row" style="gap:6px;margin-inline-end:auto">
+            <button class="btn small on-page" data-page="/">דף הבית</button>
+            <button class="btn small" data-page="/book/">הספר</button>
+            <button class="btn small" data-page="/game/">כבוש את השמים</button>
+            <button class="btn small" data-page="/globe/">המבנה הכדורי</button>
+          </div>
+          <span class="faint" id="txCount"></span><button class="btn small danger" id="txReset">החזר הכל למקור</button><span class="status" id="txMsg"></span>
+        </div>
+        <p class="faint" style="margin:8px 0 0">לוחצים על טקסט בתוך הדף, משנים אותו או מעצבים (הדגשה, גודל, צבע, גופן, יישור), ולוחצים "שמירה" בסרגל שבראש הדף. טקסט שמרוקנים חוזר לנוסח המקורי. פרקי הספר מתעדכנים בלשונית "פרקים".</p>
       </div>
-      <div id="textsList"></div>
+      <div class="sitebox"><iframe id="siteFrame" title="האתר במצב עריכה" src="about:blank"></iframe></div>
     </section>
 
     <!-- chapters -->
     <section role="tabpanel" id="tab-chapters" hidden>
       <div class="card">
-        <h2>פרקי הספר</h2>
-        <p class="muted">הפרק האחרון ברשימה מוצג בדף הספר בתור "הפרק החדש". כשעולה פרק חדש בפרוג, לוחצים "הוספת פרק", ממלאים ושומרים.</p>
-        <label style="margin-top:10px"><span class="faint">קישור לסדרה בפרוג</span><input type="url" id="seriesUrl" dir="ltr"></label>
+        <h2>פרקי הספר מפרוג</h2>
+        <p class="muted">האתר קורא לבד את הפרקים מסדרת "אופק אפס" בפרוג: שם, תאריך, תמונת השער והתקציר שבראש המאמר. הבדיקה רצה מעצמה בכל מוצאי שבת. אחרי שהעלית פרק, אפשר גם ללחוץ "רענון" ולראות אותו מיד.</p>
+        <div class="row" style="margin-top:10px"><button class="btn primary" id="progSync">רענון מפרוג</button><button class="btn small" id="progForce" title="קורא מחדש גם תמונות ותקצירים של פרקים ישנים">רענון מלא</button><span class="status" id="progMsg" aria-live="polite"></span></div>
+        <p class="faint" id="progWhen" style="margin-top:6px"></p>
       </div>
-      <div class="card"><div id="chapList"></div>
-        <div class="row" style="margin-top:12px"><button class="btn" id="chapAdd">+ הוספת פרק</button><button class="btn small" id="chapReset" style="margin-inline-start:auto">חזרה לרשימה המקורית</button></div>
-      </div>
+      <div class="card"><h2>הפרקים באתר</h2><p class="faint">אפשר לשנות כאן שם או תקציר, או להסתיר פרק מהאתר. שינוי כאן לא משנה כלום בפרוג. שדה ריק = מה שכתוב בפרוג.</p><div id="chapList"></div></div>
     </section>
 
     <!-- fonts -->
@@ -255,6 +312,7 @@ td.num{font-variant-numeric:tabular-nums}
 </div>
 
 <script src="/assets/chapters.js"></script>
+<script src="/admin/data.js"></script>
 <script>
 (function(){
   "use strict";
@@ -304,31 +362,30 @@ td.num{font-variant-numeric:tabular-nums}
     t.addEventListener("click", function(){
       document.querySelectorAll(".tab").forEach(function(x){ x.setAttribute("aria-selected", x===t ? "true" : "false"); });
       document.querySelectorAll("[role=tabpanel]").forEach(function(p){ p.hidden = p.id !== "tab-" + t.dataset.tab; });
-      if (t.dataset.tab === "texts" && !loadedTabs.texts) { loadedTabs.texts = true; loadTexts(); }
+      try { history.replaceState(null, "", "#" + t.dataset.tab); } catch (e) {}
     });
   });
+  (function(){ var h = (location.hash || "").slice(1); var t = h && document.querySelector('.tab[data-tab="' + h + '"]'); if (t) t.click(); })();
 
   function loadAll(){
     loadStats();
-    api("config").then(function(j){ PUB = j.public; CODES_SET = j.codesSet || {}; renderAccess(); renderChapters(); renderFonts(); });
+    api("config").then(function(j){ PUB = j.public; CODES_SET = j.codesSet || {}; GAME_PLAIN = j.gameCodesPlain || {}; renderAccess(); renderChapters(); renderFonts(); renderGame(); renderGlobe(); renderTextsTab(); });
   }
 
   /* ---------- save ---------- */
   $("saveBtn").onclick = function(){
     if (!PUB) return;
-    collectTexts();
-    var payload = { public: { sections: PUB.sections, texts: PUB.texts, fonts: PUB.fonts, chapters: PUB.chapters, seriesUrl: PUB.seriesUrl }, codes: pendingCodes };
+    var payload = { public: { sections: PUB.sections, fonts: PUB.fonts, chapterEdits: PUB.chapterEdits || {}, game: PUB.game, globe: PUB.globe }, codes: pendingCodes, gameCodesPlain: GAME_PLAIN };
     $("saveBtn").disabled = true; setStatus("שומר…", "");
     api("config", { method:"PUT", body: JSON.stringify(payload) }).then(function(j){
-      PUB = j.public; CODES_SET = j.codesSet || {}; pendingCodes = {}; dirty = false;
+      PUB = j.public; CODES_SET = j.codesSet || {}; GAME_PLAIN = j.gameCodesPlain || {}; pendingCodes = {}; dirty = false;
       setStatus("נשמר. השינויים יופיעו באתר תוך חצי דקה לכל היותר.", "ok");
-      renderAccess(); renderChapters(); renderFonts();
-      if (loadedTabs.texts) renderTexts();
+      renderAccess(); renderChapters(); renderFonts(); renderGame(); renderGlobe(); renderTextsTab();
     }).catch(function(err){ $("saveBtn").disabled = false; setStatus(err.message, "err"); });
   };
 
   /* =================== stats =================== */
-  var PAGE_NAMES = { home:"דף הבית", book:"הספר", game:"דף המשחק", globe:"דף המבנה", site:"אחר" };
+  var PAGE_NAMES = { home:"דף הבית", book:"הספר", game:"דף כבוש את השמים", globe:"דף המבנה", site:"אחר" };
   function kpis(el, items){ el.innerHTML = items.map(function(i){ return '<div class="kpi"><b>'+i[1]+'</b><span>'+esc(i[0])+'</span></div>'; }).join(""); }
   function hbars(el, rows, labelFn){
     var max = Math.max.apply(null, rows.map(function(r){return r.n;}).concat([1]));
@@ -364,13 +421,13 @@ td.num{font-variant-numeric:tabular-nums}
       return '<tr><td>רמה '+n+'</td><td class="num">'+fmtN(L.started)+'</td><td class="num">'+fmtN(L.done)+'</td><td><span class="pill '+(pct>=70?"ok":pct>=40?"warn":"bad")+'">'+pct+'%</span></td><td class="num">'+(L.avgScore==null?"—":L.avgScore)+'</td><td class="num">'+fmtN(L.plays)+'</td></tr>'; }).join("") : '<tr><td colspan="6" class="faint">אין עדיין נתונים.</td></tr>');
     // sky
     kpis($("kpiSky"), [["שיחקו", fmtN(s.sky.players)], ["קבוצות שנמצאו", fmtN(s.sky.groups)], ["בלי אף טעות", s.sky.groups ? Math.round(100*s.sky.perfect/s.sky.groups)+"%" : "—"], ["הגיעו ל־1,000", fmtN(s.sky.reached1000)]]);
-    hbars($("skyLevels"), s.sky.levels.map(function(l){ return { n:l.players, level:l.level }; }), function(r){ return "שלב " + r.level; });
+    hbars($("skyLevels"), s.sky.levels.map(function(l){ return { n:l.players, level:l.level }; }), function(r){ var R = ["צופה מתחיל","מתבונן","חובב כוכבים","מגלה","חוקר","נווט","מנווט לילה","אסטרונום","שומר השמים","כובש השמים"]; return r.level + ". " + (R[r.level-1] || "כובש השמים"); });
     $("skyTop").innerHTML = '<tr><th>שחקן</th><th>ניקוד</th><th>קבוצות</th><th>בלי טעות</th></tr>' + (s.sky.top.length ? s.sky.top.map(function(t){ return '<tr><td dir="ltr" style="text-align:right">#'+esc(t.id)+'</td><td class="num">'+fmtN(t.score)+'</td><td class="num">'+fmtN(t.groups)+'</td><td class="num">'+fmtN(t.perfect)+'</td></tr>'; }).join("") : '<tr><td colspan="4" class="faint">אין עדיין נתונים.</td></tr>');
     // globe
     kpis($("kpiGlobe"), [["נכנסו למבנה", fmtN(s.globe.visitors)], ["כניסות לחדרים", fmtN(s.globe.entries)]]);
     hbars($("globeRooms"), s.globe.rooms.map(function(r){ return { n:r.n, room:r.room }; }), function(r){ return r.room; });
     // recent
-    $("recentTbl").innerHTML = '<tr><th>מזהה</th><th>ביקור ראשון</th><th>ביקור אחרון</th><th>ימים</th><th>מכשיר</th><th>דפים</th><th>כוכבים ברקע</th><th>המשחק</th><th>חדרים במבנה</th></tr>' +
+    $("recentTbl").innerHTML = '<tr><th>מזהה</th><th>ביקור ראשון</th><th>ביקור אחרון</th><th>ימים</th><th>מכשיר</th><th>דפים</th><th>תפוס כוכב</th><th>כבוש את השמים</th><th>חדרים במבנה</th></tr>' +
       (s.recent.length ? s.recent.map(function(r){
         var pages = Object.keys(r.views).map(function(p){ return (PAGE_NAMES[p]||p) + " " + r.views[p]; }).join(" · ");
         return '<tr><td dir="ltr" style="text-align:right">#'+esc(r.id)+'</td><td>'+fmtDate(r.first)+'</td><td>'+fmtDate(r.last)+'</td><td class="num">'+r.days+'</td><td>'+(r.device==="mobile"?"טלפון":r.device==="desktop"?"מחשב":"")+'</td><td>'+esc(pages)+'</td><td>'+(r.skyScore? fmtN(r.skyScore)+" נק׳ · שלב "+r.skyLevel : "—")+'</td><td>'+(r.gameMaxStarted? "הגיע לרמה "+r.gameMaxStarted+(r.gameMaxDone?" · סיים עד "+r.gameMaxDone:"") : "—")+'</td><td class="num">'+(r.globeRooms||"—")+'</td></tr>';
@@ -403,92 +460,149 @@ td.num{font-variant-numeric:tabular-nums}
     });
   }
 
-  /* =================== texts =================== */
-  var TEXT_PAGES = [["/","דף הבית"],["/book/","דף הספר"],["/game/","דף המשחק"],["/globe/","דף המבנה"]];
-  var TEXT_DEFAULTS = []; // [{key,page,def}]
-  function loadTexts(){
-    $("textsList").innerHTML = '<div class="card faint">טוען את הטקסטים מהאתר…</div>';
-    Promise.all(TEXT_PAGES.map(function(p){ return fetch(p[0], {credentials:"same-origin", cache:"no-store"}).then(function(r){ return r.text(); }).then(function(html){ return [p, html]; }); }))
-      .then(function(list){
-        var seen = {};
-        TEXT_DEFAULTS = [];
-        list.forEach(function(item){
-          var doc = new DOMParser().parseFromString(item[1], "text/html");
-          doc.querySelectorAll("[data-t]").forEach(function(el){
-            var k = el.getAttribute("data-t");
-            if (seen[k]) return; seen[k] = 1;
-            TEXT_DEFAULTS.push({ key:k, page:item[0][1], def: el.textContent.trim() });
-          });
-        });
-        renderTexts();
-      }).catch(function(){ $("textsList").innerHTML = '<div class="card status err">לא הצלחתי לטעון את הטקסטים. נסה לרענן.</div>'; });
+  /* =================== texts (edited on the site) =================== */
+  function openSitePage(path){
+    document.querySelectorAll("[data-page]").forEach(function(b){ b.classList.toggle("on-page", b.dataset.page === path); });
+    $("siteFrame").src = path + "?edit=1";
   }
-  function renderTexts(){
-    var t = PUB.texts || {};
-    var byPage = {};
-    TEXT_DEFAULTS.forEach(function(d){ (byPage[d.page] = byPage[d.page] || []).push(d); });
-    $("textsList").innerHTML = Object.keys(byPage).map(function(pg){
-      return '<div class="card"><h2>'+esc(pg)+'</h2>' + byPage[pg].map(function(d){
-        var val = Object.prototype.hasOwnProperty.call(t, d.key) ? t[d.key] : "";
-        return '<div class="textrow'+(val?" changed":"")+'" data-key="'+esc(d.key)+'"><div><div class="k">'+esc(d.key)+'</div><textarea rows="'+Math.min(6, Math.max(1, Math.ceil(d.def.length/70)))+'" placeholder="'+esc(d.def)+'">'+esc(val || d.def)+'</textarea></div><button class="btn small" data-reset title="החזר לטקסט המקורי">מקורי</button></div>';
-      }).join("") + '</div>';
-    }).join("");
-    document.querySelectorAll(".textrow").forEach(function(row){
-      var ta = row.querySelector("textarea"), d = TEXT_DEFAULTS.find(function(x){return x.key===row.dataset.key;});
-      ta.addEventListener("input", function(){ row.classList.toggle("changed", ta.value.trim() !== d.def); markDirty(); });
-      row.querySelector("[data-reset]").onclick = function(){ ta.value = d.def; row.classList.remove("changed"); markDirty(); };
-    });
-    applyTextFilter();
+  document.querySelectorAll("[data-page]").forEach(function(b){ b.onclick = function(){ openSitePage(b.dataset.page); }; });
+  var frameOpened = false;
+  document.querySelector('.tab[data-tab="texts"]').addEventListener("click", function(){ if (!frameOpened) { frameOpened = true; openSitePage("/"); } });
+  if (location.hash === "#texts") { frameOpened = true; openSitePage("/"); }
+  function renderTextsTab(){
+    var n = Object.keys(PUB.texts || {}).length + Object.keys(PUB.textStyles || {}).filter(function(k){ return !(PUB.texts || {})[k]; }).length;
+    $("txCount").textContent = n ? n + " טקסטים שונו מהמקור" : "כל הטקסטים בנוסח המקורי";
+    $("txReset").hidden = !n;
   }
-  function collectTexts(){
-    if (!loadedTabs.texts || !TEXT_DEFAULTS.length) return;
-    var t = {};
-    document.querySelectorAll(".textrow").forEach(function(row){
-      var d = TEXT_DEFAULTS.find(function(x){return x.key===row.dataset.key;});
-      var v = row.querySelector("textarea").value.trim();
-      if (v && v !== d.def) t[d.key] = v;
-    });
-    PUB.texts = t;
-  }
-  function applyTextFilter(){
-    var q = $("textFilter").value.trim();
-    document.querySelectorAll(".textrow").forEach(function(row){ row.hidden = q && row.textContent.indexOf(q) < 0 && row.querySelector("textarea").value.indexOf(q) < 0; });
-  }
-  $("textFilter").addEventListener("input", applyTextFilter);
-
-  /* =================== chapters =================== */
-  function chapters(){ return PUB.chapters && PUB.chapters.length ? PUB.chapters : JSON.parse(JSON.stringify(window.OFEK_CHAPTERS || [])); }
-  function renderChapters(){
-    $("seriesUrl").value = PUB.seriesUrl || window.OFEK_SERIES_URL || "";
-    var ch = chapters();
-    $("chapList").innerHTML = ch.map(function(c, i){
-      return '<div class="chap" data-i="'+i+'">' +
-        '<label><span>מספר</span><input type="text" data-f="num" value="'+esc(c.num)+'"></label>' +
-        '<label><span>שם הפרק</span><input type="text" data-f="title" value="'+esc(c.title)+'"></label>' +
-        '<label><span>תאריך עברי</span><input type="text" data-f="heDate" value="'+esc(c.heDate)+'"></label>' +
-        '<label><span>תאריך</span><input type="text" data-f="date" value="'+esc(c.date)+'"></label>' +
-        '<label class="wide"><span>קישור לפרק</span><input type="url" dir="ltr" data-f="url" value="'+esc(c.url)+'"></label>' +
-        '<label class="wide"><span>תקציר קצר</span><textarea rows="2" data-f="teaser">'+esc(c.teaser)+'</textarea></label>' +
-        '<div class="tools"><button class="btn small" data-up'+(i===0?" disabled":"")+'>למעלה</button><button class="btn small" data-down'+(i===ch.length-1?" disabled":"")+'>למטה</button><button class="btn small danger" data-del>מחיקה</button></div></div>';
-    }).join("");
-    $("chapList").querySelectorAll(".chap").forEach(function(row){
-      var i = +row.dataset.i;
-      row.querySelectorAll("[data-f]").forEach(function(inp){
-        inp.addEventListener("input", function(){ var c = chapters(); c[i][inp.dataset.f] = inp.value; PUB.chapters = c; markDirty(); });
-      });
-      row.querySelector("[data-up]").onclick = function(){ var c=chapters(); var x=c.splice(i,1)[0]; c.splice(i-1,0,x); PUB.chapters=c; markDirty(); renderChapters(); };
-      row.querySelector("[data-down]").onclick = function(){ var c=chapters(); var x=c.splice(i,1)[0]; c.splice(i+1,0,x); PUB.chapters=c; markDirty(); renderChapters(); };
-      row.querySelector("[data-del]").onclick = function(){ var c=chapters(); c.splice(i,1); PUB.chapters=c.length?c:[]; markDirty(); renderChapters(); };
-    });
-  }
-  $("seriesUrl").addEventListener("input", function(){ PUB.seriesUrl = $("seriesUrl").value.trim() || null; markDirty(); });
-  $("chapAdd").onclick = function(){
-    var c = chapters(), last = c[c.length-1];
-    c.push({ num: last ? String((+last.num||0)+1) : "1", title:"", heDate:"", date:"", url:"", teaser:"" });
-    PUB.chapters = c; markDirty(); renderChapters();
-    var rows = $("chapList").querySelectorAll(".chap"); var r = rows[rows.length-1]; r.scrollIntoView({behavior:"smooth",block:"center"}); r.querySelector('[data-f="title"]').focus();
+  $("txReset").onclick = function(){
+    var b = $("txReset");
+    if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "בטוח? לחץ שוב"; return; }
+    b.disabled = true;
+    api("texts", { method:"POST", body: JSON.stringify({ resetAll: true }) }).then(function(j){
+      PUB.texts = j.texts; PUB.textStyles = j.textStyles || {}; b.dataset.confirm = ""; if (frameOpened) $("siteFrame").contentWindow.location.reload(); b.textContent = "החזר הכל למקור"; b.disabled = false;
+      $("txMsg").textContent = "כל הטקסטים חזרו למקור."; renderTextsTab();
+    }).catch(function(err){ b.disabled = false; $("txMsg").textContent = err.message; });
   };
-  $("chapReset").onclick = function(){ PUB.chapters = null; markDirty(); renderChapters(); };
+
+  /* =================== כבוש את השמים =================== */
+  var GAME_PLAIN = {};
+  var CH_TITLE = {}; GAME_CHAPTERS.forEach(function(c){ CH_TITLE[c[0]] = c[1]; }); CH_TITLE.endless = "מסע אינסופי";
+  function game(){ if (!PUB.game) PUB.game = JSON.parse(JSON.stringify(GAME_DEFAULT)); return PUB.game; }
+  function codeHash(raw){ var t = "polaris-north|" + String(raw||"").toUpperCase().replace(/[^A-Z0-9]/g,""); var h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (var i = 0; i < t.length; i++) { var c = t.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909); h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return (h2 >>> 0).toString(16).padStart(8, "0") + (h1 >>> 0).toString(16).padStart(8, "0"); }
+  function newCode(){ var A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", r = new Uint32Array(6); crypto.getRandomValues(r); var t = ""; for (var i = 0; i < 6; i++) t += A[r[i] % A.length]; return t.slice(0,3) + "-" + t.slice(3); }
+  var fmtWhen = function(at){ return new Date(at).toLocaleString("he-IL", { timeZone:"Asia/Jerusalem", weekday:"short", day:"numeric", month:"numeric", hour:"2-digit", minute:"2-digit" }); };
+  function israelInputToMs(v){ // the input value is Israel time; find the matching moment
+    var guess = new Date(v + ":00Z").getTime();
+    for (var i = 0; i < 2; i++) { var shown = new Date(new Date(guess).toLocaleString("en-US", { timeZone:"Asia/Jerusalem" }) + " UTC").getTime(); guess += new Date(v + ":00Z").getTime() - shown; }
+    return guess;
+  }
+  function allKeys(){ return GAME_CHAPTERS.map(function(c){ return c[0]; }).concat(["endless"]); }
+  function renderGame(){
+    var g = game(), open = new Set(g.open), now = Date.now();
+    var schedOf = {}; g.schedule.forEach(function(e){ schedOf[e.key] = e.at; });
+    $("gmChapters").innerHTML = GAME_CHAPTERS.concat([["endless","מסע אינסופי",0]]).map(function(c, i){
+      var note = schedOf[c[0]] ? (schedOf[c[0]] > now ? "ייפתח " + fmtWhen(schedOf[c[0]]) : "נפתח אוטומטית") : (c[2] ? c[2] + " רמות" : "");
+      return '<label class="chk"><input type="checkbox" data-gk="' + c[0] + '"' + (open.has(c[0]) ? " checked" : "") + '><span>' + (c[0] === "endless" ? "" : (i + 1) + ". ") + esc(c[1]) + '</span><span class="n">' + esc(note) + '</span></label>';
+    }).join("");
+    $("gmChapters").querySelectorAll("input").forEach(function(cb){ cb.onchange = function(){
+      var s2 = new Set(game().open); if (cb.checked) s2.add(cb.dataset.gk); else s2.delete(cb.dataset.gk); game().open = allKeys().filter(function(k){ return s2.has(k); }); markDirty(); }; });
+    // schedule
+    $("schKey").innerHTML = allKeys().filter(function(k){ return !open.has(k); }).map(function(k){ return '<option value="' + k + '">' + esc(CH_TITLE[k]) + '</option>'; }).join("") || '<option value="">כל הפרקים כבר פתוחים</option>';
+    if (!$("schAt").value) { var d = new Date(now + 864e5); $("schAt").value = d.toLocaleDateString("en-CA", { timeZone:"Asia/Jerusalem" }) + "T20:00"; }
+    var list = g.schedule.slice().sort(function(a, b){ return a.at - b.at; });
+    $("schTbl").innerHTML = list.length ? '<tr><th>פרק</th><th>מתי</th><th>מצב</th><th></th></tr>' + list.map(function(e){
+      return '<tr><td>' + esc(CH_TITLE[e.key] || e.key) + '</td><td>' + fmtWhen(e.at) + '</td><td>' + (e.at <= now ? '<span class="pill ok">נפתח</span>' : '<span class="pill warn">ממתין</span>') + '</td><td><button class="btn small danger" data-schdel="' + e.key + '">מחיקה</button></td></tr>'; }).join("")
+      : '<tr><td class="faint">אין פתיחות מתוזמנות.</td></tr>';
+    $("schTbl").querySelectorAll("[data-schdel]").forEach(function(b){ b.onclick = function(){ game().schedule = game().schedule.filter(function(e){ return e.key !== b.dataset.schdel; }); markDirty(); renderGame(); }; });
+    // codes
+    $("cdChapters").innerHTML = allKeys().filter(function(k){ return !open.has(k); }).map(function(k){
+      return '<label class="chk"><input type="checkbox" data-ck="' + k + '"><span>' + esc(CH_TITLE[k]) + '</span></label>'; }).join("") || '<p class="faint">כל הפרקים פתוחים כרגע, אז אין מה לפתוח בקוד.</p>';
+    $("cdTbl").innerHTML = g.codes.length ? '<tr><th>למי</th><th>פותח</th><th>הקוד</th><th></th></tr>' + g.codes.map(function(e){
+      var what = e.ch.indexOf("*") >= 0 ? "כל הפרקים" : e.ch.map(function(k){ return CH_TITLE[k] || k; }).join(" · ");
+      var plain = GAME_PLAIN[e.h];
+      return '<tr><td>' + esc(e.name || "ללא שם") + '</td><td style="white-space:normal">' + esc(what) + (e.free ? " · כל הרמות מיד" : "") + '</td><td>' + (plain ? '<span class="codeval">' + esc(plain) + '</span> <button class="btn small" data-copy="' + esc(plain) + '">העתק</button>' : '<span class="faint">נוצר בגרסה הקודמת, לא שמור כאן</span>') + '</td><td><button class="btn small danger" data-cddel="' + e.h + '">מחיקה</button></td></tr>'; }).join("")
+      : '<tr><td class="faint">עדיין אין קודים.</td></tr>';
+    $("cdTbl").querySelectorAll("[data-cddel]").forEach(function(b){ b.onclick = function(){
+      if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "בטוח?"; return; }
+      game().codes = game().codes.filter(function(e){ return e.h !== b.dataset.cddel; }); delete GAME_PLAIN[b.dataset.cddel]; markDirty(); renderGame(); }; });
+    $("cdTbl").querySelectorAll("[data-copy]").forEach(function(b){ b.onclick = function(){
+      navigator.clipboard.writeText(b.dataset.copy).then(function(){ $("cdMsg").textContent = "הקוד הועתק."; }).catch(function(){ $("cdMsg").textContent = "סמן את הקוד והעתק אותו ידנית."; }); }; });
+  }
+  $("gmAll").onclick = function(){ game().open = allKeys(); markDirty(); renderGame(); };
+  $("gmNone").onclick = function(){ game().open = []; markDirty(); renderGame(); };
+  $("schAdd").onclick = function(){
+    var k = $("schKey").value, v = $("schAt").value;
+    if (!k) { $("schMsg").textContent = "אין פרק נעול לתזמן."; return; }
+    if (!v) { $("schMsg").textContent = "בחר תאריך ושעה."; return; }
+    var at = israelInputToMs(v);
+    if (!(at > Date.now() + 30000)) { $("schMsg").textContent = "בחר זמן בעתיד. כדי לפתוח עכשיו, סמן את הפרק למעלה."; return; }
+    game().schedule = game().schedule.filter(function(e){ return e.key !== k; }).concat([{ key:k, at:at }]);
+    $("schMsg").textContent = "נוסף. אל תשכח לשמור."; markDirty(); renderGame();
+  };
+  $("cdAll").onchange = function(){ $("cdChapters").querySelectorAll("input").forEach(function(cb){ cb.checked = $("cdAll").checked; cb.disabled = $("cdAll").checked; }); };
+  $("cdMake").onclick = function(){
+    var ch = $("cdAll").checked ? ["*"] : [].map.call($("cdChapters").querySelectorAll("input:checked"), function(cb){ return cb.dataset.ck; });
+    if (!ch.length) { $("cdMsg").textContent = "בחר לפחות פרק אחד שהקוד יפתח."; return; }
+    var code, h; do { code = newCode(); h = codeHash(code); } while (game().codes.some(function(e){ return e.h === h; }));
+    game().codes.push({ h:h, name: $("cdName").value.trim().slice(0,40), ch:ch, free: $("cdFree").checked });
+    GAME_PLAIN[h] = code;
+    $("cdName").value = ""; $("cdAll").checked = false; $("cdFree").checked = false;
+    $("cdMsg").textContent = "נוצר הקוד " + code + ". הוא יעבוד אחרי שמירה."; markDirty(); renderGame();
+  };
+
+  /* =================== המבנה הכדורי =================== */
+  function renderGlobe(){
+    var open = new Set((PUB.globe && PUB.globe.open) || []);
+    var q = $("glFilter").value.trim().toLowerCase();
+    var rooms = GLOBE_ROOMS.slice().sort(function(a, b){ return a[1].localeCompare(b[1], "he"); });
+    $("glRooms").innerHTML = rooms.filter(function(r){ return !q || r[1].indexOf(q) >= 0 || r[2].toLowerCase().indexOf(q) >= 0; }).map(function(r){
+      return '<label class="chk"><input type="checkbox" data-room="' + r[0] + '"' + (open.has(r[0]) ? " checked" : "") + '><span>' + esc(r[1]) + '</span><span class="n" dir="ltr">' + esc(r[2]) + '</span></label>'; }).join("");
+    $("glCount").textContent = open.size ? open.size + " חדרים פתוחים, השאר נעולים" : "אין נעילה: כל החדרים פתוחים";
+    $("glRooms").querySelectorAll("input").forEach(function(cb){ cb.onchange = function(){
+      var s2 = new Set((PUB.globe && PUB.globe.open) || []); if (cb.checked) s2.add(cb.dataset.room); else s2.delete(cb.dataset.room);
+      PUB.globe = { open: Array.from(s2).sort() }; markDirty(); renderGlobe(); }; });
+  }
+  $("glFilter").addEventListener("input", renderGlobe);
+  $("glClear").onclick = function(){ PUB.globe = { open: [] }; markDirty(); renderGlobe(); };
+
+  /* =================== chapters (from prog) =================== */
+  var PROG = null;
+  function renderChapters(){
+    if (!PROG) { api("prog").then(function(j){ PROG = j; renderChapters(); }).catch(function(e){ $("progMsg").textContent = e.message; }); return; }
+    $("progWhen").textContent = PROG.syncedAt ? "נבדק לאחרונה: " + fmtDate(PROG.syncedAt) + " · " + PROG.items.length + " פרקים" : "עדיין לא נקראו פרקים מפרוג. לחץ \"רענון מפרוג\".";
+    var edits = PUB.chapterEdits || {};
+    $("chapList").innerHTML = PROG.items.length ? PROG.items.slice().reverse().map(function(c){
+      var e = edits[c.id] || {};
+      return '<div class="pchap' + (e.hidden ? ' hiddenc' : '') + '" data-id="' + esc(c.id) + '">' +
+        (c.image ? '<img src="' + esc(c.image) + '" alt="">' : '<div class="noimg">אין תמונה</div>') +
+        '<div class="pbody"><div class="row" style="gap:6px"><b>' + esc(+c.num === 0 ? "מבוא" : "פרק " + c.num) + '</b><span class="faint">' + esc(c.heDate) + ' · ' + esc(c.date) + '</span><a class="btn small" href="' + esc(c.url) + '" target="_blank" rel="noopener" style="margin-inline-start:auto">בפרוג ↗</a>' +
+        '<label class="chk" style="border:0;padding:0"><input type="checkbox" data-f="hidden"' + (e.hidden ? " checked" : "") + '> הסתר מהאתר</label></div>' +
+        '<label><span class="faint">שם</span><input type="text" data-f="title" placeholder="' + esc(c.title) + '" value="' + esc(e.title || "") + '"></label>' +
+        '<label><span class="faint">' + esc(c.summaryLabel || "תקציר") + (c.summary ? "" : " (בפרוג אין תקציר, מוצגת תחילת הפרק)") + '</span><textarea rows="3" data-f="summary" placeholder="' + esc(c.summary || c.snippet || "") + '">' + esc(e.summary || "") + '</textarea></label></div></div>';
+    }).join("") : '<p class="faint">אין עדיין פרקים.</p>';
+    $("chapList").querySelectorAll(".pchap").forEach(function(row){
+      row.querySelectorAll("[data-f]").forEach(function(inp){
+        inp.addEventListener(inp.type === "checkbox" ? "change" : "input", function(){
+          var ce = PUB.chapterEdits = PUB.chapterEdits || {}, id = row.dataset.id, x = ce[id] = ce[id] || {};
+          if (inp.type === "checkbox") { x.hidden = inp.checked; row.classList.toggle("hiddenc", inp.checked); } else x[inp.dataset.f] = inp.value;
+          markDirty();
+        });
+      });
+    });
+  }
+  function progSync(force){
+    $("progMsg").textContent = "קורא את פרוג…"; $("progMsg").className = "status";
+    $("progSync").disabled = $("progForce").disabled = true;
+    api("prog" + (force ? "?force=1" : ""), { method:"POST" }).then(function(j){
+      PROG = j; $("progMsg").textContent = j.added ? "נוספו " + j.added + " פרקים חדשים." : "הכל מעודכן."; $("progMsg").className = "status ok"; renderChapters();
+    }).catch(function(e){ $("progMsg").textContent = e.message; $("progMsg").className = "status err"; })
+      .finally(function(){ $("progSync").disabled = $("progForce").disabled = false; });
+  }
+  $("progSync").onclick = function(){ progSync(false); };
+  $("progForce").onclick = function(){ progSync(true); };
 
   /* =================== fonts =================== */
   var GOOGLE = ["Rubik","Heebo","Assistant","Alef","Varela Round","Secular One","Suez One","Frank Ruhl Libre","David Libre","Noto Sans Hebrew","Noto Serif Hebrew","IBM Plex Sans Hebrew","Bellefair","Miriam Libre","Karantina","Amatic SC","Tinos","Arimo","M PLUS Rounded 1c","Bona Nova"];

@@ -1,5 +1,5 @@
 <!doctype html><html><head><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest"><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>הדרך לכוכב הצפון</title>
+<title>כבוש את השמים · אופק אפס</title>
 <style id="gameStyle">
 /* ============================== THEME ============================== */
 :root{
@@ -147,7 +147,7 @@ select,option{color:var(--ink);background-color:#0d1630}
 <div id="app" dir="rtl" lang="he">
   <header>
     <div style="display:flex;align-items:center;gap:10px"><a href="/game/" class="icon" aria-label="חזרה לאתר אופק אפס" title="לדף הבית" style="display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#e9edf7;text-decoration:none;font-size:18px">⌂</a>
-    <h1 class="title">הדרך ל<span>כוכב הצפון</span></h1></div>
+    <h1 class="title">כבוש את <span>השמים</span></h1></div>
     <div class="hright">
       <div class="levelbox">
         <div class="levelline" id="levelline"></div>
@@ -232,6 +232,7 @@ select,option{color:var(--ink);background-color:#0d1630}
 <div id="overlay" dir="rtl" lang="he"><div class="card" id="card"></div></div>
 
 <script src="/assets/site.js" data-app="game"></script>
+<script src="/api/state.js"></script>
 <script id="gameScript">
 "use strict";
 /* the untouched page markup, kept so the manager's save can rebuild this exact page (PART 11) */
@@ -1866,16 +1867,17 @@ const CH_META={"מכירים את העגלה":"dipper","כוכבי ההצבעה"
 const BASE_CH=["dipper","pointers","cas","spin","horizon","dome","expert"];
 const DEFAULT_OPEN=["dipper","pointers","cas","spin","horizon","dome","sharpen","uma","arrow","orion","taurus","auriga","gemini","cancer","cmi","lepus","cma","monoceros"];
 /* The manager's choice. The manager panel rewrites the value on the next line and republishes the page; null = DEFAULT_OPEN. ("endless" = the endless journey) */
-const OPEN_SET=/*LOCK_START*/["dipper","pointers","cas","spin","horizon","dome","sharpen"]/*LOCK_END*/;
+const OFEK_G=(window.OFEK_GAME&&typeof window.OFEK_GAME==="object")?window.OFEK_GAME:null;   /* the site admin's settings (/admin), when set */
+const OPEN_SET=OFEK_G&&Array.isArray(OFEK_G.open)?OFEK_G.open:/*LOCK_START*/["dipper","pointers","cas","spin","horizon","dome","sharpen"]/*LOCK_END*/;
 const OpenKeys=new Set(Array.isArray(OPEN_SET)?OPEN_SET:DEFAULT_OPEN);
 const BaseOpen=new Set(OpenKeys);            // what the manager opened for everyone (access codes add to OpenKeys only on the device that typed them)
 /* Access codes for chosen people: each opens chosen chapters on the device where it is typed ("*" = every chapter and the endless journey).
    free:true = every level in those chapters can be played at once, without finishing the ones before.
    Only a hash of each code is kept in the page, so reading the page source does not reveal the codes. The manager panel rewrites the value on the next line. */
-const CODES=/*CODES_START*/[{"h":"ceaed2c20cc100ec","name":"לרבקה - עד פרק 10","ch":["uma","arrow","orion"],"free":false}]/*CODES_END*/;
+const CODES=OFEK_G&&Array.isArray(OFEK_G.codes)?OFEK_G.codes:/*CODES_START*/[{"h":"ceaed2c20cc100ec","name":"לרבקה - עד פרק 10","ch":["uma","arrow","orion"],"free":false}]/*CODES_END*/;
 /* Timed opening: each chapter here opens by itself for everyone when its moment comes ({key, at: milliseconds since 1970, UTC}).
    It goes by the clock of the player's device. The manager panel rewrites the value on the next line. */
-const SCHEDULE=/*SCHED_START*/[{"key":"uma","at":1792861200000}]/*SCHED_END*/;
+const SCHEDULE=OFEK_G&&Array.isArray(OFEK_G.schedule)?OFEK_G.schedule:/*SCHED_START*/[{"key":"uma","at":1792861200000}]/*SCHED_END*/;
 const normCode=raw=>String(raw||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
 function codeHash(raw){ const t="polaris-north|"+normCode(raw); let h1=0xdeadbeef,h2=0x41c6ce57;
   for(let i=0;i<t.length;i++){const c=t.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}
@@ -2667,7 +2669,7 @@ function firstOpenLevel(){ let first=null; for(let i=0;i<LEVELS.length;i++){ if(
 
 function showStart(){
   const started=Object.keys(Save.best).length>0, i=firstOpenLevel(), nOpen=LEVELS.filter(L=>isOpen(L.chapter)).length, cOpen=CHAPTERS.filter((c,ci)=>isOpen(ci)).length;
-  showCard(`${bigStar()}<h2>הדרך לכוכב הצפון</h2>
+  showCard(`${bigStar()}<h2>כבוש את השמים</h2>
     <p>לפני מצפן ולפני GPS, אנשים מצאו את הצפון בעזרת כוכב אחד קטן.<br>${nOpen} רמות ב-${cOpen} פרקים — ועוד פרקים ייפתחו בהמשך.</p>
     ${(n=>n?`<p style="color:var(--gold);margin-top:-6px">הפרק "${esc(keyTitle(n.key))}" ייפתח ${fmtWhen(n.at)}.</p>`:"")(nextScheduled())}
     <div class="btns"><button class="primary ready" id="cStart">${started?`המשך מרמה ${i+1}`:"התחל"}</button><button id="cMap">מפת המסע</button>${CODES.length?`<button id="cCode" class="small">יש לי קוד</button>`:""}</div>`);
@@ -2756,30 +2758,9 @@ function swapLine(sc,name,value){ const S="/*"+name+"_"+"START*/", E="/*"+name+"
 function buildPage(openArr,codes=CODES,sched=SCHEDULE){
   const script=swapLine(swapLine(swapLine($("gameScript").textContent,"LOCK",openArr),"CODES",codes),"SCHED",sched);
   return '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>'+PAGE_RESET+'</style></head><body>\n'
-    +'<title>הדרך לכוכב הצפון</title>\n<style id="gameStyle">'+$("gameStyle").textContent+'</style>\n'+PRISTINE_APP+'\n'+PRISTINE_OVERLAY+'\n\n<script id="gameScript">'+script+'<\/script>\n\n</body></html>';
+    +'<title>כבוש את השמים</title>\n<style id="gameStyle">'+$("gameStyle").textContent+'</style>\n'+PRISTINE_APP+'\n'+PRISTINE_OVERLAY+'\n\n<script id="gameScript">'+script+'<\/script>\n\n</body></html>';
 }
-function showAdmin(){
-  if(!Admin.on) return;
-  const sel=new Set(BaseOpen);
-  const row=(key,title,count)=>`<label style="display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px solid var(--panel-border);cursor:pointer">
-    <input type="checkbox" data-key="${key}" ${sel.has(key)?"checked":""} style="width:20px;height:20px;accent-color:#e8cf8a">
-    <span style="flex:1">${title}</span><span style="color:var(--ink-faint);font-size:13px">${count}</span></label>`;
-  let html=`<div class="cardbar"><h2>ניהול פרקים</h2>
-    <div class="btns"><button class="primary small" id="admSave">שמור לכל השחקנים</button><button id="admCodes" class="small">קודי גישה (${CODES.length})</button><button id="admSched" class="small">פתיחה לפי זמן (${SCHEDULE.filter(e=>e.at>Date.now()).length})</button><button id="admBack" class="small">ביטול</button></div>
-    <p id="admMsg" class="chapdesc" style="margin:6px 0 0;text-align:center"></p></div>
-    <p>סמן אילו פרקים פתוחים לשחקנים. כשתשמור, המשחק יתעדכן אצל כולם.</p><div>`;
-  CHAPTERS.forEach(c=>{ html+=row(c.key,c.title,c.levels.length+" רמות"+schedNote(c.key)); });
-  html+=row("endless","מסע אינסופי",schedNote("endless").replace(/^ · /,""));
-  html+=`</div>`;
-  showCard(html,true);
-  $("admBack").onclick=closeCard; $("admCodes").onclick=()=>showCodes(); $("admSched").onclick=()=>showSchedule();
-  $("admSave").onclick=async()=>{
-    const open=[...document.querySelectorAll("[data-key]")].filter(cb=>cb.checked).map(cb=>cb.dataset.key);
-    const msg=$("admMsg"), btn=$("admSave"); btn.disabled=true; msg.textContent="שומר ומפרסם…";
-    try{ await Admin.art.publish(buildPage(open)); msg.textContent="נשמר! המשחק נטען מחדש אצל כולם."; }
-    catch(e){ msg.textContent=publishError(e); btn.disabled=false; }
-  };
-}
+function showAdmin(){ location.href="/admin/#game"; }   /* chapters, timed openings and access codes are managed in the site's admin */
 function publishError(e){ const c=e&&e.code;
   return c==="conflict" ? "מישהו עדכן את המשחק ממש עכשיו — הדף נטען מחדש. נסה שוב אחרי הטעינה."
     : (c==="not_writer"||c==="not_granted") ? "אין לך הרשאה לשנות את המשחק הזה."
@@ -2873,13 +2854,12 @@ function showCodes(editIdx=null){
     publishCodes([...CODES,entry],$("cdMsg"),$("cdMake"),"codes"); };
 }
 (async()=>{ try{
-  if(!window.claude||typeof window.claude.use!=="function") return;
-  const [art,user]=await Promise.all([window.claude.use("artifact"),window.claude.use("user")]);
-  if(!art||!user) return;
-  const ok=(await user.isOwner().catch(()=>false)) || (await user.canEdit().catch(()=>false));
-  if(!ok) return;
-  Admin.on=true; Admin.art=art; $("btnAdmin").hidden=false;
-  if(Save.reopen){ const r=Save.reopen; delete Save.reopen; writeSave(); afterBoot(()=>{ if(r==="codes") showCodes(); else if(r==="schedule") showSchedule(); }); }
+  /* the site's admin sees every chapter (also locked ones) and a button to the admin page */
+  let flag=null; try{ flag=localStorage.getItem("ofek-admin-device"); }catch(e){}
+  if(flag!=="1") return;
+  const me=await fetch("/api/admin/me",{cache:"no-store",credentials:"same-origin"}).then(r=>r.json());
+  if(!me||!me.admin) return;
+  Admin.on=true; $("btnAdmin").hidden=false; updateHeader();
 }catch(e){} })();
 /* =======================================================================
    BOOT

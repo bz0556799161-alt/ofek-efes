@@ -54,8 +54,9 @@ export default async (req) => {
         doc.sky.groups++;
         doc.sky.misses += num(e.misses, 1000);
         if (num(e.misses) === 0) doc.sky.perfect++;
-        doc.sky.score = Math.max(doc.sky.score, num(e.score, 1000));
-        doc.sky.lvl = Math.max(doc.sky.lvl, Math.min(10, Math.floor(doc.sky.score / 100) + 1));
+        doc.sky.score = Math.max(doc.sky.score, num(e.score, 1e6));
+        doc.sky.lvl = Math.max(doc.sky.lvl, Math.floor(doc.sky.score / 100) + 1);
+        if (e.group) doc.sky.groupsSeen = Object.assign(doc.sky.groupsSeen || {}, { [str(e.group, 16)]: ((doc.sky.groupsSeen || {})[str(e.group, 16)] || 0) + 1 });
         break;
       }
       case "game-start": {
