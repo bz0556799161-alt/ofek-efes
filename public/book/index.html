@@ -113,6 +113,7 @@
       return '<li><a href="' + esc(c.url) + '" target="_blank" rel="noopener">' +
         (c.image ? '<img class="thumb" src="' + esc(c.image) + '" alt="" loading="lazy">' : '<span class="n">' + mark(c) + '</span>') +
         '<span class="t">' + (label(c) ? '<em>' + esc(label(c)) + '</em>' : '') + esc(c.title) + (i === 0 ? '<span class="new">חדש</span>' : '') +
+        (c.summaryLabel ? '<i class="sl">' + esc(c.summaryLabel) + '</i>' : '') +
         '<small>' + esc(sum(c)) + '</small></span>' +
         '<span class="d"><b>' + esc(c.heDate) + '</b>' + esc(c.date) + '</span></a></li>';
     }).join("");
