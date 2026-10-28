@@ -22,6 +22,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:10px 14
 .title{font-family:var(--serif);font-size:clamp(19px,3vw,27px);font-weight:500;margin:0;white-space:nowrap}
 .title span{color:var(--gold)}
 .hright{display:flex;align-items:center;gap:12px;flex:1;justify-content:flex-end;min-width:220px}
+@media (max-width:560px){.hright{flex-basis:100%}}
 .levelbox{display:flex;flex-direction:column;gap:6px;min-width:180px;flex:1;max-width:420px}
 .levelline{font-size:13.5px;color:var(--ink-soft);line-height:1.35}
 .levelline b{color:var(--ink);font-weight:600}
@@ -452,6 +453,7 @@ const GROUPS = {
     stars:["acrux","mimosa","gacrux","imai"],
     lines:[["gacrux","acrux"],["mimosa","imai"]] },
 };
+GROUPS.umi={ name:"הדובה הקטנה", stars:GROUPS.little.stars, lines:GROUPS.little.lines };   /* the Little Dipper is the whole Little Bear: body (the bowl) and a long tail */
 GROUPS.orionFull={ name:"אוריון", stars:[...GROUPS.orionMid.stars,...GROUPS.club.stars,...GROUPS.shield.stars], lines:[...GROUPS.orionMid.lines,...GROUPS.club.lines,...GROUPS.shield.lines] };
 /* The shapes that lead to Polaris (the others are signposts for other directions) */
 const POLE_GROUPS=["dipper","cas"];
@@ -798,11 +800,12 @@ function buildDomeTrees(view, mustPts){
    Stage types: findGroup, pickStars, drawLine, tapStar, tapSpot, tapNorth, spin.
    ======================================================================= */
 const TXT={
-  findGroup:{ dipper:"מצא את שבעת הכוכבים שיוצרים את העגלה הגדולה.", cas:"מצא את חמשת הכוכבים של קסיופאה.", little:"מצא את שבעת הכוכבים של העגלה הקטנה.",
+  findGroup:{ dipper:"מצא את שבעת הכוכבים שיוצרים את העגלה הגדולה.", cas:"מצא את חמשת הכוכבים של קסיופאה.", little:"מצא את שבעת הכוכבים של העגלה הקטנה.", umi:"מצא את שבעת הכוכבים של הדובה הקטנה.",
               tri:"מצא את שלושת הכוכבים של המשולש הקיצי.", orion:"מצא את שבעת הכוכבים הבהירים של אוריון.",
               belt:"מצא את שלושת הכוכבים של חגורת אוריון.", uma:"מצא את שמונה-עשר הכוכבים של הדובה הגדולה.", hex:"מצא את ששת הכוכבים של משושה החורף.", crux:"מצא את ארבעת הכוכבים של צלב הדרום." },
   hintGroup:{ dipper:"חפש ארבעה כוכבים שיוצרים מעין מרובע — זו הקערה. ממנה יוצאת שורה מתעקלת של שלושה כוכבים — זו הידית.",
               cas:"חפש חמישה כוכבים בהירים בשורה מזגזגת, כמו האות W או M.",
+              umi:"שבעה כוכבים: גוף קטן של ארבעה כוכבים, וזנב מתעקל של שלושה. כוכב הצפון — הבהיר שבהם — הוא קצה הזנב.",
               little:"היא דומה לעגלה הגדולה, אבל קטנה וחלשה יותר. כוכב הצפון הוא הקצה של הידית שלה.",
               tri:"חפש את שלושת הכוכבים הבהירים ביותר באזור, שיוצרים משולש גדול וארוך. הבהיר שבהם הוא וגה.",
               orion:"חפש שלושה כוכבים צפופים בשורה ישרה — זו החגורה. מעליה ומתחתיה שני זוגות של כוכבים בהירים: הכתפיים והרגליים.",
@@ -898,11 +901,11 @@ const STAR_HE={vega:"וגה",deneb:"דנב",altair:"אלטאיר",betelgeuse:"ב
   mirzam:"מירזאם — רגל",muliphein:"מוליפיין",iotCMa:"יוטא",thetCMa:"תטא — האוזן",o2CMa:"אומיקרון",wezen:"וזן",adhara:"אדהרה",aludra:"אלודרה — הזנב",furud:"פורוד",
   alpMon:"אלפא",betMon:"בטא",gamMon:"גמא",delMon:"דלתא — הלב",zetMon:"זטא",mon13:"13 — הקרן",epsMon:"אפסילון",mon18:"18",
   castor:"קסטור — ראש",mebsuta:"מבסוטה",tejat:"תג'את — רגל",wasat:"ואסאט",alhena:"אלהנה — רגל"};
-const GROUP_HE={uma:{alkaid:"אלקאיד — קצה הזנב",mizar:"מיצר — הזנב",alioth:"אליות — הזנב",megrez:"מגרץ — שורש הזנב",phecda:"פקדה — הירך",merak:"מרק — הבטן",dubhe:"דובהה — הגב",
+const GROUP_HE={umi:{polaris:"כוכב הצפון — קצה הזנב",yildun:"ילדון — הזנב",epsUMi:"אפסילון — הזנב",zetUMi:"זטא — שורש הזנב",kochab:"כוכב — שומר הקוטב",pherkad:"פרקד — שומר הקוטב",etaUMi:"אטא — הבטן"},uma:{alkaid:"אלקאיד — קצה הזנב",mizar:"מיצר — הזנב",alioth:"אליות — הזנב",megrez:"מגרץ — שורש הזנב",phecda:"פקדה — הירך",merak:"מרק — הבטן",dubhe:"דובהה — הגב",
   uma23:"23 — הראש",muscida:"מוסקידה — האף",upsUMa:"אופסילון — הצוואר",phiUMa:"פי — החזה",thetUMa:"תטא — הברך",talitha:"טליתה — כף",kapUMa:"קאפה — כף",
   chiUMa:"חי — הירך האחורית",psiUMa:"פסי — הברך",muUMa:"מו — כף",tania:"למדא — כף"},monoceros:{xiOri:"קצה הקרן",mon15:"15 — הראש",mon17:"17 — הראש",epsMon:"אפסילון — הלוע",delMon:"דלתא — הלב",betMon:"בטא — רגל",gamMon:"גמא — רגל",mon28:"28 — הגב",zetMon:"זטא — הזנב",alpMon:"אלפא — רגל אחורית"}};
 /* when each shape stands high in the evening sky of Israel (local sidereal time, hours) */
-const SKY={uma:[10.6,12.4],arrow:[5.2,6],sword:[5.2,6],orionMid:[5,6.2],orionFull:[5,6.2],auriga:[5,6],geminiFull:[6.8,7.8],cancer:[8.2,9.2],cmi:[7.2,8.2],wtri:[6.4,7.4],lepus:[5.2,6.2],cma:[6.6,7.6],monoceros:[6.6,7.6],tri:[19.2,20.6],orion:[5,6.2],hex:[6.2,7.2],leo:[10.2,11.4],bootes:[14,15],scorpius:[16.6,17.4],cygnus:[19.8,21],lyra:[18.4,19.4],
+const SKY={umi:[14.5,16.5],uma:[10.6,12.4],arrow:[5.2,6],sword:[5.2,6],orionMid:[5,6.2],orionFull:[5,6.2],auriga:[5,6],geminiFull:[6.8,7.8],cancer:[8.2,9.2],cmi:[7.2,8.2],wtri:[6.4,7.4],lepus:[5.2,6.2],cma:[6.6,7.6],monoceros:[6.6,7.6],tri:[19.2,20.6],orion:[5,6.2],hex:[6.2,7.2],leo:[10.2,11.4],bootes:[14,15],scorpius:[16.6,17.4],cygnus:[19.8,21],lyra:[18.4,19.4],
   square:[22.8,24],andromeda:[0.4,1.4],taurus:[4,5],gemini:[6.8,7.8]};
 function ladder(g,o={}){ const name=GROUPS[g].name, base={place:"tlv",lst:o.lst||SKY[g],require:[g],magLimit:o.magLimit};
   const f=o.dim?.35:1, n=k=>Math.round(k*f);                 // faint shapes: fewer competing field stars
@@ -1076,6 +1079,42 @@ const CHAPTERS=[
      instruction:"ענן מסתיר את הגב של הדובה. מצא את הדובה ולחץ במקום שבו נמצא דובהה.",
      hint1:"דובהה הוא פינת הקערה שממנה יוצא הקו אל הראש — בין מגרץ למרק."})],
    ...ex("בדיוק שם!","דובהה הוא אחד הכוכבים הבהירים בדובה. גם כשענן מסתיר אותו, מי שמכיר את הצורה יודע איפה הוא.")},
+ ]},
+/* ---- the Little Bear: the Little Dipper is the whole bear — body and a long tail, with Polaris at the tip ---- */
+ {title:"הדובה הקטנה", desc:"העגלה הקטנה היא דובה — וכוכב הצפון הוא קצה הזנב שלה", levels:[
+  ...ladder("umi",{dim:true,magLimit:5.8,
+    learn:"ארבעה כוכבים הם הגוף — הקערה. שלושה כוכבים מתעקלים הם הזנב, ובקצה הזנב — כוכב הצפון. שני הכוכבים הבהירים בקצה הקערה, כוכב ופרקד, נקראים 'שומרי הקוטב': כל הלילה הם מקיפים את כוכב הצפון.",
+    intro:{t:"הדובה הקטנה",x:"גם לעגלה הקטנה יש דובה: הדובה הקטנה. הקערה היא הגוף, והידית היא זנב ארוך. בקצה הזנב יושב כוכב הצפון — וכל השמים מסתובבים סביבו."}}),
+  {id:"umi_guards",view:{mode:"horizon",aim:true,place:"tlv",lst:SKY.umi,require:["umi"],magLimit:5.8,fill:[.66,.8],faint:70,medium:10,bright:1},
+   stages:[st.find("umi",{instruction:"ערב קיץ, מבט צפונה. מצא את הדובה הקטנה."}),
+     st.pointers({group:"umi",targets:["kochab","pherkad"],line:["kochab","pherkad"],label:"שומרי הקוטב",
+       instruction:"עכשיו לחץ על שני 'שומרי הקוטב': שני הכוכבים בקצה הקערה — הרחוקים מהזנב.",
+       hint1:"שני הכוכבים הבהירים ביותר בדובה הקטנה, חוץ מכוכב הצפון. הם יושבים בקצה הקערה, הכי רחוק מהזנב.",
+       inGroupMsg:"זה כוכב של הדובה הקטנה — אבל לא אחד משני השומרים",doneText:""})],
+   ...ex("מצאת את השומרים!","כוכב ופרקד מקיפים את כוכב הצפון כל הלילה, כמו שני שומרים שמסתובבים סביב מגדל.")},
+  {id:"umi_city",view:{mode:"horizon",place:"tlv",lst:SKY.umi,require:["umi","polaris"],needNorth:true,lightHide:["yildun","epsUMi","zetUMi","etaUMi"],city:true,magLimit:3.2,fill:[.7,.82],faint:0,medium:0,bright:0,brighter:0,scenery:"town"},
+   stages:[st.star("polaris","כוכב הצפון",{instruction:"מרכז העיר: מהדובה הקטנה רואים רק שלושה כוכבים. איזה מהם הוא כוכב הצפון?",
+       hint1:"שניים מהשלושה קרובים זה לזה — אלה שומרי הקוטב. כוכב הצפון עומד לבד, רחוק מהם, בקצה הזנב שלא רואים.",via:"umi",
+       near:{kochab:"זה כוכב — אחד משני השומרים. כוכב הצפון רחוק יותר, לבדו",pherkad:"זה פרקד — אחד משני השומרים. כוכב הצפון רחוק יותר, לבדו"}}),
+     st.north()],
+   ...ex("מצאת את הצפון!","בעיר רואים מהדובה הקטנה רק את כוכב הצפון ואת שני השומרים. מי שמכיר את הצורה — יודע מי מהשלושה הוא כוכב הצפון.")},
+  {id:"umi_two",view:{mode:"dome",place:"tlv",lst:[12.5,14.5],domeRot:"random",require:["dipper","umi"],magLimit:5.8,faint:120,medium:20,bright:3},
+   stages:[st.find("dipper",{instruction:"מצא את העגלה הגדולה."}),
+     st.line("dipper",{instruction:"גרור קו מכוכבי ההצבעה, והמשך — אל קצה הזנב של הדובה הקטנה."}),
+     st.find("umi",{instruction:"ועכשיו מצא את כל הדובה הקטנה."})],
+   ...ex("שתי הדובות!","כוכבי ההצבעה של הדובה הגדולה מצביעים אל קצה הזנב של הדובה הקטנה. שימו לב: הזנבות של שתי הדובות מתעקלים לכיוונים הפוכים.")},
+  {id:"umi_spin",view:{mode:"chart",require:["umi"],fill:[.45,.55],faint:90,medium:14,bright:2,magLimit:5.8},
+   stages:[st.spin({instruction:"צפה בדובה הקטנה במשך כמה שעות של לילה..."}),st.polaris("spin",{instruction:"הדובה הסתובבה — אבל כוכב אחד שלה כמעט לא זז. לחץ עליו."})],
+   ...ex(ALL_POLARIS,"הדובה הקטנה מסתובבת סביב קצה הזנב שלה, כמו מחוג של שעון שמסתובב סביב הציר.")},
+  {id:"umi_hidden",view:{mode:"dome",place:"tlv",lst:SKY.umi,domeRot:"random",require:["umi"],cloudHide:["kochab"],clouds:2,magLimit:5.8,faint:120,medium:20,bright:3},
+   stages:[st.guess("kochab",{lines:["umi"],label:"כוכב",tolDeg:3,
+     instruction:"ענן מסתיר את כוכב — השומר הבהיר. מצא את הדובה הקטנה ולחץ במקום שבו הוא נמצא.",
+     hint1:"כוכב הוא פינת הקערה שצמודה לשורש הזנב — ליד פרקד, השומר השני.",
+     miss:"לא שם. כוכב הוא פינת הקערה שבין שורש הזנב לפרקד"})],
+   ...ex("בדיוק שם!","לפני כ-3,000 שנה הקוטב השמימי היה קרוב יותר לכוכב מאשר לכוכב הצפון — הציר של כדור הארץ זז לאט מאוד.")},
+  {id:"umi_north",view:{mode:"dome",place:"tlv",lst:SKY.umi,domeRot:"random",require:["umi"],magLimit:5.8,clouds:2,plane:true,faint:140,medium:22,bright:3},
+   stages:[st.find("umi",{instruction:"עננים ומטוס, וכל כיפת השמים. מצא את הדובה הקטנה."}),st.domeNorth()],
+   ...ex("מצאת את הצפון!","מי שמוצא את הדובה הקטנה — מוצא את כוכב הצפון בקצה הזנב, ואיתו את הצפון.")},
  ]},
  {title:"חץ הצפון", desc:"החגורה והחרב של אוריון — חץ שמצביע אל כוכב הצפון", levels:[
   ...ladder("arrow",{skipSmall:true,skipWeather:true,
@@ -1565,6 +1604,15 @@ const MEDIUM={
      instruction:"ענן מסתיר את כף הרגל הקדמית. מצא את הדובה ולחץ במקום שבו היא נמצאת.",hint1:"מהחזה יורדת רגל אל הברך, ומשם אל זוג כוכבים צמודים — הכף. הענן מסתיר את הבהיר שבהם."})],
    ...ex("בדיוק שם!","מי שמכיר את כל הדובה — לא רק את העגלה — יודע להשלים גם חלק מוסתר.")},
  ],
+ "הדובה הקטנה":[
+  {id:"m_umi_1",view:Mh("umi",{magLimit:5.8,faint:90,medium:14,bright:2}),stages:[st.find("umi",{instruction:"התמונה עקומה. מצא את הדובה הקטנה."})],
+   ...ex("מצוין!","כוכבי הדובה הקטנה חלשים — חוץ מכוכב הצפון ושני השומרים. מהם מתחילים.")},
+  {id:"m_umi_2",view:Md("umi",{require:["umi","uma"],magLimit:5.8,faint:140,medium:22,bright:3}),stages:[st.find("uma",{instruction:"מצא את הדובה הגדולה."}),st.find("umi",{instruction:"ועכשיו את הדובה הקטנה."})],
+   ...ex("שתי דובות!","הדובה הגדולה והדובה הקטנה — שתיהן מסתובבות כל הלילה סביב כוכב הצפון.")},
+  {id:"m_umi_3",view:Mh("umi",{magLimit:5.8,cloudHide:["polaris"],clouds:1,faint:90,medium:14,bright:2}),stages:[st.guess("polaris",{lines:["umi"],label:"כוכב הצפון",tolDeg:3,
+     instruction:"ענן מסתיר את קצה הזנב. לחץ במקום שבו נמצא כוכב הצפון.",hint1:"עקוב אחרי הזנב מהקערה: זטא, אפסילון, ילדון — ועוד צעד אחד באותה קשת."})],
+   ...ex("בדיוק שם!","הזנב של הדובה הקטנה מוביל אל כוכב הצפון — גם כשענן מסתיר אותו.")},
+ ],
  "חץ הצפון":[
   {id:"m_arr_1",view:{mode:"horizon",place:"tlv",faceAz:180,alt0:45,skyOnly:true,lst:[5,6.2],require:["arrow"],fill:[.4,.52],faint:180,medium:30,bright:3,scenery:"hills"},
    stages:[st.find("arrow",{instruction:"מבט דרומה בערב חורף. מצא את החץ: שלושת כוכבי החגורה, החרב ואטא."})],
@@ -1751,11 +1799,11 @@ const MEDIUM={
 CHAPTERS.forEach(c=>{ const m=MEDIUM[c.title]; if(!m) return; c.levels.splice(c.title==="כל כיפת השמים"?0:Math.ceil(c.levels.length/2),0,...m); });
 
 const LINKS=[
- ["אוריון",{title:"חיבור: מהדובה אל אוריון", desc:"הדובה הגדולה, חץ הצפון ואוריון — יחד בשמי החורף", levels:[
+ ["אוריון",{title:"חיבור: מהדובה אל אוריון", desc:"שתי הדובות, חץ הצפון ואוריון — יחד בשמי החורף", levels:[
   {id:"lk1_1",view:{mode:"dome",place:"tlv",lst:[5.8,6.6],domeRot:"random",require:["uma","orion","polaris"],faint:220,medium:36,bright:4},
    stages:[st.find("uma",{instruction:"ליל חורף. מצא את הדובה הגדולה."}),st.find("orion",{instruction:"עכשיו את אוריון."}),st.polaris("dipper",{instruction:"עכשיו מצא את כוכב הצפון — בעזרת העגלה."}),st.domeNorth()],
    ...ex("מצאת את הצפון!","בערבי חורף רואים את שתיהן: הדובה בצפון-מזרח ואוריון בדרום — ושתיהן מובילות לצפון."),
-   intro:{t:"פרק חיבור",x:"שלושה פרקים — הדובה, חץ הצפון ואוריון — בשמים אחד. עכשיו משתמשים בכולם ביחד."}},
+   intro:{t:"פרק חיבור",x:"הדובה הגדולה, הדובה הקטנה, חץ הצפון ואוריון — בשמים אחד. עכשיו משתמשים בכולם ביחד."}},
   {id:"lk1_2",view:{mode:"horizon",place:"tlv",lst:[5.8,6.6],require:["uma","polaris"],needNorth:true,fill:[.72,.84],faint:180,medium:30,bright:3,scenery:"trees"},
    stages:[st.find("uma",{instruction:"מבט צפונה בערב חורף. מצא את הדובה הגדולה."}),st.polaris("dipper"),st.north()],
    ...ex("מצאת את הצפון!","הגב והבטן של הדובה — כוכבי ההצבעה — מצביעים אל כוכב הצפון, ומשם ישר למטה אל הצפון.")},
@@ -1765,6 +1813,9 @@ const LINKS=[
   {id:"lk1_4",view:{mode:"dome",place:"tlv",lst:[5.8,6.6],domeRot:"random",require:["orionMid","uma"],clouds:3,moon:true,plane:true,faint:220,medium:36,bright:4},
    stages:[st.find("orionMid",{instruction:"עננים, ירח ומטוס. מצא את אוריון — עם הראש, החרב ואטא."}),st.find("uma",{instruction:"ועכשיו את הדובה הגדולה כולה."})],
    ...ex("מצוין!","שלושים כוכבים, שתי צורות גדולות — בשמים מלאים הפרעות.")},
+  {id:"lk1_5",view:{mode:"dome",place:"tlv",lst:[5.8,6.6],domeRot:"random",require:["umi","orion"],magLimit:5.8,faint:150,medium:24,bright:3},
+   stages:[st.find("umi",{instruction:"ליל חורף, שמים חשוכים. מצא את הדובה הקטנה."}),st.arrow({instruction:"עכשיו גרור את חץ הצפון של אוריון — הוא צריך להגיע אל קצה הזנב של הדובה הקטנה."})],
+   ...ex("מצוין!","החץ של אוריון מגיע מהצד השני של השמים — בדיוק אל קצה הזנב של הדובה הקטנה.")},
  ]}],
  ["התאומים",{title:"חיבור: השור, העגלון והתאומים", desc:"שלוש צורות שנוגעות זו בזו מעל אוריון", levels:[
   {id:"lk2_1",view:{mode:"dome",place:"tlv",lst:[5.4,6.6],domeRot:"random",require:["taurus","auriga","gemini"],faint:220,medium:36,bright:4},
@@ -1859,13 +1910,13 @@ LINKS.forEach(([after,ch])=>{ const i=CHAPTERS.findIndex(c=>c.title===after); if
 const LEVELS=CHAPTERS.flatMap((c,ci)=>c.levels.map(l=>Object.assign({chapter:ci},l)));
 /* -------- chapters: keys, and which ones players may open -------- */
 const CH_META={"מכירים את העגלה":"dipper","כוכבי ההצבעה":"pointers","קסיופאה":"cas","השמים מסתובבים":"spin","מסתכלים צפונה":"horizon","כיפת השמים":"dome",
-  "חידוד: מוצאים את הצפון":"sharpen","הדובה הגדולה":"uma","חץ הצפון":"arrow","אוריון":"orion","השור":"taurus","העגלון":"auriga","התאומים":"gemini","הסרטן":"cancer",
+  "חידוד: מוצאים את הצפון":"sharpen","הדובה הגדולה":"uma","הדובה הקטנה":"umi","חץ הצפון":"arrow","אוריון":"orion","השור":"taurus","העגלון":"auriga","התאומים":"gemini","הסרטן":"cancer",
   "הכלב הקטן":"cmi","הארנבת":"lepus","הכלב הגדול":"cma","חד הקרן":"monoceros",
   "חידות המומחה":"expert","המשולש הקיצי":"tri","משושה החורף":"hex","חידות מוזרות":"weird","האריה":"leo","רועה הדובים":"bootes","העקרב":"scorpius",
   "הברבור והנבל":"cygnus","פגסוס ואנדרומדה":"pegasus","כל כיפת השמים":"allsky",
   "חיבור: מהדובה אל אוריון":"link1","חיבור: השור, העגלון והתאומים":"link2","חיבור: הסרטן, הכלב הקטן והארנבת":"link3","חיבור: הכלבים וחד הקרן":"link4","חיבור: קיץ וחורף":"link5","חיבור: שמי האביב והקיץ":"link6"};
 const BASE_CH=["dipper","pointers","cas","spin","horizon","dome","expert"];
-const DEFAULT_OPEN=["dipper","pointers","cas","spin","horizon","dome","sharpen","uma","arrow","orion","taurus","auriga","gemini","cancer","cmi","lepus","cma","monoceros"];
+const DEFAULT_OPEN=["dipper","pointers","cas","spin","horizon","dome","sharpen","uma","umi","arrow","orion","taurus","auriga","gemini","cancer","cmi","lepus","cma","monoceros"];
 /* The manager's choice. The manager panel rewrites the value on the next line and republishes the page; null = DEFAULT_OPEN. ("endless" = the endless journey) */
 const OFEK_G=(window.OFEK_GAME&&typeof window.OFEK_GAME==="object")?window.OFEK_GAME:null;   /* the site admin's settings (/admin), when set */
 const OPEN_SET=OFEK_G&&Array.isArray(OFEK_G.open)?OFEK_G.open:/*LOCK_START*/["dipper","pointers","cas","spin","horizon","dome","sharpen"]/*LOCK_END*/;
@@ -2251,9 +2302,10 @@ const STAGES={
         if(State.found.size===set.length){drawGroupLines(s.group);groupLabel(s.group);stageComplete();} }
       else { if(s.group==="dipper"&&star.key&&GROUPS.little.stars.includes(star.key)) toast("זו העגלה הקטנה! היא דומה — אבל קטנה וחלשה יותר");
              else if(s.group==="little"&&star.key&&GROUPS.dipper.stars.includes(star.key)) toast("זו העגלה הגדולה. חפש את הקטנה — ליד כוכב הצפון");
+             else if(s.group==="umi"&&star.key&&GROUPS.dipper.stars.includes(star.key)) toast("זו הדובה הגדולה. חפש את הקטנה — ליד כוכב הצפון");
              else if(s.group==="orion"&&star.key==="sirius") toast("זה סיריוס — הכוכב הבהיר ביותר בשמים. הוא לא חלק מאוריון");
              else if(s.group==="tri"&&star.key==="arcturus") toast("זה ארקטורוס — בהיר מאוד, אבל לא חלק מהמשולש");
-             else if(star.key&&!(State.kind==="level"&&State.levelIdx<51)){ const og=Object.keys(GROUPS).find(g=>!["belt","sickle","little"].includes(g)&&g!==s.group&&GROUPS[g].stars.includes(star.key)); if(og) toast("זה כוכב של "+GROUPS[og].name); }
+             else if(star.key&&!(State.kind==="level"&&State.levelIdx<51)){ const og=Object.keys(GROUPS).find(g=>!["belt","sickle","little","umi"].includes(g)&&g!==s.group&&GROUPS[g].stars.includes(star.key)); if(og) toast("זה כוכב של "+GROUPS[og].name); }
              wrong(star); } },
     hint2(s){const R=groupRegion(GROUPS[s.group].stars);showRegion(R.c,R.r*1.25+20*pxk())},
     hint3(s){flashLines([s.group])},
@@ -2296,7 +2348,7 @@ const STAGES={
       const V=State.view, T=V.P[s.target];
       if(s.target==="polaris"){
         const gs=viaGroups(s.via==="spin"?"auto":s.via);
-        if(s.via!=="spin"){ gs.forEach(g=>{if(!$("layer-lines").querySelector(`[data-g="${g}"]`))drawGroupLines(g,"cline draw","layer-lines",.08)}); gs.forEach(g=>showGuide(g,true)); }
+        if(s.via!=="spin"){ gs.forEach(g=>{if(!$("layer-lines").querySelector(`[data-g="${g}"]`))drawGroupLines(g,"cline draw","layer-lines",.08)}); gs.forEach(g=>{ if(GUIDES[g]) showGuide(g,true); }); }
         haloAt(T); label(T,"כוכב הצפון",{gold:true,size:15});
         if(V.spec.showAlt && V.mode==="horizon") showAltitude();
       } else {
@@ -2501,14 +2553,18 @@ function setupPuzzleScene(){
   (V.spec.preLines||[]).forEach(g=>drawGroupLines(g,"cline","layer-lines",0));
   $("place").textContent = V.mode==="chart" ? "" : V.spec.hidePlace ? "מקום לא ידוע · מבט צפונה" : `${V.place.name} · קו רוחב ${Math.round(V.lat)}° · ${V.mode==="dome"?"מבט למעלה":"מבט "+["צפונה","לצפון-מזרח","מזרחה","לדרום-מזרח","דרומה","לדרום-מערב","מערבה","לצפון-מערב"][Math.round((((V.spec.aim?V.faceAz:(V.spec.faceAz||0))%360)+360)%360/45)%8]}`;
   if(V.mode==="dome" && !Save.zoomTip){ Save.zoomTip=1; writeSave(); setTimeout(()=>toast("קשה ללחוץ? אפשר להגדיל: שתי אצבעות, גלגלת העכבר או הכפתור +"),900); }
-  State.stage=0; State.solved=false; State.busy=false;
+  State.stage=0; State.solved=false; State.busy=false; State.carry=new Set(); State.found=null;
   $("btnNext").disabled=true; $("btnNext").classList.remove("ready"); $("btnHint").disabled=false;
   updateHeader(); startStage();
 }
 function startStage(){
+  const prev=State.stage>0?State.puzzle.stages[State.stage-1]:null;
+  if(prev&&prev.type==="findGroup"&&State.found&&State.carry) State.found.forEach(k=>State.carry.add(k));
   State.found=new Set(); State.wrongTried=new Set(); State.hintLevel=0;
   const s=curStage(); setInstruction(s.instruction); $("hinttext").textContent=""; $("choices").innerHTML=""; $("choices").hidden=true; $("btnHint").disabled=s.type==="learn";
   if(State.stage===0) $("explain").textContent="";
+  if(s.type==="findGroup"&&State.carry&&State.carry.size){ const set=GROUPS[s.group].stars, got=set.filter(k=>State.carry.has(k)&&State.view.P[k]);
+    if(got.length&&got.length<set.length){ got.forEach(k=>State.found.add(k)); toast(`${got.length} כוכבים כבר מסומנים — מצא את ${set.length-got.length} הנותרים`); } }
   updateCounter(); if(STAGES[s.type].start) STAGES[s.type].start(s);
 }
 function stageComplete(delay=700){
