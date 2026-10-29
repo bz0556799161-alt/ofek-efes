@@ -144,3 +144,60 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export function israelDay(ts = Date.now()) {
   return new Date(ts).toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" });
 }
+
+/* ---------------- כבוש את השמים: chapters and access codes, checked on the server ----------------
+   The game page reaches the browser without the levels of every chapter this visitor may not open (see the edge gate),
+   and the code hashes never leave the server. */
+export const normGameCode = (raw) => String(raw || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+// the same hash the admin page stores for each code (h)
+export function gameCodeHash(raw) {
+  const t = "polaris-north|" + normGameCode(raw);
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < t.length; i++) { const c = t.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (h2 >>> 0).toString(16).padStart(8, "0") + (h1 >>> 0).toString(16).padStart(8, "0");
+}
+// the game settings in force: the admin's, or (never saved yet) the defaults shipped with the admin page
+export async function gameSettings(cfg, req) {
+  if (cfg.public.game) return cfg.public.game;
+  try {
+    const t = await (await fetch(new URL("/admin/data.js", req.url))).text();
+    const m = t.match(/var GAME_DEFAULT=(\{.*?\});/s);
+    if (m) return JSON.parse(m[1]);
+  } catch (e) {}
+  return { open: [], schedule: [], codes: [] };
+}
+// the codes a visitor typed are kept in a signed cookie: "h1~h2.signature"
+export async function gameGrantSig(list) { return hmac(await getSecret(), "game:" + list); }
+export async function readGameGrant(req) {
+  const c = readCookies(req).ofek_g || "";
+  const i = c.lastIndexOf(".");
+  if (i <= 0) return [];
+  const list = c.slice(0, i);
+  if (!safeEqual(c.slice(i + 1), await gameGrantSig(list))) return [];
+  return list.split("~").filter((h) => /^[0-9a-f]{16}$/.test(h));
+}
+export async function gameGrantCookie(hashes) {
+  const list = [...new Set(hashes)].slice(-20).join("~");
+  return cookie("ofek_g", list + "." + (await gameGrantSig(list)), 365 * 86400);
+}
+// which chapters this visitor may open now
+export async function gameAccess(req, cfg) {
+  if (await isAdmin(req)) return { admin: true, all: true, open: [], keys: [], free: [] };
+  const g = await gameSettings(cfg, req), now = Date.now();
+  const open = new Set(g.open || []);
+  (g.schedule || []).forEach((e) => { if (e.at <= now) open.add(e.key); });
+  const hs = await readGameGrant(req), keys = new Set(), free = new Set();
+  let all = open.has("*");
+  for (const e of g.codes || []) {
+    if (!hs.includes(e.h)) continue;
+    for (const k of e.ch || []) { if (k === "*") all = true; keys.add(k); if (e.free) free.add(k); }
+  }
+  return { admin: false, all, open: [...open], keys: [...keys], free: [...free] };
+}
+// what the public may see of the game settings: no code hashes
+export function publicGame(game) {
+  if (!game) return null;
+  return Object.assign({}, game, { codes: (game.codes || []).length ? [{ h: "", name: "", ch: [], free: false }] : [] });
+}

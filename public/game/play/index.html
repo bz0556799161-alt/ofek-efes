@@ -235,7 +235,7 @@ select,option{color:var(--ink);background-color:#0d1630}
 <script src="/assets/site.js" data-app="game"></script>
 <script src="/api/state.js"></script>
 <script id="gameScript">
-"use strict";
+"use strict";(()=>{ /*WRAP*/
 /* the untouched page markup, kept so the manager's save can rebuild this exact page (PART 11) */
 const PRISTINE_APP=document.getElementById("app").outerHTML, PRISTINE_OVERLAY=document.getElementById("overlay").outerHTML;
 /* =======================================================================
@@ -922,9 +922,13 @@ function ladder(g,o={}){ const name=GROUPS[g].name, base={place:"tlv",lst:o.lst|
   if(!o.skipWeather) add("weather",{view:Object.assign({mode:"dome",domeRot:"random",faint:n(220),medium:n(36),bright:o.dim?0:4,clouds:3,moon:!o.dim},base),
     stages:[st.find(g,{instruction:(o.dim?"עננים. ":"עננים וירח. ")+"מצא את "+name+"."})],...ex("מצוין!","עננים מסתירים, הירח מעמעם — אבל הכוכבים הבהירים של הצורה נשארים.")});
   return L; }
+/* On the site, the server leaves out the levels of every chapter this visitor may not open: they arrive as LOCKED_LV(key)
+   placeholders (LV_COUNT keeps the level numbers), so a locked chapter is simply not in the page. Recount LV_COUNT after changing levels. */
+const LV_COUNT=/*LVC*/{"dipper":8,"pointers":7,"cas":7,"spin":5,"horizon":9,"dome":5,"sharpen":8,"uma":13,"umi":14,"arrow":11,"orion":17,"link1":5,"taurus":13,"auriga":11,"gemini":14,"link2":4,"cancer":10,"cmi":11,"lepus":10,"link3":4,"cma":11,"monoceros":9,"expert":10,"link4":4,"tri":11,"hex":10,"weird":9,"link5":4,"leo":12,"bootes":11,"scorpius":11,"link6":4,"cygnus":13,"pegasus":13,"allsky":13}/*LVC_END*/;
+const LOCKED_LV=k=>Array.from({length:LV_COUNT[k]||0},(_,i)=>({id:"locked_"+k+"_"+i,locked:true,view:{mode:"chart"},stages:[]}));
 /* -------- the journey: chapters & levels -------- */
 const CHAPTERS=[
- {title:"מכירים את העגלה", desc:"לזהות את הצורה — בכל כיוון, בכל שמים", levels:[
+ {title:"מכירים את העגלה", desc:"לזהות את הצורה — בכל כיוון, בכל שמים", levels:/*@dipper*/[
   {view:{mode:"chart",require:["dipper"],rot:0,jitter:0,fill:[.55,.6],faint:60,medium:8}, stages:[st.find("dipper")],
    ...ex("מצוין! מצאת את העגלה הגדולה.","העגלה הגדולה מורכבת משבעה כוכבים בולטים: ארבעה יוצרים מעין קערה ושלושה יוצרים את הידית."),
    intro:{t:"ברוך הבא לשמי הלילה",x:"לפני מצפן ולפני GPS, אנשים מצאו את הצפון בעזרת כוכב אחד. המסע מתחיל בצורה המפורסמת ביותר בשמים: העגלה הגדולה."}},
@@ -943,8 +947,8 @@ const CHAPTERS=[
    ...ex("מצוין!","במקום חשוך רואים אלפי כוכבים. הסוד: להתעלם מהחלשים ולחפש את הבהירים שיוצרים צורה.")},
   {view:{mode:"chart",require:["dipper","little"],fill:[.7,.8],faint:120,medium:20,bright:2,magLimit:5.8}, stages:[st.find("dipper",{instruction:"יש כאן שתי עגלות! מצא את העגלה הגדולה."})],
    ...ex("מצוין! לא התבלבלת.","ליד העגלה הגדולה יש עוד עגלה — העגלה הקטנה. היא קטנה וחלשה יותר, ובקצה הידית שלה נמצא כוכב הצפון.")},
- ]},
- {title:"כוכבי ההצבעה", desc:"מהעגלה הגדולה אל כוכב הצפון", levels:[
+ ]/*@end*/},
+ {title:"כוכבי ההצבעה", desc:"מהעגלה הגדולה אל כוכב הצפון", levels:/*@pointers*/[
   {view:{mode:"chart",require:["dipper"],rot:0,fill:[.5,.6],faint:90,medium:14}, stages:[st.pointers()],
    ...ex("נכון! אלה כוכבי ההצבעה.","שני הכוכבים בצד החיצוני של הקערה נקראים כוכבי ההצבעה. הם מצביעים לכיוון אחד מיוחד מאוד..."),
    intro:{t:"כוכבי ההצבעה",x:"לעגלה הגדולה יש סוד: שני כוכבים בקצה הקערה מצביעים אל כוכב הצפון."}},
@@ -958,8 +962,8 @@ const CHAPTERS=[
   {view:{mode:"chart",require:["dipper","polaris"],fill:[.66,.78],faint:200,medium:32,bright:4,clouds:3,brighter:2}, stages:[st.polaris("dipper")], ...ex(ALL_POLARIS,EXPL.pointers)},
   {view:{mode:"chart",require:["dipper","polaris"],fill:[.62,.74],faint:180,medium:30,bright:3,moon:true,brighter:2}, stages:[st.polaris("dipper",{instruction:"הירח זורח ומסתיר כוכבים חלשים. מצא את כוכב הצפון."})],
    ...ex(ALL_POLARIS,"אור הירח מעלים את הכוכבים החלשים — אבל העגלה וכוכב הצפון נשארים.")},
- ]},
- {title:"קסיופאה", desc:"כשהעגלה לא עוזרת — יש עוד דרך", levels:[
+ ]/*@end*/},
+ {title:"קסיופאה", desc:"כשהעגלה לא עוזרת — יש עוד דרך", levels:/*@cas*/[
   {view:{mode:"chart",require:["cas"],lst:13,jitter:12,fill:[.4,.5],faint:110,medium:18}, stages:[st.find("cas")],
    ...ex("מצאת את קסיופאה!","קסיופאה היא חמישה כוכבים בצורת W. היא נמצאת מול העגלה הגדולה, בצד השני של כוכב הצפון."),
    intro:{t:"קסיופאה",x:"מה עושים כשהעגלה הגדולה נמוכה או מוסתרת? מחפשים את קסיופאה — חמישה כוכבים בצורת W."}},
@@ -975,8 +979,8 @@ const CHAPTERS=[
    ...ex("בדיוק שם!",EXPL.cas)},
   {view:{mode:"chart",require:["cas","polaris"],exclude:["dipper"],cloudExclude:true,fill:[.72,.82],faint:170,medium:28,bright:3,brighter:2}, stages:[st.polaris("cas",{instruction:"העגלה הגדולה מאחורי העננים. מצא את כוכב הצפון בדרך אחרת."})],
    ...ex(ALL_POLARIS,EXPL.cas+" כך יש לך תמיד שתי דרכים.")},
- ]},
- {title:"השמים מסתובבים", desc:"הכוכב שכמעט אינו זז", levels:[
+ ]/*@end*/},
+ {title:"השמים מסתובבים", desc:"הכוכב שכמעט אינו זז", levels:/*@spin*/[
   {view:{mode:"chart",require:["polaris","dipper"],fill:[.5,.6],faint:120,medium:20,bright:3}, stages:[st.spin(),st.polaris("spin",{instruction:"איזה כוכב כמעט לא זז? לחץ עליו."})],
    ...ex(ALL_POLARIS,"כל השמים מסתובבים סביב נקודה אחת — הקוטב השמימי. כוכב הצפון קרוב מאוד אליה, ולכן כמעט אינו זז ונשאר תמיד מעל הצפון."),
    intro:{t:"השמים מסתובבים",x:"במשך הלילה הכוכבים נעים לאט על פני השמים. רק כוכב אחד כמעט לא זז..."}},
@@ -987,8 +991,8 @@ const CHAPTERS=[
   {view:{mode:"chart",require:["polaris","cas"],fill:[.45,.55],faint:180,medium:28,bright:4,moon:true}, stages:[st.spin(),st.polaris("spin",{instruction:"איזה כוכב נשאר כמעט במקום?"})],
    ...ex(ALL_POLARIS,"קסיופאה והעגלה מסתובבות סביב כוכב הצפון כמו מחוגים של שעון — רק בכיוון ההפוך.")},
   {view:{mode:"chart",require:["dipper","cas","polaris"],fill:[.8,.86],faint:200,medium:34,bright:4,clouds:3,brighter:2}, stages:[st.polaris("both")], ...ex(ALL_POLARIS,EXPL.between)},
- ]},
- {title:"מסתכלים צפונה", desc:"שמים אמיתיים מעל האופק", levels:[
+ ]/*@end*/},
+ {title:"מסתכלים צפונה", desc:"שמים אמיתיים מעל האופק", levels:/*@horizon*/[
   {view:{mode:"horizon",place:"tlv",lst:[9.5,12.5],require:["dipper","polaris"],fill:[.72,.82],faint:150,medium:24,bright:3,scenery:"hills",brighter:1},
    stages:[st.polaris("dipper")], ...ex(ALL_POLARIS,"זה מה שרואים בערבי אביב בישראל: העגלה הגדולה גבוהה מעל כוכב הצפון."),
    intro:{t:"מסתכלים צפונה",x:"עכשיו אתה עומד בחוץ, בתל אביב, ומסתכל צפונה. למטה — האופק. השמים כאן הם השמים האמיתיים."}},
@@ -1010,8 +1014,8 @@ const CHAPTERS=[
    stages:[st.polaris("auto",{instruction:"טסת לאמסטרדם שבאירופה. מצא את כוכב הצפון."}),st.north()], ...ex("מצאת את הצפון!","באמסטרדם כוכב הצפון גבוה — כ-52° מעל האופק — והעגלה הגדולה אף פעם לא שוקעת. "+EXPL.alt)},
   {view:{mode:"horizon",place:"tlv",require:["dipper","polaris"],needNorth:true,fill:[.75,.85],faint:170,medium:28,bright:3,scenery:"trees",hidePolaris:true,clouds:2},
    stages:[st.pointers(),st.spot("dipper"),st.north()], ...ex("מצאת את הצפון!","גם בלי לראות את כוכב הצפון, ידעת בדיוק איפה הוא — ואיפה הצפון.")},
- ]},
- {title:"כיפת השמים", desc:"שוכבים על הגב ומסתכלים למעלה", levels:[
+ ]/*@end*/},
+ {title:"כיפת השמים", desc:"שוכבים על הגב ומסתכלים למעלה", levels:/*@dome*/[
   {view:{mode:"dome",place:"tlv",domeRot:0,require:["polaris"],faint:200,medium:32,bright:4,anyGuide:true,brighter:2},
    stages:[st.polaris("auto")], ...ex(ALL_POLARIS,"בכיפת השמים כל השמים מוצגים כעיגול: המרכז הוא הנקודה שמעל ראשך, והשפה היא האופק מסביב."),
    intro:{t:"כיפת השמים",x:"דמיין שאתה שוכב על הגב באמצע שדה. כל השמים מעליך — עיגול אחד גדול. בשפה שלו: האופק מכל הצדדים."}},
@@ -1023,9 +1027,9 @@ const CHAPTERS=[
    stages:[st.polaris("auto",{instruction:"שים לב למטוס! מצא את כוכב הצפון."}),st.domeNorth()], ...ex("מצאת את הצפון!","מטוס זז ומהבהב — כוכבים לא. ככה מבדילים ביניהם.")},
   {view:{mode:"dome",place:"tlv",domeRot:"random",require:["dipper","polaris"],faint:220,medium:36,bright:4,hidePolaris:true,clouds:3},
    stages:[st.pointers(),st.spot("dipper"),st.domeNorth()], ...ex("מצאת את הצפון!","אפילו כשכוכב הצפון מוסתר וכיפת השמים מסובבת — מצאת את הדרך.")},
- ]},
+ ]/*@end*/},
  /* ===================== THE JOURNEY (manager-controlled order): north → the north arrow → Orion → his winter neighbours ===================== */
- {title:"חידוד: מוצאים את הצפון", desc:"העגלה, קסיופאה וכוכב הצפון — עד שזה יוצא בעיניים עצומות", levels:[
+ {title:"חידוד: מוצאים את הצפון", desc:"העגלה, קסיופאה וכוכב הצפון — עד שזה יוצא בעיניים עצומות", levels:/*@sharpen*/[
   {id:"sh1",view:{mode:"chart",require:["dipper","polaris","cas"],fill:[.66,.78],faint:150,medium:26,bright:3,brighter:2},
    stages:[st.pointers({doneText:"עכשיו בקו."}),st.line("dipper")],...ex("פגעת!",EXPL.pointers),
    intro:{t:"חידוד",x:"לפני שממשיכים הלאה — עוד סבב על הדבר החשוב ביותר: למצוא את הצפון. העגלה, קסיופאה, כוכב הצפון — ואז הנקודה באופק."}},
@@ -1043,9 +1047,9 @@ const CHAPTERS=[
    stages:[st.find("cas",{instruction:"העגלה מאחורי העננים, וגם כוכב הצפון. מצא את קסיופאה."}),st.spot("cas"),st.domeNorth()],...ex("מצאת את הצפון!",EXPL.cas)},
   {id:"sh8",view:{mode:"horizon",placeFrom:["eilat","hermon","ams"],require:["polaris"],needNorth:true,roll:"random",fill:[.75,.85],faint:190,medium:30,bright:3,scenery:"town",city:true,brighter:2,anyGuide:true,showAlt:true},
    stages:[st.polaris("auto",{instruction:"מקום אחר, עיר, והמצלמה עקומה. מצא את כוכב הצפון."}),st.north()],...ex("מצאת את הצפון!",EXPL.north+" "+EXPL.alt)},
- ]},
+ ]/*@end*/},
 /* ---- the Great Bear: the Big Dipper is only its back and tail (figure as drawn by the game's author) ---- */
- {title:"הדובה הגדולה", desc:"העגלה היא רק הגב והזנב — מסביבה דובה שלמה", levels:[
+ {title:"הדובה הגדולה", desc:"העגלה היא רק הגב והזנב — מסביבה דובה שלמה", levels:/*@uma*/[
   /* lst 15.5–16 h: a June evening, the bear low in the north-west, tail up and legs down — exactly as in the author's picture */
   ...ladder("uma",{lst:[15.5,16],learn:"הקערה של העגלה היא הגוף, והידית — הזנב. מהקערה יוצאים הראש והאף, רגל קדמית ורגל אחורית. בקצה כל רגל — זוג כוכבים צמודים: הכפות. כך נראית הדובה בערבי קיץ, בצפון-מערב: הזנב למעלה והרגליים למטה.",
     intro:{t:"הדובה הגדולה",x:"את העגלה הגדולה אתה כבר מכיר. אבל היא רק חלק מצורה גדולה הרבה יותר: הדובה הגדולה. הקערה היא הגוף, הידית היא הזנב — ומסביב יש ראש, אף ורגליים."}}),
@@ -1079,9 +1083,9 @@ const CHAPTERS=[
      instruction:"ענן מסתיר את הגב של הדובה. מצא את הדובה ולחץ במקום שבו נמצא דובהה.",
      hint1:"דובהה הוא פינת הקערה שממנה יוצא הקו אל הראש — בין מגרץ למרק."})],
    ...ex("בדיוק שם!","דובהה הוא אחד הכוכבים הבהירים בדובה. גם כשענן מסתיר אותו, מי שמכיר את הצורה יודע איפה הוא.")},
- ]},
+ ]/*@end*/},
 /* ---- the Little Bear: the Little Dipper is the whole bear — body and a long tail, with Polaris at the tip ---- */
- {title:"הדובה הקטנה", desc:"העגלה הקטנה היא דובה — וכוכב הצפון הוא קצה הזנב שלה", levels:[
+ {title:"הדובה הקטנה", desc:"העגלה הקטנה היא דובה — וכוכב הצפון הוא קצה הזנב שלה", levels:/*@umi*/[
   ...ladder("umi",{dim:true,magLimit:5.8,
     learn:"ארבעה כוכבים הם הגוף — הקערה. שלושה כוכבים מתעקלים הם הזנב, ובקצה הזנב — כוכב הצפון. שני הכוכבים הבהירים בקצה הקערה, כוכב ופרקד, נקראים 'שומרי הקוטב': כל הלילה הם מקיפים את כוכב הצפון.",
     intro:{t:"הדובה הקטנה",x:"גם לעגלה הקטנה יש דובה: הדובה הקטנה. הקערה היא הגוף, והידית היא זנב ארוך. בקצה הזנב יושב כוכב הצפון — וכל השמים מסתובבים סביבו."}}),
@@ -1115,8 +1119,8 @@ const CHAPTERS=[
   {id:"umi_north",view:{mode:"dome",place:"tlv",lst:SKY.umi,domeRot:"random",require:["umi"],magLimit:5.8,clouds:2,plane:true,faint:140,medium:22,bright:3},
    stages:[st.find("umi",{instruction:"עננים ומטוס, וכל כיפת השמים. מצא את הדובה הקטנה."}),st.domeNorth()],
    ...ex("מצאת את הצפון!","מי שמוצא את הדובה הקטנה — מוצא את כוכב הצפון בקצה הזנב, ואיתו את הצפון.")},
- ]},
- {title:"חץ הצפון", desc:"החגורה והחרב של אוריון — חץ שמצביע אל כוכב הצפון", levels:[
+ ]/*@end*/},
+ {title:"חץ הצפון", desc:"החגורה והחרב של אוריון — חץ שמצביע אל כוכב הצפון", levels:/*@arrow*/[
   ...ladder("arrow",{skipSmall:true,skipWeather:true,
     learn:"שלושת הכוכבים הגדולים בשורה הם החגורה של אוריון. מתחתם תלויים שלושה כוכבים קטנים — החרב (הכתם האמצעי הוא ערפילית אוריון). והכוכב שבצד — אטא. החרב והחגורה יחד הם חץ.",
     intro:{t:"חץ הצפון",x:"בשמי החורף יש חץ שמצביע צפונה: שלושת הכוכבים של חגורת אוריון, והחרב שתלויה מתחתם. מהחרב, דרך אמצע החגורה — ישר אל כוכב הצפון."}}),
@@ -1141,8 +1145,8 @@ const CHAPTERS=[
        miss:"לא בדיוק. המשך את החץ מהחרב דרך החגורה — עד שהוא פוגע באופק"})],
    ...ex("מצאת את הצפון — בלי כוכב הצפון!","בחצי הכדור הדרומי כוכב הצפון מתחת לאופק, ואוריון נראה הפוך. אבל חץ הצפון שלו עדיין מצביע צפונה."),
    intro:{t:"מעבר לקו המשווה",x:"טסת לאוסטרליה. כאן כוכב הצפון מתחת לאופק — אף אחד לא רואה אותו. אבל אוריון נראה מכל מקום על פני כדור הארץ."}},
- ]},
- {title:"אוריון", desc:"מכמה כוכבים — עד הצייד כולו, עם האלה והמגן", levels:[
+ ]/*@end*/},
+ {title:"אוריון", desc:"מכמה כוכבים — עד הצייד כולו, עם האלה והמגן", levels:/*@orion*/[
   ...ladder("orion",{skipSmall:true,skipWeather:true,
     learn:"שתי כתפיים (בטלגז האדומה ובלטריקס), שלושה כוכבים צפופים באמצע — החגורה — ושתי רגליים (ריגל הכחלחל וסאיף).",
     intro:{t:"אוריון הצייד",x:"את החגורה והחרב כבר אתה מכיר. עכשיו — הצייד כולו. נתחיל משבעת הכוכבים הבהירים, ובכל שלב נוסיף עוד."}}),
@@ -1175,8 +1179,8 @@ const CHAPTERS=[
   {o:59,view:{mode:"horizon",place:"tlv",faceAz:270,lst:[10.3,10.9],require:["orion"],fill:[.68,.8],faint:170,medium:28,bright:3,scenery:"town"},
    stages:[st.find("orion",{instruction:"אוריון עומד לשקוע במערב. מצא אותו."}),st.west()],
    ...ex("מצאת את המערב!","החגורה שוקעת בדיוק במערב. כשהמערב משמאלך — אתה פונה צפונה. כך אפשר לבדוק שמצאת את הכיוון הנכון.")},
- ]},
- {title:"השור", desc:"פנים בצורת V, עין אדומה, קרניים — וכימה", levels:[
+ ]/*@end*/},
+ {title:"השור", desc:"פנים בצורת V, עין אדומה, קרניים — וכימה", levels:/*@taurus*/[
   ...ladder("taurus",{skipSmall:true,skipWeather:true,
     learn:"צורת V קטנה היא הפנים של השור, ואלדבראן הכתום — העין. משתי הזרועות של ה-V נמשכות שתי קרניים ארוכות, ומלמטה יוצאות הרגליים.",
     intro:{t:"השור",x:"מול אוריון מסתער שור. הפנים שלו — צורת V קטנה — הן צביר כוכבים אמיתי, והעין שלו היא אלדבראן הכתום."}}),
@@ -1208,8 +1212,8 @@ const CHAPTERS=[
      instruction:"ענן מסתיר את העין של השור. מצא את ה-V ולחץ במקום שבו נמצא אלדבראן.",
      hint1:"אלדבראן נמצא בקצה של אחת מזרועות ה-V — זו שקרובה לאוריון."})],
    ...ex("בדיוק שם!","אפשר למצוא את אלדבראן גם בדרך אחרת: חגורת אוריון מצביעה עליו.")},
- ]},
- {title:"העגלון", desc:"המחומש של קפלה — והכוכב שהוא גם קרן של השור", levels:[
+ ]/*@end*/},
+ {title:"העגלון", desc:"המחומש של קפלה — והכוכב שהוא גם קרן של השור", levels:/*@auriga*/[
   ...ladder("auriga",{learn:"מחומש גדול: קפלה הבהירה והצהבהבה בראש, ומסביב — מנקלינן, תטא, אלנאת (שהוא גם קצה הקרן של השור) ויוטא. ליד קפלה — הגדיים.",
     intro:{t:"העגלון",x:"מעל אוריון והשור יש מחומש גדול של כוכבים. בראשו קפלה — אחד הכוכבים הבהירים בשמים, ובחורף כמעט מעל הראש."}}),
   {id:"aur_kids",view:{mode:"horizon",aim:true,place:"tlv",lst:SKY.auriga,require:["auriga","epsAur","zetAur"],fill:[.66,.78],faint:150,medium:22,bright:2},
@@ -1226,8 +1230,8 @@ const CHAPTERS=[
      instruction:"ענן מסתיר את קפלה. מצא את המחומש ולחץ במקום שבו היא נמצאת.",
      hint1:"קפלה היא הפינה של המחומש הקרובה ביותר לכוכב הצפון — ממש ליד הגדיים."})],
    ...ex("בדיוק שם!","קפלה היא הפינה הצפונית של המחומש — ובחורף, כמעט מעל הראש.")},
- ]},
- {title:"התאומים", desc:"שני ראשים, שני גופים — ועד הצייד כולו", levels:[
+ ]/*@end*/},
+ {title:"התאומים", desc:"שני ראשים, שני גופים — ועד הצייד כולו", levels:/*@gemini*/[
   ...ladder("gemini",{skipSmall:true,skipWeather:true,
     learn:"קסטור ופולוקס הם שני הראשים, ומכל אחד יוצאת שורת כוכבים — הגוף והרגליים.",
     intro:{t:"התאומים",x:"שני כוכבים בהירים, צמודים — כמו שני ראשים. אלה התאומים, קסטור ופולוקס. נתחיל בצורה פשוטה, ואחר כך — התאומים כולם."}}),
@@ -1253,8 +1257,8 @@ const CHAPTERS=[
      instruction:"ענן מסתיר את אחד התאומים. מצא את קסטור ולחץ במקום שבו מסתתר פולוקס.",
      hint1:"שני התאומים צמודים — רק כ-4.5 מעלות ביניהם. פולוקס בקצה של הגוף השני, צמוד לקסטור."})],
    ...ex("בדיוק שם!","התאומים לא נפרדים — מי שמוצא אחד, מוצא את השני.")},
- ]},
- {title:"הסרטן", desc:"הצורה החלשה שבין התאומים לאריה — וכוורת של כוכבים", levels:[
+ ]/*@end*/},
+ {title:"הסרטן", desc:"הצורה החלשה שבין התאומים לאריה — וכוורת של כוכבים", levels:/*@cancer*/[
   ...ladder("cancer",{dim:true,magLimit:6,skipWeather:true,
     learn:"הסרטן חלש מאוד — חמישה כוכבים בצורת Y הפוכה. רואים אותו רק בשמים חשוכים, הרחק מאורות העיר.",
     intro:{t:"הסרטן",x:"בין התאומים לאריה יש צורה חלשה מאוד: הסרטן. כדי לראות אותו צריך שמים חשוכים — ובאמצעו מסתתר צביר כוכבים יפהפה."}}),
@@ -1272,8 +1276,8 @@ const CHAPTERS=[
      hint1:"הכוורת נמצאת כמעט באמצע הדרך בין פולוקס לרגולוס — קצת יותר קרוב לפולוקס, ובצד של פרוקיון.",
      miss:"לא שם. חשוב על הקו מפולוקס אל רגולוס — הכוורת קרובה לאמצע שלו"})],
    ...ex("מצאת אותה — בלי לראות אותה!","גם כשצורה חלשה נעלמת, אפשר לדעת איפה היא לפי השכנים הבהירים.")},
- ]},
- {title:"הכלב הקטן", desc:"שני כוכבים בלבד — ומשולש החורף", levels:[
+ ]/*@end*/},
+ {title:"הכלב הקטן", desc:"שני כוכבים בלבד — ומשולש החורף", levels:/*@cmi*/[
   ...ladder("cmi",{skipSmall:true,skipWeather:true,
     learn:"הכלב הקטן הוא רק שני כוכבים: פרוקיון הבהיר, וגומייסה לידו.",
     intro:{t:"הכלב הקטן",x:"לצייד אוריון יש שני כלבים. הקטן שבהם הוא רק שני כוכבים — אבל אחד מהם, פרוקיון, הוא מהבהירים בשמים."}}),
@@ -1289,8 +1293,8 @@ const CHAPTERS=[
      instruction:"ענן מסתיר את פרוקיון. השתמש במשולש החורף ולחץ במקום שבו הוא נמצא.",
      hint1:"השלם את המשולש: בטלגז וסיריוס הם שני קודקודים. פרוקיון הוא השלישי — מזרחה, מתחת לתאומים."})],
    ...ex("בדיוק שם!","משולש החורף עוזר להשלים כל אחד משלושת הכוכבים שלו.")},
- ]},
- {title:"הארנבת", desc:"מתחת לרגליים של אוריון", levels:[
+ ]/*@end*/},
+ {title:"הארנבת", desc:"מתחת לרגליים של אוריון", levels:/*@lepus*/[
   ...ladder("lepus",{learn:"ארנב (הכוכב הבהיר במרכז) וניהאל הם הגוף. למעלה — האוזניים, לצד — הזנב, ולמטה — הרגליים.",
     intro:{t:"הארנבת",x:"מתחת לרגליים של הצייד מתחבאת ארנבת. כנראה שהיא בורחת ממנו — או מהכלב הגדול שלידה."}}),
   {id:"lep_orion",view:{mode:"horizon",place:"tlv",faceAz:180,alt0:35,skyOnly:true,lst:[5.2,6.2],require:["orion","lepus"],fill:[.74,.86],faint:190,medium:30,bright:3,scenery:"hills"},
@@ -1302,8 +1306,8 @@ const CHAPTERS=[
      instruction:"ענן מסתיר את ארנב. מצא את הארנבת ולחץ במקום שבו הוא נמצא.",
      hint1:"ארנב הוא מרכז הארנבת: כל הקווים נפגשים בו — מהאוזניים, מהזנב ומהרגליים."})],
    ...ex("בדיוק שם!","ארנב הוא הלב של הצורה — כל הקווים מובילים אליו.")},
- ]},
- {title:"הכלב הגדול", desc:"סיריוס — הכוכב הבהיר ביותר בשמי הלילה", levels:[
+ ]/*@end*/},
+ {title:"הכלב הגדול", desc:"סיריוס — הכוכב הבהיר ביותר בשמי הלילה", levels:/*@cma*/[
   ...ladder("cma",{learn:"סיריוס הבהיר הוא הלב של הכלב. מעליו — הראש והאוזן, לפניו — הרגל (מירזאם), ומאחור — הגוף, הרגל האחורית והזנב.",
     intro:{t:"הכלב הגדול",x:"הכלב הגדול הולך אחרי אוריון, ובחזה שלו — סיריוס, הכוכב הבהיר ביותר בשמי הלילה."}}),
   {o:60,view:{mode:"horizon",place:"tlv",faceAz:180,alt0:42,skyOnly:true,lst:[5.6,7.2],require:["orion","sirius"],fill:[.72,.84],faint:180,medium:30,bright:3,scenery:"hills"},
@@ -1324,8 +1328,8 @@ const CHAPTERS=[
      instruction:"ענן מכסה את הכוכב הבהיר ביותר בשמים. לחץ במקום שבו נמצא סיריוס.",
      hint1:"שתי דרכים: חגורת אוריון מצביעה עליו, והוא גם ראש הכלב — מעל הגוף ובין הרגל לראש."})],
    ...ex("בדיוק שם!","גם הכוכב הבהיר ביותר יכול להיעלם מאחורי ענן — אבל לא מהמפה שבראש שלך.")},
- ]},
- {title:"חד הקרן", desc:"צורה כמעט בלתי נראית — בתוך משולש החורף", levels:[
+ ]/*@end*/},
+ {title:"חד הקרן", desc:"צורה כמעט בלתי נראית — בתוך משולש החורף", levels:/*@monoceros*/[
   ...ladder("monoceros",{dim:true,magLimit:6.2,skipSmall:true,skipWeather:true,
     learn:"חד הקרן חלש מאוד — אין בו אף כוכב בהיר. הקרן נוגעת באלה של אוריון, הראש משולש קטן, שתי רגליים קדמיות פונות לאוריון, והגוף והזנב נמתחים עד מעבר לפרוקיון.",
     intro:{t:"חד הקרן",x:"בתוך משולש החורף, בין בטלגז, פרוקיון וסיריוס, מסתתרת צורה חלשה מאוד: חד הקרן. זו הקבוצה הקשה ביותר בפרקים האלה."}}),
@@ -1342,13 +1346,13 @@ const CHAPTERS=[
      hint1:"הלב נמצא כמעט במרכז משולש החורף — קצת קרוב יותר לפרוקיון.",
      miss:"לא שם. חפש את מרכז המשולש שבין בטלגז, פרוקיון וסיריוס"})],
    ...ex("מצאת אותו — בלי לראות אותו!","מי שמכיר את השמים יודע איפה נמצאות גם הצורות שאי אפשר לראות.")},
- ]},
+ ]/*@end*/},
  /* ===================== LOCKED UNTIL THE MANAGER OPENS THEM ===================== */
- {title:"חידות המומחה", desc:"שמים חדשים בכל פעם — בלי הנחות", levels:
-   Array.from({length:10},(_,i)=>({random:5+i}))
+ {title:"חידות המומחה", desc:"שמים חדשים בכל פעם — בלי הנחות", levels:/*@expert*/[
+   ...Array.from({length:10},(_,i)=>({random:5+i}))]/*@end*/
  },
  /* ===================== NEW CHAPTERS (added after the original journey) ===================== */
- {title:"המשולש הקיצי", desc:"שלושה כוכבים בהירים של לילות הקיץ", levels:[
+ {title:"המשולש הקיצי", desc:"שלושה כוכבים בהירים של לילות הקיץ", levels:/*@tri*/[
   ...ladder("tri",{intro:{t:"המשולש הקיצי",x:"כוכב הצפון מראה את הצפון. אבל בשמים יש עוד צורות שעוזרות להתמצא — כל אחת בעונה שלה. נתחיל בשמי הקיץ: שלושה כוכבים בהירים שיוצרים משולש ענק."}, learn:"וגה, דנב ואלטאיר — שלושה כוכבים בהירים מאוד שיוצרים משולש ארוך. וגה הוא הבהיר מכולם.",skipSmall:true,skipWeather:true}),
   {o:51,view:{mode:"dome",place:"tlv",lst:[18.8,20.6],domeRot:0,require:["tri"],faint:200,medium:32,bright:4},
    stages:[st.find("tri",{instruction:"ערב קיץ. אתה שוכב על הגב ומסתכל למעלה. מצא את המשולש הקיצי."})],
@@ -1369,8 +1373,8 @@ const CHAPTERS=[
      hint1:"וגה ודנב קרובים יחסית זה לזה. אלטאיר רחוק משניהם — בערך פי אחד וחצי מהמרחק ביניהם — בצד שפונה דרומה.",
      hintLines:[]})],
    ...ex("בדיוק שם!","המשולש הקיצי הוא משולש ארוך: מוגה לדנב 24 מעלות, ומשניהם לאלטאיר יותר מ-30 מעלות.")},
- ]},
- {title:"משושה החורף", desc:"שישה כוכבים בהירים מסביב לאוריון", levels:[
+ ]/*@end*/},
+ {title:"משושה החורף", desc:"שישה כוכבים בהירים מסביב לאוריון", levels:/*@hex*/[
   ...ladder("hex",{intro:{t:"משושה החורף",x:"סביב אוריון יש שישה כוכבים בהירים מאוד שיוצרים משושה ענק. כמעט חצי מהכוכבים הבהירים בשמי החורף נמצאים בו."}, learn:"שישה כוכבים מהבהירים בשמים, במעגל ענק סביב אוריון: סיריוס, פרוקיון, פולוקס, קפלה, אלדבראן וריגל.",skipMid:true,skipSmall:true,skipWeather:true}),
   {o:68,view:{mode:"horizon",place:"tlv",faceAz:180,alt0:55,skyOnly:true,lst:[6.2,7.4],require:["hex","betelgeuse"],fill:[.66,.8],faint:190,medium:30,bright:3,scenery:"hills"},
    stages:[st.find("hex",{instruction:"מבט דרומה בחורף. מצא את משושה החורף."}),
@@ -1393,8 +1397,8 @@ const CHAPTERS=[
      instruction:"ענן מסתיר קודקוד אחד של המשושה. מצא את המשושה ולחץ במקום שבו מסתתר הכוכב החסר.",
      hint1:"חסר הקודקוד שבין סיריוס לפולוקס. דמיין את המשושה סגור — ולחץ במקום הפינה החסרה."})],
    ...ex("זה פרוקיון!","מי שמכיר את הצורה יודע להשלים אותה — גם כשחלק ממנה מוסתר.")},
- ]},
- {title:"חידות מוזרות", desc:"איפה אתה? מה מוסתר? למה השמים הפוכים?", levels:[
+ ]/*@end*/},
+ {title:"חידות מוזרות", desc:"איפה אתה? מה מוסתר? למה השמים הפוכים?", levels:/*@weird*/[
   {o:72,view:{mode:"horizon",placeFrom:["eilat","ams","reyk","mumbai"],hidePlace:true,require:["polaris"],needNorth:true,fill:[.72,.82],faint:170,medium:28,bright:3,scenery:"hills",anyGuide:true,brighter:2},
    stages:[st.polaris("auto",{instruction:"אינך יודע איפה אתה. מצא קודם את כוכב הצפון."}),
      st.quiz(["eilat","ams","reyk","mumbai"],{instruction:"עכשיו נחש: איפה אתה נמצא?",hint1:EXPL.alt+" אגרוף ביד מושטת מכסה בערך 10 מעלות."})],
@@ -1423,9 +1427,9 @@ const CHAPTERS=[
      hint1:"כוכב הצפון נמצא בגובה של בערך 32 מעלות, ממש מעל נקודת הצפון. קפלה (מימין) ווגה (משמאל) נמצאים משני צדדיו, בערך באותו מרחק.",
      miss:"לא שם. זכור: כוכב הצפון בגובה קו הרוחב — כ-32° בתל אביב — מעל הצפון"})],
    ...ex("מצאת אותו — בלי לראות אותו!","מי שמכיר את השמים יודע איפה כוכב הצפון גם בלב העיר: בגובה קו הרוחב, מעל הצפון.")},
- ]},
+ ]/*@end*/},
  /* ===================== CONSTELLATION CHAPTERS — one shape per chapter ===================== */
- {title:"האריה", desc:"מלך שמי האביב — המגל, רגולוס והזנב", levels:[
+ {title:"האריה", desc:"מלך שמי האביב — המגל, רגולוס והזנב", levels:/*@leo*/[
   ...ladder("leo",{intro:{t:"האריה",x:"בערבי אביב עובר מעל ישראל האריה — אחת הצורות היחידות שבאמת דומות למה שהן מתארות: אריה רובץ."}, learn:"המגל — סימן שאלה הפוך — הוא הראש והרעמה, ורגולוס הבהיר בתחתיתו הוא הלב. מאחור משולש: הגב, הירך והזנב (דנבולה).",skipSmall:true}),
   {o:78,view:{mode:"dome",place:"tlv",lst:[9.8,11.4],domeRot:0,require:["leo"],faint:200,medium:32,bright:4},
    stages:[st.find("leo",{instruction:"ערב אביב. מצא את האריה — תשעה כוכבים."})],
@@ -1451,8 +1455,8 @@ const CHAPTERS=[
      instruction:"ענן מכסה את הלב של האריה. מצא את האריה, ולחץ במקום שבו מסתתר רגולוס.",
      hint1:"רגולוס הוא תחתית המגל. מהכוכב שמעליו במגל המשך עוד צעד אחד — ומשם שורה ישרה אל הירך של האריה."})],
    ...ex("בדיוק שם!","מי שמכיר את הצורה — רואה גם את מה שמוסתר.")},
- ]},
- {title:"רועה הדובים", desc:"הקשת אל ארקטורוס, ומשם אל ספיקה", levels:[
+ ]/*@end*/},
+ {title:"רועה הדובים", desc:"הקשת אל ארקטורוס, ומשם אל ספיקה", levels:/*@bootes*/[
   ...ladder("bootes",{intro:{t:"רועה הדובים",x:"רועה הדובים 'רועה' את העגלה הגדולה ברחבי השמים. הכוכב הבהיר שלו — ארקטורוס — נמצא בהמשך הידית של העגלה."}, learn:"ארקטורוס הכתום הוא הקצה של עפיפון צר וארוך. רועה הדובים 'רועה' את העגלה הגדולה.",skipSmall:true,skipWeather:true}),
   {o:85,view:{mode:"dome",place:"tlv",lst:[14,15.6],domeRot:"random",require:["bootes"],moon:true,faint:210,medium:34,bright:4},
    stages:[st.find("bootes",{instruction:"מצא את רועה הדובים — העפיפון שיוצא מארקטורוס."})],
@@ -1480,8 +1484,8 @@ const CHAPTERS=[
      instruction:"ענן מסתיר את ארקטורוס. השתמש בעגלה ובעפיפון, ולחץ במקום שבו הוא נמצא.",
      hint1:"שתי דרכים: המשך את הקשת של ידית העגלה, או מצא את העפיפון — ארקטורוס הוא הקצה החד שלו."})],
    ...ex("בדיוק שם!","שתי דרכים מובילות לאותו מקום: הקשת של העגלה והקצה של העפיפון.")},
- ]},
- {title:"העקרב", desc:"עקרב אמיתי בשמים — עם לב אדום ועוקץ", levels:[
+ ]/*@end*/},
+ {title:"העקרב", desc:"עקרב אמיתי בשמים — עם לב אדום ועוקץ", levels:/*@scorpius*/[
   ...ladder("scorpius",{intro:{t:"העקרב",x:"בערבי קיץ, נמוך בדרום, זוחל עקרב ענק. בישראל הזנב שלו כמעט נוגע באופק."}, learn:"ראש של שלושה כוכבים בשורה, לב אדום (אנטארס), וזנב ארוך שמתעקל עד העוקץ (שאולה).",skipSmall:true,skipWeather:true}),
   {o:87,view:{mode:"horizon",place:"tlv",faceAz:180,alt0:20,lst:[16.4,17.6],require:["scorpius"],fill:[.66,.8],faint:180,medium:30,bright:3,scenery:"hills"},
    stages:[st.find("scorpius",{instruction:"ערב קיץ. אתה מסתכל דרומה, נמוך מעל האופק. מצא את העקרב."})],
@@ -1503,8 +1507,8 @@ const CHAPTERS=[
      instruction:"ענן מסתיר את הלב של העקרב. לחץ במקום שבו נמצא אנטארס.",
      hint1:"מצא את הראש (שורה של שלושה כוכבים) ואת הזנב. הלב נמצא ביניהם — קצת מתחת לראש."})],
    ...ex("בדיוק שם!","גם בלי הלב, העקרב מזוהה בקלות — אין עוד צורה כזו בשמים.")},
- ]},
- {title:"הברבור והנבל", desc:"צלב הצפון, אלביראו, ווגה", levels:[
+ ]/*@end*/},
+ {title:"הברבור והנבל", desc:"צלב הצפון, אלביראו, ווגה", levels:/*@cygnus*/[
   ...ladder("cygnus",{intro:{t:"הברבור",x:"בלילות הקיץ עף מעל הראש ברבור ענק — או צלב גדול. הזנב שלו הוא דנב, אחד מכוכבי המשולש הקיצי."}, learn:"צלב גדול: דנב בראש (הזנב של הברבור), סדר במרכז, אלביראו בקצה (המקור), ושתי כנפיים לצדדים.",skipSmall:true,skipWeather:true}),
   {o:92,view:{mode:"dome",place:"tlv",lst:[19.6,21.2],domeRot:0,require:["cygnus"],faint:210,medium:34,bright:4},
    stages:[st.find("cygnus",{instruction:"ליל קיץ. מצא את הברבור — צלב גדול מעל הראש."})],
@@ -1527,8 +1531,8 @@ const CHAPTERS=[
      instruction:"ענן מכסה את הזנב של הברבור. לחץ במקום שבו נמצא דנב.",
      hint1:"מצא את הצלב: שורה ארוכה ושתי זרועות. דנב בקצה השורה הארוכה — מעבר למרכז הצלב, מול אלביראו."})],
    ...ex("בדיוק שם!","דנב הוא כוכב-על רחוק מאוד — ובכל זאת אחד הבהירים בשמים.")},
- ]},
- {title:"פגסוס ואנדרומדה", desc:"הריבוע הגדול, החץ לצפון, וגלקסיה שלמה", levels:[
+ ]/*@end*/},
+ {title:"פגסוס ואנדרומדה", desc:"הריבוע הגדול, החץ לצפון, וגלקסיה שלמה", levels:/*@pegasus*/[
   ...ladder("square",{intro:{t:"פגסוס",x:"בערבי סתיו עובר מעל הראש ריבוע ענק של ארבעה כוכבים. הוא קשה לזיהוי דווקא כי הוא גדול כל כך."}, learn:"ארבעה כוכבים בינוניים בריבוע ענק: מרקב, שאט, אלפרץ ואלגניב. בתוך הריבוע כמעט אין כוכבים.",skipSmall:true,skipWeather:true}),
   {o:97,view:{mode:"dome",place:"tlv",lst:[22.4,23.8],domeRot:0,require:["square"],faint:200,medium:32,bright:4},
    stages:[st.find("square",{instruction:"ערב סתיו. מצא את הריבוע הגדול של פגסוס."})],
@@ -1554,8 +1558,8 @@ const CHAPTERS=[
   {o:101,view:{mode:"dome",place:"tlv",lst:[22.8,24.6],domeRot:"random",require:["square","polaris"],exclude:["dipper","cas"],cloudExclude:true,hidePolaris:true,faint:220,medium:36,bright:4},
    stages:[st.spot("square",{instruction:"כוכב הצפון, העגלה וקסיופאה מוסתרים. השתמש בריבוע הגדול ולחץ במקום שבו כוכב הצפון אמור להיות."}),st.domeNorth()],
    ...ex("בדיוק שם!","גם בסתיו, כשהעגלה נמוכה, הריבוע הגדול יכול להוביל אותך לצפון.")},
- ]},
- {title:"כל כיפת השמים", desc:"השלבים הקשים ביותר: כל השמים, כל הכיוונים", levels:[
+ ]/*@end*/},
+ {title:"כל כיפת השמים", desc:"השלבים הקשים ביותר: כל השמים, כל הכיוונים", levels:/*@allsky*/[
   {o:110,view:{mode:"dome",place:"tlv",lst:[6,7.5],domeRot:"random",require:["cas","dipper","orion","hex","polaris"],clouds:2,faint:230,medium:38,bright:5},
    stages:[st.find("cas",{instruction:"ליל חורף. מצא את כל השמים — התחל בקסיופאה."}),st.find("dipper",{instruction:"עכשיו את העגלה הגדולה."}),
      st.find("orion",{instruction:"עכשיו את אוריון."}),st.find("hex",{instruction:"עכשיו את משושה החורף."}),
@@ -1588,14 +1592,14 @@ const CHAPTERS=[
      st.dir(180,{path:"south",name:"דרום",instruction:"ועכשיו — הדרום, על שפת הכיפה.",hint1:"מהקוטב הדרומי ישר החוצה אל השפה.",miss:"הדרום נמצא בהמשך הקו מהמרכז דרך הקוטב הדרומי"})],
    ...ex("צפון ודרום — מצד אחד של העולם!","בלי כוכב הצפון ובלי מצפן: אוריון הראה את הצפון, וצלב הדרום — את הדרום.")},
   ...Array.from({length:5},(_,i)=>({random:15+i,o:115+i})),
- ]},
+ ]/*@end*/},
 ];
 /* ======================= MORE PRACTICE: three medium levels in every chapter from the Great Bear on,
    and after every three chapters a connection chapter that ties them together ======================= */
 const Mh=(g,o={})=>Object.assign({mode:"horizon",aim:true,place:"tlv",lst:SKY[g],require:[g],roll:"random",fill:[.5,.62],faint:170,medium:28,bright:3},o);
 const Md=(g,o={})=>Object.assign({mode:"dome",place:"tlv",lst:SKY[g],domeRot:"random",require:[g],faint:210,medium:34,bright:4},o);
 const MEDIUM={
- "הדובה הגדולה":[
+ "הדובה הגדולה":/*@m:uma*/[
   {id:"m_uma_1",view:Mh("uma",{moon:true}),stages:[st.find("uma",{instruction:"ירח בשמים והתמונה עקומה. מצא את הדובה הגדולה."})],
    ...ex("מצוין!","הירח מעלים את הכוכבים החלשים של הדובה — אבל הבהירים, של העגלה, נשארים. מהם מתחילים.")},
   {id:"m_uma_2",view:Md("uma",{require:["uma","little"],magLimit:5.8}),stages:[st.find("uma",{instruction:"מצא את הדובה הגדולה."}),st.find("little",{instruction:"ועכשיו את העגלה הקטנה — היא הגב והזנב של הדובה הקטנה."})],
@@ -1603,8 +1607,8 @@ const MEDIUM={
   {id:"m_uma_3",view:Mh("uma",{cloudHide:["talitha"],clouds:2}),stages:[st.guess("talitha",{lines:["uma"],label:"כף הרגל הקדמית",tolDeg:3.5,
      instruction:"ענן מסתיר את כף הרגל הקדמית. מצא את הדובה ולחץ במקום שבו היא נמצאת.",hint1:"מהחזה יורדת רגל אל הברך, ומשם אל זוג כוכבים צמודים — הכף. הענן מסתיר את הבהיר שבהם."})],
    ...ex("בדיוק שם!","מי שמכיר את כל הדובה — לא רק את העגלה — יודע להשלים גם חלק מוסתר.")},
- ],
- "הדובה הקטנה":[
+ ]/*@end*/,
+ "הדובה הקטנה":/*@m:umi*/[
   {id:"m_umi_1",view:Mh("umi",{magLimit:5.8,faint:90,medium:14,bright:2}),stages:[st.find("umi",{instruction:"התמונה עקומה. מצא את הדובה הקטנה."})],
    ...ex("מצוין!","כוכבי הדובה הקטנה חלשים — חוץ מכוכב הצפון ושני השומרים. מהם מתחילים.")},
   {id:"m_umi_2",view:Md("umi",{require:["umi","uma"],magLimit:5.8,faint:140,medium:22,bright:3}),stages:[st.find("uma",{instruction:"מצא את הדובה הגדולה."}),st.find("umi",{instruction:"ועכשיו את הדובה הקטנה."})],
@@ -1612,8 +1616,8 @@ const MEDIUM={
   {id:"m_umi_3",view:Mh("umi",{magLimit:5.8,cloudHide:["polaris"],clouds:1,faint:90,medium:14,bright:2}),stages:[st.guess("polaris",{lines:["umi"],label:"כוכב הצפון",tolDeg:3,
      instruction:"ענן מסתיר את קצה הזנב. לחץ במקום שבו נמצא כוכב הצפון.",hint1:"עקוב אחרי הזנב מהקערה: זטא, אפסילון, ילדון — ועוד צעד אחד באותה קשת."})],
    ...ex("בדיוק שם!","הזנב של הדובה הקטנה מוביל אל כוכב הצפון — גם כשענן מסתיר אותו.")},
- ],
- "חץ הצפון":[
+ ]/*@end*/,
+ "חץ הצפון":/*@m:arrow*/[
   {id:"m_arr_1",view:{mode:"horizon",place:"tlv",faceAz:180,alt0:45,skyOnly:true,lst:[5,6.2],require:["arrow"],fill:[.4,.52],faint:180,medium:30,bright:3,scenery:"hills"},
    stages:[st.find("arrow",{instruction:"מבט דרומה בערב חורף. מצא את החץ: שלושת כוכבי החגורה, החרב ואטא."})],
    ...ex("מצאת את החץ!","החרב תלויה מתחת לחגורה — וביחד הם חץ שמצביע אל הצד השני של השמים, אל כוכב הצפון.")},
@@ -1625,8 +1629,8 @@ const MEDIUM={
        near:{c42Ori:"קרוב! זה הכוכב העליון בחרב. הערפילית ממש מתחתיו",iotaOri:"קרוב! זה קצה החרב. הערפילית ממש מעליו"}}),
      st.star("alnilam","אמצע החגורה",{instruction:"ועכשיו — חוד החץ: הכוכב האמצעי בחגורה.",near:{mintaka:"זה קצה החגורה. חפש את האמצעי",alnitak:"זה קצה החגורה. חפש את האמצעי"}})],
    ...ex("מצוין!","ערפילית אוריון היא ענן גז ענק שבו נולדים כוכבים חדשים — ורואים אותה בעין.")},
- ],
- "אוריון":[
+ ]/*@end*/,
+ "אוריון":/*@m:orion*/[
   {id:"m_ori_1",view:Mh("orionMid",{moon:true}),stages:[st.find("orionMid",{instruction:"ירח והתמונה עקומה. מצא את גוף אוריון — עם הראש, החרב ואטא."})],
    ...ex("מצוין!","הראש, החרב ואטא חלשים יותר — אבל כשמוצאים קודם את השבעה הבהירים, קל להוסיף אותם.")},
   {id:"m_ori_2",view:Md("orionMid"),stages:[
@@ -1637,16 +1641,16 @@ const MEDIUM={
    stages:[st.guess("bellatrix",{lines:["orion"],label:"בלטריקס",tolDeg:3.5,instruction:"ענן מסתיר את אחת הכתפיים. לחץ במקום שבו נמצאת בלטריקס.",
      hint1:"בלטריקס היא הכתף שמול בטלגז — מעל הקצה של החגורה שקרוב לריגל."})],
    ...ex("בדיוק שם!","ארבעת הכוכבים הגדולים של אוריון יוצרים מעין מלבן, והחגורה באמצע.")},
- ],
- "השור":[
+ ]/*@end*/,
+ "השור":/*@m:taurus*/[
   {id:"m_tau_1",view:Mh("taurus"),stages:[st.find("taurus",{instruction:"התמונה עקומה. מצא את השור."})],...ex("מצוין!","מתחילים מאלדבראן הכתום וה-V — ומשם הקרניים.")},
   {id:"m_tau_2",view:Md("taurus",{city:true,moon:true}),stages:[st.find("taurus",{instruction:"אורות עיר וירח. מצא את השור."})],
    ...ex("מצוין!","בעיר נעלמים חלק מכוכבי השור — אבל אלדבראן ואלנאת בהירים מספיק.")},
   {id:"m_tau_3",view:Mh("taurus",{cloudHide:["gamTau"],roll:0,fill:[.58,.7]}),stages:[st.guess("gamTau",{lines:["taurus"],label:"קודקוד ה-V",tolDeg:3,
      instruction:"ענן מסתיר את הקודקוד של ה-V. לחץ במקום שבו הוא נמצא.",hint1:"ה-V פתוח לכיוון הקרניים. הקודקוד הוא הנקודה החדה בצד השני."})],
    ...ex("בדיוק שם!","ה-V הוא צביר כוכבים אמיתי — ההיאדות — אחד הצבירים הקרובים ביותר אלינו.")},
- ],
- "העגלון":[
+ ]/*@end*/,
+ "העגלון":/*@m:auriga*/[
   {id:"m_aur_1",view:Mh("auriga",{moon:true}),stages:[st.find("auriga",{instruction:"ירח והתמונה עקומה. מצא את העגלון."})],...ex("מצוין!","קפלה הבהירה היא הכניסה לצורה — ומשם המחומש.")},
   {id:"m_aur_2",view:Md("auriga"),stages:[st.find("auriga",{instruction:"מצא את העגלון."}),
      st.star("menkalinan","מנקלינן",{instruction:"לקפלה יש שני שכנים במחומש. אחד מהם הוא אחד הגדיים. לחץ על השני — מנקלינן.",
@@ -1655,8 +1659,8 @@ const MEDIUM={
   {id:"m_aur_3",view:Mh("auriga",{cloudHide:["thetAur"],clouds:2,roll:0,fill:[.58,.7]}),stages:[st.guess("thetAur",{lines:["auriga"],label:"תטא",tolDeg:3.5,
      instruction:"ענן מסתיר פינה של המחומש. לחץ במקום שבו היא חסרה.",hint1:"הפינה החסרה נמצאת בין מנקלינן לאלנאת."})],
    ...ex("בדיוק שם!","מחומש שלם — גם כשפינה אחת מוסתרת.")},
- ],
- "התאומים":[
+ ]/*@end*/,
+ "התאומים":/*@m:gemini*/[
   {id:"m_gem_1",view:Mh("geminiFull",{fill:[.55,.68]}),stages:[st.find("geminiFull",{instruction:"מצא את התאומים כולם — ראשים, ידיים, גופים ורגליים."})],
    ...ex("מצוין!","שמונה-עשר כוכבים — שני אנשים שעומדים יד ביד.")},
   {id:"m_gem_2",view:Md("gemini"),stages:[st.find("gemini",{instruction:"מצא את התאומים."}),
@@ -1666,8 +1670,8 @@ const MEDIUM={
   {id:"m_gem_3",view:Md("gemini",{require:["gemini","procyon"],cloudHide:["castor"],clouds:1}),stages:[st.guess("castor",{lines:["gemini"],label:"קסטור",tolDeg:3.5,
      instruction:"ענן מסתיר את אחד הראשים. לחץ במקום שבו נמצא קסטור.",hint1:"קסטור צמוד לפולוקס — כ-4.5 מעלות — בצד הרחוק יותר מפרוקיון."})],
    ...ex("בדיוק שם!","קסטור ופולוקס כמעט נוגעים זה בזה — מי שמוצא אחד, מוצא את שניהם.")},
- ],
- "הסרטן":[
+ ]/*@end*/,
+ "הסרטן":/*@m:cancer*/[
   {id:"m_cnc_1",view:Mh("cancer",{magLimit:6,roll:"random",faint:60,medium:6,bright:0}),stages:[st.find("cancer",{instruction:"שמים חשוכים, התמונה עקומה. מצא את הסרטן."})],
    ...ex("מצוין!","הסרטן חלש — לכן מחפשים צורת Y הפוכה של כוכבים קלושים, לא כוכב בהיר.")},
   {id:"m_cnc_2",view:Md("cancer",{require:["cancer","m44"],magLimit:6,faint:120,medium:12,bright:2}),stages:[st.find("cancer",{instruction:"מצא את הסרטן בכיפת השמים."}),
@@ -1676,16 +1680,16 @@ const MEDIUM={
   {id:"m_cnc_3",view:Mh("cancer",{require:["cancer","procyon"],cloudHide:["altarf"],magLimit:6,roll:0,fill:[.62,.74],faint:60,medium:6,bright:0}),stages:[st.guess("altarf",{lines:["cancer"],label:"אל-טרף",tolDeg:3,
      instruction:"ענן מסתיר את הכוכב הבהיר בסרטן. לחץ במקום שבו נמצא אל-טרף.",hint1:"אל-טרף הוא קצה הרגל של הסרטן שהכי קרובה לפרוקיון."})],
    ...ex("בדיוק שם!","אל-טרף הוא הכוכב הבהיר ביותר בסרטן — ועדיין חלש למדי.")},
- ],
- "הכלב הקטן":[
+ ]/*@end*/,
+ "הכלב הקטן":/*@m:cmi*/[
   {id:"m_cmi_1",view:Mh("wtri",{moon:true}),stages:[st.find("wtri",{instruction:"ירח והתמונה עקומה. מצא את משולש החורף."})],...ex("מצוין!","שלושת הכוכבים כל כך בהירים, שהירח לא מסתיר אותם.")},
   {id:"m_cmi_2",view:Md("wtri",{require:["wtri","cmi"],clouds:2}),stages:[st.find("wtri",{instruction:"מצא את משולש החורף."}),st.find("cmi",{instruction:"ועכשיו את הכלב הקטן — שני כוכבים."})],
    ...ex("מצוין!","פרוקיון הוא גם קודקוד במשולש החורף וגם הכוכב הבהיר של הכלב הקטן.")},
   {id:"m_cmi_3",view:Mh("cmi",{require:["cmi","pollux","betelgeuse"],cloudHide:["gomeisa"],roll:0,fill:[.62,.74]}),stages:[st.guess("gomeisa",{lines:["cmi"],label:"גומייסה",tolDeg:2.5,
      instruction:"ענן מסתיר את הכוכב השני של הכלב הקטן. לחץ במקום שבו נמצא גומייסה.",hint1:"גומייסה צמוד לפרוקיון — כ-4 מעלות — בצד של התאומים."})],
    ...ex("בדיוק שם!","גומייסה ופרוקיון — כלב שלם בשני כוכבים.")},
- ],
- "הארנבת":[
+ ]/*@end*/,
+ "הארנבת":/*@m:lepus*/[
   {id:"m_lep_1",view:Mh("lepus"),stages:[st.find("lepus",{instruction:"התמונה עקומה. מצא את הארנבת."})],...ex("מצוין!","ארנב וניהאל הם הגוף — ומהם יוצאים האוזניים, הזנב והרגליים.")},
   {id:"m_lep_2",view:Md("lepus",{require:["orion","lepus"],moon:true}),stages:[st.find("orion",{instruction:"מצא את אוריון.",doneText:"הארנבת מתחת לרגליים שלו."}),st.find("lepus",{instruction:"עכשיו מצא את הארנבת."})],
    ...ex("מצוין!","החרב של אוריון מצביעה אל הארנבת: המשך את הקו מהחגורה דרך החרב, בערך פי שניים וחצי — ותגיע לארנב.")},
@@ -1693,8 +1697,8 @@ const MEDIUM={
    stages:[st.guess("nihal",{lines:["lepus"],label:"ניהאל",tolDeg:2.5,instruction:"ענן מסתיר את ניהאל. לחץ במקום שבו הוא נמצא.",
      hint1:"ניהאל צמוד לארנב — בצד הרחוק מאוריון."})],
    ...ex("בדיוק שם!","ארנב וניהאל — שני הכוכבים הבהירים של הארנבת, צמודים זה לזה.")},
- ],
- "הכלב הגדול":[
+ ]/*@end*/,
+ "הכלב הגדול":/*@m:cma*/[
   {id:"m_cma_1",view:{mode:"horizon",place:"tlv",faceAz:180,alt0:26,skyOnly:true,lst:[6.6,7.8],require:["cma"],moon:true,fill:[.55,.68],faint:190,medium:30,bright:3,scenery:"trees"},
    stages:[st.find("cma",{instruction:"ירח בשמים. מצא את הכלב הגדול."})],...ex("מצוין!","סיריוס בולט גם כשהירח זורח — ממנו מתחילים.")},
   {id:"m_cma_2",view:Md("cma"),stages:[st.find("cma",{instruction:"מצא את הכלב הגדול."}),
@@ -1703,8 +1707,8 @@ const MEDIUM={
   {id:"m_cma_3",view:Md("cma",{cloudHide:["mirzam"],clouds:1}),stages:[st.guess("mirzam",{lines:["cma"],label:"מירזאם",tolDeg:3,
      instruction:"ענן מסתיר את הרגל הקדמית. לחץ במקום שבו נמצא מירזאם.",hint1:"מירזאם צמוד לסיריוס — כ-5 מעלות — בצד של אוריון."})],
    ...ex("בדיוק שם!","מירזאם 'מבשר' את סיריוס: הוא זורח ממש לפניו.")},
- ],
- "חד הקרן":[
+ ]/*@end*/,
+ "חד הקרן":/*@m:monoceros*/[
   {id:"m_mon_1",view:Mh("monoceros",{require:["wtri","monoceros"],magLimit:6.2,roll:0,fill:[.62,.74],faint:60,medium:6,bright:1}),stages:[st.find("monoceros",{instruction:"שמים חשוכים מאוד. מצא את חד הקרן — בתוך משולש החורף."})],
    ...ex("מצוין!","בלי המשולש הבהיר מסביב — כמעט אי אפשר למצוא אותו.")},
   {id:"m_mon_2",view:Mh("monoceros",{magLimit:6.2,faint:70,medium:8,bright:1}),stages:[st.find("monoceros",{instruction:"התמונה עקומה. מצא את חד הקרן."})],
@@ -1712,8 +1716,8 @@ const MEDIUM={
   {id:"m_mon_3",view:Mh("monoceros",{require:["monoceros","club"],magLimit:6.2,roll:0,fill:[.6,.72],faint:60,medium:6,bright:1}),stages:[st.find("monoceros",{instruction:"מצא את חד הקרן."}),
      st.star("xiOri","קצה הקרן",{instruction:"לחץ על קצה הקרן.",hint1:"הקרן יוצאת מהראש ונוגעת כמעט באלה של אוריון.",lines:["monoceros"]})],
    ...ex("מצוין!","קצה הקרן הוא בעצם כוכב של אוריון — כך הצורות נוגעות זו בזו.")},
- ],
- "המשולש הקיצי":[
+ ]/*@end*/,
+ "המשולש הקיצי":/*@m:tri*/[
   {id:"m_tri_1",view:Mh("tri",{moon:true}),stages:[st.find("tri",{instruction:"ירח והתמונה עקומה. מצא את המשולש הקיצי."})],...ex("מצוין!","שלושה מהכוכבים הבהירים בשמי הקיץ.")},
   {id:"m_tri_2",view:Md("tri"),stages:[st.find("tri",{instruction:"מצא את המשולש הקיצי."}),
      st.star("deneb","דנב",{instruction:"לחץ על דנב.",hint1:"וגה ודנב הם שני הקודקודים הקרובים זה לזה. דנב הוא החלש מבין השניים.",near:{vega:"זה וגה — הבהיר. דנב לידו",altair:"זה אלטאיר — הקודקוד הרחוק"}})],
@@ -1721,16 +1725,16 @@ const MEDIUM={
   {id:"m_tri_3",view:Md("tri",{cloudHide:["vega"],clouds:1}),stages:[st.guess("vega",{lines:["tri"],label:"וגה",tolDeg:5,
      instruction:"ענן מסתיר את וגה. לחץ במקום שבו הוא נמצא.",hint1:"וגה קרוב לדנב — כ-24 מעלות — והרחק מאלטאיר."})],
    ...ex("בדיוק שם!","הצלע הקצרה של המשולש היא בין וגה לדנב.")},
- ],
- "משושה החורף":[
+ ]/*@end*/,
+ "משושה החורף":/*@m:hex*/[
   {id:"m_hex_1",view:Mh("hex",{fill:[.62,.74]}),stages:[st.find("hex",{instruction:"התמונה עקומה. מצא את משושה החורף."})],...ex("מצוין!","שישה כוכבים בהירים מסביב לאוריון.")},
   {id:"m_hex_2",view:Md("hex",{require:["hex","orion"]}),stages:[st.find("orion",{instruction:"מצא את אוריון."}),st.find("hex",{instruction:"ועכשיו את המשושה שמקיף אותו."})],
    ...ex("מצוין!","ריגל, הרגל של אוריון, הוא גם קודקוד של המשושה.")},
   {id:"m_hex_3",view:Md("hex",{cloudHide:["aldebaran"],clouds:1}),stages:[st.guess("aldebaran",{lines:["hex"],label:"אלדבראן",tolDeg:5,
      instruction:"ענן מסתיר קודקוד של המשושה. לחץ במקום שבו נמצא אלדבראן.",hint1:"אלדבראן הוא הקודקוד שבין ריגל לקפלה."})],
    ...ex("בדיוק שם!","אלדבראן — העין של השור — הוא גם קודקוד של משושה החורף.")},
- ],
- "חידות מוזרות":[
+ ]/*@end*/,
+ "חידות מוזרות":/*@m:weird*/[
   {id:"m_wrd_1",view:{mode:"horizon",placeFrom:["eilat","ams","reyk","mumbai"],hidePlace:true,require:["polaris"],needNorth:true,fill:[.72,.82],faint:170,medium:28,bright:3,scenery:"trees",anyGuide:true,brighter:2,moon:true},
    stages:[st.polaris("auto",{instruction:"שוב אינך יודע איפה אתה, והירח זורח. מצא את כוכב הצפון."}),st.quiz(["eilat","ams","reyk","mumbai"],{instruction:"איפה אתה?",hint1:EXPL.alt})],
    ...ex("נכון!",EXPL.alt)},
@@ -1740,8 +1744,8 @@ const MEDIUM={
    stages:[st.guess("polaris",{tolDeg:5,label:"כוכב הצפון",instruction:"מרכז העיר: רואים רק את העגלה. נחש איפה כוכב הצפון.",
      hint1:"המשך את הקו של שני הכוכבים בקצה הקערה — בערך פי חמישה.",miss:"לא שם. המשך את הקו של כוכבי ההצבעה — פי חמישה"})],
    ...ex("מצאת אותו — בלי לראות אותו!","כוכבי ההצבעה עובדים גם כשכוכב הצפון עצמו נעלם באור העיר.")},
- ],
- "האריה":[
+ ]/*@end*/,
+ "האריה":/*@m:leo*/[
   {id:"m_leo_1",view:Mh("leo",{moon:true}),stages:[st.find("leo",{instruction:"ירח והתמונה עקומה. מצא את האריה."})],...ex("מצוין!","המגל והמשולש — ראש ואחוריים.")},
   {id:"m_leo_2",view:Md("leo"),stages:[st.find("leo",{instruction:"מצא את האריה."}),
      st.star("algieba","הרעמה",{instruction:"לחץ על אלגיבה — הרעמה, באמצע המגל.",near:{regulus:"זה רגולוס — תחתית המגל. הרעמה מעליו",adhafera:"קרוב — הרעמה צעד אחד לפני"},lines:["leo"]})],
@@ -1749,16 +1753,16 @@ const MEDIUM={
   {id:"m_leo_3",view:Md("leo",{cloudHide:["denebola"],clouds:1}),stages:[st.guess("denebola",{lines:["leo"],label:"דנבולה",tolDeg:4,
      instruction:"ענן מסתיר את הזנב. לחץ במקום שבו נמצאת דנבולה.",hint1:"הזנב הוא הקודקוד המרוחק של המשולש שמאחורי הגב — הרחק מהמגל."})],
    ...ex("בדיוק שם!","דנבולה — 'זנב האריה'.")},
- ],
- "רועה הדובים":[
+ ]/*@end*/,
+ "רועה הדובים":/*@m:bootes*/[
   {id:"m_boo_1",view:Mh("bootes"),stages:[st.find("bootes",{instruction:"התמונה עקומה. מצא את רועה הדובים."})],...ex("מצוין!","ארקטורוס הכתום והעפיפון שיוצא ממנו.")},
   {id:"m_boo_2",view:Md("bootes",{require:["bootes","dipper"]}),stages:[st.find("dipper",{instruction:"מצא את העגלה הגדולה."}),st.find("bootes",{instruction:"עכשיו את רועה הדובים — הוא הולך אחרי הידית."})],
    ...ex("מצוין!","הרועה הולך אחרי הדובה ברחבי השמים — לכן קוראים לו 'רועה הדובים'.")},
   {id:"m_boo_3",view:Md("bootes",{cloudHide:["izar"],clouds:1}),stages:[st.guess("izar",{lines:["bootes"],label:"איזר",tolDeg:3,
      instruction:"ענן מסתיר כוכב בעפיפון. לחץ במקום שבו נמצא איזר.",hint1:"איזר נמצא על אחת הצלעות של העפיפון, ממש סמוך לארקטורוס."})],
    ...ex("בדיוק שם!","במשקפת איזר הוא זוג כוכבים — אחד כתום ואחד כחלחל.")},
- ],
- "העקרב":[
+ ]/*@end*/,
+ "העקרב":/*@m:scorpius*/[
   {id:"m_sco_1",view:{mode:"horizon",place:"tlv",faceAz:180,alt0:20,lst:[16.4,17.6],require:["scorpius"],moon:true,fill:[.6,.74],faint:180,medium:30,bright:3,scenery:"trees"},
    stages:[st.find("scorpius",{instruction:"ירח בשמים. מצא את העקרב נמוך בדרום."})],...ex("מצוין!","אנטארס האדום בולט גם באור הירח.")},
   {id:"m_sco_2",view:Md("scorpius"),stages:[st.find("scorpius",{instruction:"מצא את העקרב."}),
@@ -1767,24 +1771,24 @@ const MEDIUM={
   {id:"m_sco_3",view:{mode:"horizon",place:"tlv",faceAz:180,alt0:20,lst:[16.2,17.8],require:["scorpius"],cloudHide:["shaula"],fill:[.6,.74],faint:190,medium:30,bright:3,scenery:"hills"},
    stages:[st.guess("shaula",{lines:["scorpius"],label:"העוקץ",tolDeg:3,instruction:"ענן מסתיר את העוקץ. לחץ במקום שבו הוא נמצא.",hint1:"עקוב אחרי הזנב מהלב, למטה ומסביב — העוקץ בקצה המתעקל."})],
    ...ex("בדיוק שם!","שאולה פירושו 'המורם' — העוקץ שמורם להכות.")},
- ],
- "הברבור והנבל":[
+ ]/*@end*/,
+ "הברבור והנבל":/*@m:cygnus*/[
   {id:"m_cyg_1",view:Mh("cygnus"),stages:[st.find("cygnus",{instruction:"התמונה עקומה. מצא את הברבור."})],...ex("מצוין!","צלב גדול — דנב בראש, אלביראו בקצה.")},
   {id:"m_cyg_2",view:Md("cygnus",{require:["cygnus","lyra"],magLimit:5.8}),stages:[st.find("cygnus",{instruction:"מצא את הברבור."}),st.find("lyra",{instruction:"ועכשיו את הנבל — לידו."})],
    ...ex("מצוין!","הברבור והנבל שכנים — ושניהם נותנים כוכב למשולש הקיצי.")},
   {id:"m_cyg_3",view:Md("cygnus",{cloudHide:["albireo"],clouds:1}),stages:[st.guess("albireo",{lines:["cygnus"],label:"אלביראו",tolDeg:4,
      instruction:"ענן מסתיר את המקור של הברבור. לחץ במקום שבו נמצא אלביראו.",hint1:"המקור בקצה השורה הארוכה של הצלב — מול דנב."})],
    ...ex("בדיוק שם!","אלביראו — זוג כוכבים זהוב וכחול, אחד המראות היפים במשקפת.")},
- ],
- "פגסוס ואנדרומדה":[
+ ]/*@end*/,
+ "פגסוס ואנדרומדה":/*@m:pegasus*/[
   {id:"m_peg_1",view:Mh("square",{fill:[.55,.68]}),stages:[st.find("square",{instruction:"התמונה עקומה. מצא את הריבוע הגדול."})],...ex("מצוין!","ריבוע ענק — וכמעט ריק בפנים.")},
   {id:"m_peg_2",view:Md("square",{require:["square","andromeda"]}),stages:[st.find("square",{instruction:"מצא את הריבוע הגדול."}),st.find("andromeda",{instruction:"ועכשיו את אנדרומדה — השרשרת שיוצאת מהפינה."})],
    ...ex("מצוין!","אלפרץ שייך לשתי הצורות: פינה של הריבוע וראש השרשרת.")},
   {id:"m_peg_3",view:Md("square",{require:["square","andromeda"],cloudHide:["alpheratz"],clouds:1}),stages:[st.guess("alpheratz",{lines:["square","andromeda"],label:"אלפרץ",tolDeg:4,
      instruction:"ענן מסתיר פינה של הריבוע. לחץ במקום שבו נמצא אלפרץ.",hint1:"אלפרץ היא הפינה שבה הריבוע פוגש את שרשרת אנדרומדה."})],
    ...ex("בדיוק שם!","אלפרץ — הכוכב שמחבר בין פגסוס לאנדרומדה.")},
- ],
- "כל כיפת השמים":[
+ ]/*@end*/,
+ "כל כיפת השמים":/*@m:allsky*/[
   {id:"m_all_1",view:{mode:"dome",place:"tlv",lst:[10,11.4],domeRot:"random",require:["dipper","leo","polaris"],anyGuide:true,faint:220,medium:36,bright:4},
    stages:[st.find("dipper",{instruction:"ליל אביב. התחל בעגלה הגדולה."}),st.find("leo",{instruction:"עכשיו את האריה."}),st.polaris("auto"),st.domeNorth()],
    ...ex("מצוין!","בערבי אביב העגלה גבוהה — והיא מובילה גם לאריה וגם לצפון.")},
@@ -1794,12 +1798,12 @@ const MEDIUM={
   {id:"m_all_3",view:{mode:"dome",place:"tlv",lst:[22.6,24],domeRot:"random",require:["square","andromeda","cas","polaris"],anyGuide:true,faint:220,medium:36,bright:4},
    stages:[st.find("square",{instruction:"ליל סתיו. מצא את הריבוע הגדול."}),st.find("andromeda",{instruction:"עכשיו את אנדרומדה."}),st.find("cas",{instruction:"ואת קסיופאה."}),st.polaris("auto"),st.domeNorth()],
    ...ex("מצוין!","בסתיו: מהריבוע לאנדרומדה, משם לקסיופאה — ומשם לצפון.")},
- ],
+ ]/*@end*/,
 };
 CHAPTERS.forEach(c=>{ const m=MEDIUM[c.title]; if(!m) return; c.levels.splice(c.title==="כל כיפת השמים"?0:Math.ceil(c.levels.length/2),0,...m); });
 
 const LINKS=[
- ["אוריון",{title:"חיבור: מהדובה אל אוריון", desc:"שתי הדובות, חץ הצפון ואוריון — יחד בשמי החורף", levels:[
+ ["אוריון",{title:"חיבור: מהדובה אל אוריון", desc:"שתי הדובות, חץ הצפון ואוריון — יחד בשמי החורף", levels:/*@link1*/[
   {id:"lk1_1",view:{mode:"dome",place:"tlv",lst:[5.8,6.6],domeRot:"random",require:["uma","orion","polaris"],faint:220,medium:36,bright:4},
    stages:[st.find("uma",{instruction:"ליל חורף. מצא את הדובה הגדולה."}),st.find("orion",{instruction:"עכשיו את אוריון."}),st.polaris("dipper",{instruction:"עכשיו מצא את כוכב הצפון — בעזרת העגלה."}),st.domeNorth()],
    ...ex("מצאת את הצפון!","בערבי חורף רואים את שתיהן: הדובה בצפון-מזרח ואוריון בדרום — ושתיהן מובילות לצפון."),
@@ -1816,8 +1820,8 @@ const LINKS=[
   {id:"lk1_5",view:{mode:"dome",place:"tlv",lst:[5.8,6.6],domeRot:"random",require:["umi","orion"],magLimit:5.8,faint:150,medium:24,bright:3},
    stages:[st.find("umi",{instruction:"ליל חורף, שמים חשוכים. מצא את הדובה הקטנה."}),st.arrow({instruction:"עכשיו גרור את חץ הצפון של אוריון — הוא צריך להגיע אל קצה הזנב של הדובה הקטנה."})],
    ...ex("מצוין!","החץ של אוריון מגיע מהצד השני של השמים — בדיוק אל קצה הזנב של הדובה הקטנה.")},
- ]}],
- ["התאומים",{title:"חיבור: השור, העגלון והתאומים", desc:"שלוש צורות שנוגעות זו בזו מעל אוריון", levels:[
+ ]/*@end*/}],
+ ["התאומים",{title:"חיבור: השור, העגלון והתאומים", desc:"שלוש צורות שנוגעות זו בזו מעל אוריון", levels:/*@link2*/[
   {id:"lk2_1",view:{mode:"dome",place:"tlv",lst:[5.4,6.6],domeRot:"random",require:["taurus","auriga","gemini"],faint:220,medium:36,bright:4},
    stages:[st.find("taurus",{instruction:"מצא את השור."}),st.find("auriga",{instruction:"עכשיו את העגלון."}),st.find("gemini",{instruction:"ועכשיו את התאומים."})],
    ...ex("מצוין!","השור, העגלון והתאומים — שלוש צורות צמודות בשמי החורף."),
@@ -1834,8 +1838,8 @@ const LINKS=[
   {id:"lk2_4",view:{mode:"dome",place:"tlv",lst:[5.6,6.8],domeRot:"random",require:["taurus","auriga","gemini"],clouds:3,moon:true,plane:true,faint:220,medium:36,bright:4},
    stages:[st.find("auriga",{instruction:"עננים, ירח ומטוס. מצא את העגלון."}),st.find("taurus",{instruction:"עכשיו את השור."}),st.find("gemini",{instruction:"ועכשיו את התאומים."})],
    ...ex("מצוין!","שלוש צורות — יותר מעשרים כוכבים — בשמים קשים.")},
- ]}],
- ["הארנבת",{title:"חיבור: הסרטן, הכלב הקטן והארנבת", desc:"צורות קטנות סביב הצורות הגדולות", levels:[
+ ]/*@end*/}],
+ ["הארנבת",{title:"חיבור: הסרטן, הכלב הקטן והארנבת", desc:"צורות קטנות סביב הצורות הגדולות", levels:/*@link3*/[
   {id:"lk3_1",view:{mode:"dome",place:"tlv",lst:[6.4,7.6],domeRot:"random",require:["orion","lepus","cmi"],faint:220,medium:36,bright:4},
    stages:[st.find("orion",{instruction:"מצא את אוריון."}),st.find("lepus",{instruction:"עכשיו את הארנבת — מתחתיו."}),st.find("cmi",{instruction:"ועכשיו את הכלב הקטן."})],
    ...ex("מצוין!","אוריון הוא המרכז: הארנבת מתחת לרגליו, והכלב הקטן מאחוריו."),
@@ -1850,8 +1854,8 @@ const LINKS=[
   {id:"lk3_4",view:{mode:"dome",place:"tlv",lst:[6.6,7.8],domeRot:"random",require:["lepus","cmi","wtri"],clouds:3,moon:true,faint:220,medium:36,bright:4},
    stages:[st.find("wtri",{instruction:"עננים וירח. מצא את משולש החורף."}),st.find("cmi",{instruction:"עכשיו את הכלב הקטן."}),st.find("lepus",{instruction:"ועכשיו את הארנבת."})],
    ...ex("מצוין!","גם הצורות הקטנות נמצאות — אם יודעים ליד מה לחפש.")},
- ]}],
- ["חידות המומחה",{title:"חיבור: הכלבים וחד הקרן", desc:"משולש החורף והצורות שבתוכו ומסביבו", levels:[
+ ]/*@end*/}],
+ ["חידות המומחה",{title:"חיבור: הכלבים וחד הקרן", desc:"משולש החורף והצורות שבתוכו ומסביבו", levels:/*@link4*/[
   {id:"lk4_1",view:{mode:"dome",place:"tlv",lst:[6.6,7.8],domeRot:"random",require:["wtri","cma","cmi"],faint:220,medium:36,bright:4},
    stages:[st.find("wtri",{instruction:"מצא את משולש החורף."}),st.find("cma",{instruction:"עכשיו את הכלב הגדול."}),st.find("cmi",{instruction:"ועכשיו את הכלב הקטן."})],
    ...ex("מצוין!","שני הכלבים של הצייד — וכל אחד נותן כוכב למשולש החורף."),
@@ -1868,8 +1872,8 @@ const LINKS=[
        hint1:"מהכוכב העליון בחגורה, דרך התחתון, והלאה — בערך פי שמונה מאורך החגורה.",inGroupMsg:"זה כוכב של אוריון. המשך את קו החגורה הלאה",doneText:""}),
      st.find("cma",{instruction:"ועכשיו את הכלב הגדול כולו."})],
    ...ex("מצוין!","מאוריון לסיריוס, ומסיריוס לכלב כולו.")},
- ]}],
- ["חידות מוזרות",{title:"חיבור: קיץ וחורף", desc:"המשולש הקיצי, משושה החורף — והמקום שלך על כדור הארץ", levels:[
+ ]/*@end*/}],
+ ["חידות מוזרות",{title:"חיבור: קיץ וחורף", desc:"המשולש הקיצי, משושה החורף — והמקום שלך על כדור הארץ", levels:/*@link5*/[
   {id:"lk5_1",view:{mode:"dome",place:"tlv",lst:[19,20.4],domeRot:"random",require:["tri","polaris"],anyGuide:true,faint:220,medium:36,bright:4},
    stages:[st.find("tri",{instruction:"ליל קיץ. מצא את המשולש הקיצי."}),st.polaris("auto"),st.domeNorth()],
    ...ex("מצאת את הצפון!","בקיץ — המשולש מעל הראש, ואת הצפון מראים העגלה וקסיופאה."),
@@ -1884,8 +1888,8 @@ const LINKS=[
    stages:[st.guess("polaris",{tolDeg:7,label:"כוכב הצפון",instruction:"מרכז העיר בקיץ: רואים רק את המשולש. בכיפה הזו הצפון למעלה. נחש איפה כוכב הצפון.",
      hint1:"כוכב הצפון בגובה 32 מעלות, בצד הצפוני: קצת יותר מחצי הדרך ממרכז הכיפה אל השפה.",miss:"לא שם. הצפון למעלה, וכוכב הצפון קצת יותר מחצי הדרך מהמרכז אל השפה"}),st.domeNorth()],
    ...ex("מצאת אותו — בלי לראות אותו!","כוכב הצפון תמיד באותו מקום: מעל הצפון, בגובה קו הרוחב.")},
- ]}],
- ["העקרב",{title:"חיבור: שמי האביב והקיץ", desc:"האריה, רועה הדובים והעקרב — והעגלה שמובילה אליהם", levels:[
+ ]/*@end*/}],
+ ["העקרב",{title:"חיבור: שמי האביב והקיץ", desc:"האריה, רועה הדובים והעקרב — והעגלה שמובילה אליהם", levels:/*@link6*/[
   {id:"lk6_1",view:{mode:"dome",place:"tlv",lst:[12.4,13.6],domeRot:"random",require:["dipper","leo","bootes"],faint:220,medium:36,bright:4},
    stages:[st.find("dipper",{instruction:"ליל אביב. מצא את העגלה הגדולה."}),st.find("leo",{instruction:"עכשיו את האריה."}),st.find("bootes",{instruction:"ועכשיו את רועה הדובים."})],
    ...ex("מצוין!","העגלה באמצע: האריה מצד אחד, רועה הדובים מהצד השני."),
@@ -1904,7 +1908,7 @@ const LINKS=[
    stages:[st.guess("spica",{lines:["dipper"],label:"ספיקה",tolDeg:5,instruction:"ענן מסתיר את ספיקה. לחץ במקום שבו היא נמצאת.",
      hint1:"'קשת אל ארקטורוס — והאץ אל ספיקה': המשך את הקשת של הידית אל ארקטורוס, ומשם עוד בערך אותו מרחק.",hintLines:["dipper"]})],
    ...ex("בדיוק שם!","ידית אחת — שני כוכבים בהירים בהמשכה.")},
- ]}],
+ ]/*@end*/}],
 ];
 LINKS.forEach(([after,ch])=>{ const i=CHAPTERS.findIndex(c=>c.title===after); if(i>=0) CHAPTERS.splice(i+1,0,ch); });
 const LEVELS=CHAPTERS.flatMap((c,ci)=>c.levels.map(l=>Object.assign({chapter:ci},l)));
@@ -1925,7 +1929,7 @@ const BaseOpen=new Set(OpenKeys);            // what the manager opened for ever
 /* Access codes for chosen people: each opens chosen chapters on the device where it is typed ("*" = every chapter and the endless journey).
    free:true = every level in those chapters can be played at once, without finishing the ones before.
    Only a hash of each code is kept in the page, so reading the page source does not reveal the codes. The manager panel rewrites the value on the next line. */
-const CODES=OFEK_G&&Array.isArray(OFEK_G.codes)?OFEK_G.codes:/*CODES_START*/[{"h":"ceaed2c20cc100ec","name":"לרבקה - עד פרק 10","ch":["uma","arrow","orion"],"free":false}]/*CODES_END*/;
+const CODES=OFEK_G&&Array.isArray(OFEK_G.codes)?OFEK_G.codes:/*CODES_START*/[]/*CODES_END*/;
 /* Timed opening: each chapter here opens by itself for everyone when its moment comes ({key, at: milliseconds since 1970, UTC}).
    It goes by the clock of the player's device. The manager panel rewrites the value on the next line. */
 const SCHEDULE=OFEK_G&&Array.isArray(OFEK_G.schedule)?OFEK_G.schedule:/*SCHED_START*/[{"key":"uma","at":1792861200000}]/*SCHED_END*/;
@@ -1935,7 +1939,15 @@ function codeHash(raw){ const t="polaris-north|"+normCode(raw); let h1=0xdeadbee
   h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909); h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
   return (h2>>>0).toString(16).padStart(8,"0")+(h1>>>0).toString(16).padStart(8,"0"); }
 const codeKeys=e=>e.ch.includes("*")?[...Object.values(CH_META),"endless"]:e.ch;
-CHAPTERS.forEach(c=>{ c.key=CH_META[c.title]; c.base=BASE_CH.includes(c.key); });
+/* new codes keep only a slow, salted hash (PBKDF2), so the page source cannot be used to guess them; old codes (h only) still work */
+const PB_ITER=150000, TE=new TextEncoder();
+async function strongHash(code,salt){ const k=await crypto.subtle.importKey("raw",TE.encode("polaris-north|"+normCode(code)),"PBKDF2",false,["deriveBits"]);
+  const b=await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:TE.encode(salt),iterations:PB_ITER},k,256);
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }
+async function codeMatches(e,c){ if(!c||!e) return false; if(e.p){ const [salt,hh]=String(e.p).split("$"); return !!hh&&(await strongHash(c,salt))===hh; } return !!e.h&&e.h===codeHash(c); }
+async function findCode(c){ for(const e of CODES) if(await codeMatches(e,c)) return e; return null; }
+const randHex=n=>[...crypto.getRandomValues(new Uint8Array(n))].map(x=>x.toString(16).padStart(2,"0")).join("");
+CHAPTERS.forEach(c=>{ c.key=CH_META[c.title]; c.base=BASE_CH.includes(c.key); c.stripped=c.levels.some(l=>l.locked); });
 /* every level has a stable id, so progress survives any reordering of chapters */
 { let bi=0; LEVELS.forEach(L=>{ if(CHAPTERS[L.chapter].base) L.id="base_"+(bi++); else if(!L.id&&L.o!=null) L.id="o"+L.o; }); }
 
@@ -2017,12 +2029,22 @@ function writeSave(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(Save)); 
 let Save=loadSave();
 /* chapters opened on this device by access codes (a code the manager deleted stops working at the next load) */
 const FreeKeys=new Set();
-function applyCodes(){ Save.codes=(Save.codes||[]).filter(c=>CODES.some(e=>e.h===codeHash(c)));
-  Save.codes.forEach(c=>{ const e=CODES.find(x=>x.h===codeHash(c)); codeKeys(e).forEach(k=>{ OpenKeys.add(k); if(e.free) FreeKeys.add(k); }); }); }
+const CodeHits=new Map();                     // code typed on this device -> its entry (checked again at every load)
+function applyCodes(){
+  const G=window.OFEK_GRANT;                   // the site: chapters the server opened for this visitor (by a code checked on the server)
+  if(G&&typeof G==="object"){ codeKeys({ch:G.keys||[]}).forEach(k=>OpenKeys.add(k)); codeKeys({ch:G.free||[]}).forEach(k=>FreeKeys.add(k)); }
+  CodeHits.forEach(e=>codeKeys(e).forEach(k=>{ OpenKeys.add(k); if(e.free) FreeKeys.add(k); })); }
+async function verifyCodes(){ const keep=[];
+  for(const c of (Save.codes||[])){ const e=await findCode(c).catch(()=>null); if(e){ keep.push(c); CodeHits.set(c,e); } }
+  Save.codes=keep; applyCodes(); }
 applyCodes();
+const codesReady=verifyCodes().catch(()=>{});
 /* open the chapters whose time has come; while the game is open this runs every half minute */
 function applySchedule(announce){ const now=Date.now(), opened=[];
   SCHEDULE.forEach(e=>{ if(e.at<=now && !OpenKeys.has(e.key)){ OpenKeys.add(e.key); opened.push(e.key); } });
+  if(announce&&window.OFEK_GAME) SCHEDULE.forEach(e=>{ const c=CHAPTERS.find(x=>x.key===e.key); if(!c||!c.stripped||now<e.at+20000) return;
+    const flag="ofek-due-"+e.key+"-"+e.at; let seen=null; try{ seen=sessionStorage.getItem(flag); sessionStorage.setItem(flag,"1"); }catch(x){}
+    if(!seen) location.reload(); });
   if(announce && opened.length){ updateHeader(); sfx("win"); toast((opened.length>1?"פרקים חדשים נפתחו: ":"פרק חדש נפתח: ")+opened.map(keyTitle).join(", ")+"!"); }
   return opened; }
 applySchedule(false);
@@ -2715,8 +2737,8 @@ const fmtTime=s=>{s=Math.round(s);const m=Math.floor(s/60),r=s%60;return m?`${m}
 function starIcon(on,size=26){return `<svg width="${size}" height="${size}" viewBox="-12 -12 24 24"><path d="M0,-10L2.9,-3.1L10,-3.1L4.3,1.4L6.4,8.6L0,4.3L-6.4,8.6L-4.3,1.4L-10,-3.1L-2.9,-3.1Z" fill="${on?"#e8cf8a":"none"}" stroke="${on?"#e8cf8a":"#55607a"}" stroke-width="1.2"/></svg>`}
 function bigStar(){return `<svg width="64" height="64" viewBox="-32 -32 64 64" aria-hidden="true"><defs><radialGradient id="cg"><stop offset="0" stop-color="#fff6d6" stop-opacity=".8"/><stop offset=".35" stop-color="#e8cf8a" stop-opacity=".25"/><stop offset="1" stop-color="#e8cf8a" stop-opacity="0"/></radialGradient></defs><circle r="26" fill="url(#cg)"/><path d="M0,-18 L3,-3 L18,0 L3,3 L0,18 L-3,3 L-18,0 L-3,-3Z" fill="#fff8ea"/></svg>`}
 /* ---- locks: a chapter must be open (the manager decides); inside the open levels you advance one by one ---- */
-const isOpen=ci=>OpenKeys.has(CHAPTERS[ci].key);
-const canPlayChapter=ci=>isOpen(ci)||Admin.on;
+const isOpen=ci=>OpenKeys.has(CHAPTERS[ci].key)&&!CHAPTERS[ci].stripped;
+const canPlayChapter=ci=>isOpen(ci)||(Admin.on&&!CHAPTERS[ci].stripped);
 const bestOf=i=>Save.best[LEVELS[i].id];
 function levelUnlocked(i){ if(!canPlayChapter(LEVELS[i].chapter)) return false; if(Admin.on||bestOf(i)!=null||FreeKeys.has(CHAPTERS[LEVELS[i].chapter].key)) return true;
   for(let j=i-1;j>=0;j--) if(isOpen(LEVELS[j].chapter)) return bestOf(j)!=null; return true; }
@@ -2780,11 +2802,25 @@ function showCodeEntry(){
       <div class="btns"><button class="primary ready" type="submit">פתח</button><button type="button" id="cBack">חזרה</button></div>
     </form>`);
   $("codeInput").focus(); $("cBack").onclick=showMap;
-  $("codeForm").addEventListener("submit",ev=>{ ev.preventDefault();
-    const c=normCode($("codeInput").value), e=c&&CODES.find(x=>x.h===codeHash(c)), msg=$("codeMsg");
-    if(!e){ sfx("wrong"); msg.textContent=c?"הקוד לא נכון. בדוק שהקלדת אותו בדיוק כמו שקיבלת.":"הקלד את הקוד שקיבלת."; return; }
+  let busy=false;
+  $("codeForm").addEventListener("submit",async ev=>{ ev.preventDefault(); if(busy) return;
+    const c=normCode($("codeInput").value), msg=$("codeMsg");
+    if(!c){ sfx("wrong"); msg.textContent="הקלד את הקוד שקיבלת."; return; }
+    busy=true; msg.textContent="בודק…";
+    if(window.OFEK_GAME){                      // the site: the server checks the code and opens the chapters for this visitor
+      let r=null; try{ const x=await fetch("/api/game-code",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify({code:c})}); r=await x.json(); }catch(x){}
+      busy=false;
+      if(!r){ msg.textContent="אין חיבור. נסה שוב."; return; }
+      if(!r.ok){ sfx("wrong"); msg.textContent=r.error||"הקוד לא נכון. בדוק שהקלדת אותו בדיוק כמו שקיבלת."; return; }
+      sfx("win");
+      showCard(`${bigStar()}<h2>נפתח!</h2><p>הקוד פתח במכשיר הזה: <b style="color:var(--ink)">${esc(codeSummary({ch:r.ch||[]}))}</b>.${r.free?" אפשר לשחק בכל רמה בפרקים האלה, בלי לסיים את הקודמות.":""}</p>
+        <div class="btns"><button class="primary ready" id="cMap2">למפת המסע</button></div>`);
+      $("cMap2").onclick=()=>{ try{ sessionStorage.setItem("ofek-open-map","1"); }catch(x){} location.reload(); };
+      return; }
+    const e=await findCode(c).catch(()=>null); busy=false;
+    if(!e){ sfx("wrong"); msg.textContent="הקוד לא נכון. בדוק שהקלדת אותו בדיוק כמו שקיבלת."; return; }
     if(!(Save.codes||[]).some(x=>normCode(x)===c)){ Save.codes=[...(Save.codes||[]),c]; writeSave(); }
-    applyCodes(); updateHeader(); sfx("win");
+    CodeHits.set(c,e); applyCodes(); updateHeader(); sfx("win");
     showCard(`${bigStar()}<h2>נפתח!</h2><p>הקוד פתח במכשיר הזה: <b style="color:var(--ink)">${esc(codeSummary(e))}</b>.${e.free?" אפשר לשחק בכל רמה בפרקים האלה, בלי לסיים את הקודמות.":""}</p>
       <div class="btns"><button class="primary ready" id="cMap2">למפת המסע</button></div>`);
     $("cMap2").onclick=showMap; });
@@ -2824,7 +2860,7 @@ function publishError(e){ const c=e&&e.code;
     : "השמירה נכשלה"+(e&&e.message?": "+e.message:"")+"."; }
 /* ---- access codes: the manager creates a code, picks the chapters it opens, and sends it to the people who should have it ---- */
 const CODE_CHARS="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-function newCode(){ const r=new Uint32Array(6); crypto.getRandomValues(r); const t=[...r].map(x=>CODE_CHARS[x%CODE_CHARS.length]).join(""); return t.slice(0,3)+"-"+t.slice(3); }
+function newCode(){ const r=new Uint32Array(8); crypto.getRandomValues(r); const t=[...r].map(x=>CODE_CHARS[x%CODE_CHARS.length]).join(""); return t.slice(0,4)+"-"+t.slice(4); }
 async function publishCodes(codes,msg,btn,reopen,sched=SCHEDULE){
   btn.disabled=true; msg.textContent="שומר ומפרסם…";
   Save.reopen=reopen; writeSave();                       // after the reload, come back to this screen
@@ -2899,13 +2935,14 @@ function showCodes(editIdx=null){
     navigator.clipboard.writeText(t).then(()=>toast("הקוד הועתק")).catch(()=>{ const r=document.createRange(); r.selectNodeContents(b.previousElementSibling); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast("הקוד מסומן — העתק אותו"); }); });
   document.querySelectorAll("[data-ced]").forEach(b=>b.onclick=()=>showCodes(+b.dataset.ced));
   document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>delTwice(b,()=>publishCodes(CODES.filter((_,j)=>j!==+b.dataset.del),$("cdMsg"),b,"codes")));
-  $("cdMake").onclick=()=>{
+  $("cdMake").onclick=async()=>{
     const isAll=$("cdAll").checked, ch=isAll?["*"]:[...document.querySelectorAll("[data-ch]")].filter(cb=>cb.checked).map(cb=>cb.dataset.ch);
     if(!ch.length){ $("cdMsg").textContent="בחר לפחות פרק אחד שהקוד יפתח."; return; }
     const fields={name:$("cdName").value.trim().slice(0,40),ch,free:$("cdFree").checked};
     if(ed){ publishCodes(CODES.map((e,j)=>j===editIdx?Object.assign({},e,fields):e),$("cdMsg"),$("cdMake"),"codes"); return; }
-    let code; do{ code=newCode(); }while(CODES.some(e=>e.h===codeHash(code)));
-    const entry=Object.assign({h:codeHash(code)},fields);
+    $("cdMake").disabled=true; $("cdMsg").textContent="יוצר קוד…";
+    const code=newCode(), salt=randHex(8);
+    const entry=Object.assign({h:randHex(8),p:salt+"$"+await strongHash(code,salt)},fields);   // h is only an id now
     Save.myCodes=Object.assign({},Save.myCodes,{[entry.h]:code});    // the readable code stays only on the manager's device
     publishCodes([...CODES,entry],$("cdMsg"),$("cdMake"),"codes"); };
 }
@@ -2922,8 +2959,11 @@ function showCodes(editIdx=null){
    ======================================================================= */
 /* run fn once the first sky and the start card are up (the manager panel may be detected before or after that) */
 let booted=false; const bootQueue=[]; function afterBoot(fn){ if(booted) fn(); else bootQueue.push(fn); }
-requestAnimationFrame(()=>{ State.kind="level"; State.levelIdx=firstOpenLevel(); startPuzzle(levelPuzzle(State.levelIdx)); showStart(); booted=true; bootQueue.splice(0).forEach(f=>f()); });
+codesReady.then(()=>requestAnimationFrame(()=>{ State.kind="level"; State.levelIdx=firstOpenLevel(); startPuzzle(levelPuzzle(State.levelIdx)); showStart();
+  let toMap=null; try{ toMap=sessionStorage.getItem("ofek-open-map"); sessionStorage.removeItem("ofek-open-map"); }catch(x){} if(toMap) showMap();
+  booted=true; bootQueue.splice(0).forEach(f=>f()); }));
 if(SCHEDULE.length){ setInterval(()=>applySchedule(true),30000); document.addEventListener("visibilitychange",()=>{ if(!document.hidden) applySchedule(true); }); }
+})(); /*WRAP_END*/
 </script>
 
 </body></html>

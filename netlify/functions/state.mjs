@@ -1,9 +1,9 @@
 // Settings the game and the structure need before they start, as a small script.
-import { loadConfig } from "../lib/common.mjs";
+import { loadConfig, publicGame } from "../lib/common.mjs";
 
 export default async () => {
   const cfg = await loadConfig();
-  const game = cfg.public.game || null;
+  const game = publicGame(cfg.public.game || null);   // never the code hashes
   const globe = cfg.public.globe || { open: [] };
   const js = "window.OFEK_GAME = " + JSON.stringify(game).replace(/</g, "\\u003c") + ";\n" +
     "window.ROOM_ACCESS = " + JSON.stringify({ open: globe.open || [], updatedAt: cfg.public.updatedAt || 0 }).replace(/</g, "\\u003c") + ";\n";

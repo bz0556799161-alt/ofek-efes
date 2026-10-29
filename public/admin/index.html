@@ -502,7 +502,7 @@ td.num{font-variant-numeric:tabular-nums}
     for (var i = 0; i < t.length; i++) { var c = t.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
     h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909); h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
     return (h2 >>> 0).toString(16).padStart(8, "0") + (h1 >>> 0).toString(16).padStart(8, "0"); }
-  function newCode(){ var A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", r = new Uint32Array(6); crypto.getRandomValues(r); var t = ""; for (var i = 0; i < 6; i++) t += A[r[i] % A.length]; return t.slice(0,3) + "-" + t.slice(3); }
+  function newCode(){ var A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", r = new Uint32Array(8); crypto.getRandomValues(r); var t = ""; for (var i = 0; i < 8; i++) t += A[r[i] % A.length]; return t.slice(0,4) + "-" + t.slice(4); }
   var fmtWhen = function(at){ return new Date(at).toLocaleString("he-IL", { timeZone:"Asia/Jerusalem", weekday:"short", day:"numeric", month:"numeric", hour:"2-digit", minute:"2-digit" }); };
   function israelInputToMs(v){ // the input value is Israel time; find the matching moment
     var guess = new Date(v + ":00Z").getTime();
