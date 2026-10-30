@@ -148,13 +148,18 @@ BOOK_SCRIPT = '''<script src="/assets/chapters.js"></script>
 <script>
 (function(){
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, function(m){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]; }); }
-  var live = null;   // the chapters read from prog.co.il
+  var CK = "ofek-chapters-v1";
+  var live = null, ready = false;   // the chapters read from prog.co.il
+  try { var c = JSON.parse(localStorage.getItem(CK) || "null"); if (c && c.length) { live = c; ready = true; } } catch (e) {}
   function list(){
     if (live && live.length) return live;
     var cfg = window.OFEK_CONFIG || {};
     return (cfg.chapters && cfg.chapters.length) ? cfg.chapters : (window.OFEK_CHAPTERS || []);
   }
   function render(){
+    // until the real list arrives, show a quiet placeholder instead of the old built-in list (no flash)
+    document.body.classList.toggle("ch-loading", !ready);
+    if (!ready) return;
     var ch = list(), last = ch[ch.length-1];
     var label = function(c){ return +c.num === 0 ? "מבוא" : (c.num ? "פרק " + c.num : ""); };
     var mark = function(c){ return +c.num === 0 ? "◦" : esc(c.num); };
@@ -182,7 +187,15 @@ BOOK_SCRIPT = '''<script src="/assets/chapters.js"></script>
   }
   render();
   document.addEventListener("ofek:config", render);
-  fetch("/api/chapters").then(function(r){ return r.ok ? r.json() : null; }).then(function(j){ if (j && j.items && j.items.length) { live = j.items; render(); } }).catch(function(){});
+  var fallback = setTimeout(function(){ if (!ready) { ready = true; render(); } }, 4000);
+  fetch("/api/chapters").then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
+    clearTimeout(fallback);
+    if (j && j.items && j.items.length) {
+      var same = JSON.stringify(j.items) === JSON.stringify(live);
+      live = j.items; try { localStorage.setItem(CK, JSON.stringify(j.items)); } catch (e) {}
+      if (!ready || !same) { ready = true; render(); }
+    } else if (!ready) { ready = true; render(); }
+  }).catch(function(){ clearTimeout(fallback); if (!ready) { ready = true; render(); } });
 })();
 </script>
 '''

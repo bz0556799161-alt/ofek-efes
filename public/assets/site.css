@@ -279,3 +279,10 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-betw
 .sent p{color:var(--ink-soft);margin:0 0 8px}
 .foot-link{color:var(--ink-soft);text-decoration:none}
 .foot-link:hover{color:var(--gold)}
+
+/* book: a calm placeholder while the chapters load */
+.ch-loading #latestCard{min-height:300px}
+.ch-loading #chapterList{min-height:240px}
+.ch-loading #latestCard,.ch-loading #chapterList{background-image:linear-gradient(100deg,transparent 30%,rgba(205,216,218,.05) 50%,transparent 70%);background-size:220% 100%;animation:chShimmer 1.4s linear infinite}
+@keyframes chShimmer{from{background-position:120% 0}to{background-position:-120% 0}}
+@media (prefers-reduced-motion: reduce){.ch-loading #latestCard,.ch-loading #chapterList{animation:none}}
