@@ -7,6 +7,7 @@ export const MODES = ["open", "soon", "locked", "hidden"];
 export const siteStore = () => getStore({ name: "ofek-site", consistency: "strong" });
 export const visitorStore = () => getStore({ name: "ofek-visitors" });
 export const fontStore = () => getStore({ name: "ofek-fonts" });
+export const messageStore = () => getStore({ name: "ofek-messages", consistency: "strong" });
 
 export function defaultConfig() {
   return {

@@ -51,9 +51,8 @@
     <section class="panel form-panel" data-solid aria-labelledby="formTitle">
       <h2 id="formTitle" data-t="contact.form.title">השארת פנייה</h2>
       <p class="sub" data-t="contact.form.sub">ממלאים, שולחים, והפנייה מגיעה אליי למייל. אחזור אליך בהקדם.</p>
-      <form name="contact" id="contactForm" method="POST" action="/contact/?sent=1" data-netlify="true" netlify-honeypot="bot-field" novalidate>
-        <input type="hidden" name="form-name" value="contact">
-        <p class="hp" aria-hidden="true"><label>לא למילוי <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+      <form id="contactForm" novalidate>
+        <p class="hp" aria-hidden="true"><label>לא למילוי <input name="website" tabindex="-1" autocomplete="off"></label></p>
         <div class="fields">
           <label class="field"><span>שם <b aria-hidden="true">*</b></span><input id="fName" name="name" type="text" autocomplete="name" required maxlength="80"></label>
           <label class="field"><span>נושא</span>
@@ -136,10 +135,11 @@
     if (!mail && !phone) { err.textContent = "השאר מייל או טלפון, כדי שאוכל לחזור אליך."; $("fEmail").focus(); return; }
     if (mail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) { err.textContent = "כתובת המייל לא נראית תקינה."; $("fEmail").focus(); return; }
     err.textContent = ""; btn.disabled = true; btn.textContent = "שולח…";
-    var body = new URLSearchParams(new FormData(form)).toString();
-    fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body })
-      .then(function(r){ if (!r.ok) throw new Error(r.status); showSent(); if (window.ofekTrack) ofekTrack("contact", {}); })
-      .catch(function(){ err.textContent = "השליחה לא הצליחה. נסה שוב, או כתוב ישירות למייל שלמעלה."; })
+    var data = {}; new FormData(form).forEach(function(v, k){ data[k] = v; });
+    fetch("/api/contact", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) })
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok) throw new Error(j.error || ""); }); })
+      .then(function(){ showSent(); if (window.ofekTrack) ofekTrack("contact", {}); })
+      .catch(function(e){ err.textContent = (e && e.message) || "השליחה לא הצליחה. נסה שוב, או כתוב ישירות למייל שלמעלה."; })
       .then(function(){ btn.disabled = false; btn.textContent = "שליחת הפנייה"; });
   });
 })();

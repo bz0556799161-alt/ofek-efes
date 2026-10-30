@@ -2,7 +2,7 @@
 import { purgeCache } from "@netlify/functions";
 import {
   loadConfig, saveConfig, isAdmin, adminCookie, adminPassword, cookie, json, sleep, safeEqual,
-  sha256, randomHex, hashCode, visitorStore, fontStore, israelDay, SECTIONS, MODES
+  sha256, randomHex, hashCode, visitorStore, fontStore, messageStore, israelDay, SECTIONS, MODES
 } from "../lib/common.mjs";
 import { syncProg, loadProg, importProg } from "../lib/prog.mjs";
 
@@ -310,6 +310,27 @@ export default async (req, context) => {
   }
 
   if (route === "stats" && method === "GET") return json(await stats());
+
+  // messages sent through the contact page
+  if (route === "messages" && method === "GET") {
+    const store = messageStore(), keys = [];
+    for await (const page of store.list({ paginate: true })) page.blobs.forEach((b) => keys.push(b.key));
+    keys.sort().reverse();
+    const items = (await Promise.all(keys.slice(0, 300).map((k) => store.get(k, { type: "json" }).catch(() => null)))).filter(Boolean);
+    const env = (k) => (globalThis.Netlify && Netlify.env && Netlify.env.get(k)) || process.env[k] || "";
+    return json({ items, total: keys.length, emailOn: !!env("RESEND_API_KEY") });
+  }
+  if (route === "messages" && (method === "PATCH" || method === "DELETE")) {
+    const id = s(url.searchParams.get("id"), 40);
+    if (!/^[0-9a-f-]{10,40}$/.test(id)) return json({ error: "bad" }, 400);
+    const store = messageStore();
+    if (method === "DELETE") { await store.delete(id); return json({ ok: true }); }
+    const m = await store.get(id, { type: "json" });
+    if (!m) return json({ error: "הפנייה לא נמצאה." }, 404);
+    m.read = url.searchParams.get("read") !== "0";
+    await store.setJSON(id, m);
+    return json({ ok: true });
+  }
 
   // the book's chapters from prog.co.il: read the stored list, or refresh it now
   if (route === "prog" && method === "GET") return json((await loadProg()) || { items: [], syncedAt: 0 });

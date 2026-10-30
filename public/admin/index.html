@@ -87,6 +87,18 @@ td.num{font-variant-numeric:tabular-nums}
 .sitebox{border:1px solid var(--edge);border-radius:14px;overflow:hidden;background:#000;height:calc(100vh - 260px);min-height:520px}
 .sitebox iframe{width:100%;height:100%;border:0;display:block}
 .btn.on-page{background:var(--gold);color:#1b1407;border-color:var(--gold)}
+.tab .badge{display:inline-block;min-width:20px;padding:0 6px;margin-inline-start:4px;border-radius:99px;background:var(--bad);color:#1b1407;font-size:12px;font-weight:700;line-height:20px;text-align:center}
+.msg{border-top:1px solid var(--edge);padding:14px 2px;display:grid;gap:6px}
+.msg:first-child{border-top:0}
+.msg.unread{border-inline-start:3px solid var(--gold);padding-inline-start:12px}
+.msg .mhead{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}
+.msg .mname{font-weight:600;font-size:16.5px}
+.msg .mtopic{font-size:13px;color:var(--gold)}
+.msg .mwhen{font-size:13px;color:var(--faint);margin-inline-start:auto}
+.msg .mbody{white-space:pre-wrap;color:var(--ink);background:var(--panel-2);border-radius:10px;padding:10px 12px;line-height:1.6}
+.msg .mways{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px}
+.msg .mways a{direction:ltr;unicode-bidi:isolate}
+.msg .mtools{display:flex;gap:6px;justify-content:flex-end}
 .pchap{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;padding:14px 0;border-bottom:1px solid var(--edge)}
 .pchap img,.pchap .noimg{width:96px;height:96px;border-radius:10px;object-fit:cover;background:var(--panel-2)}
 .pchap .noimg{display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--faint)}
@@ -159,6 +171,7 @@ td.num{font-variant-numeric:tabular-nums}
     <div class="wrap">
       <nav class="tabs" role="tablist" aria-label="חלקי הניהול">
         <button class="tab" role="tab" data-tab="stats" aria-selected="true">סטטיסטיקה</button>
+        <button class="tab" role="tab" data-tab="messages" aria-selected="false">פניות <span class="badge" id="msgBadge" hidden></span></button>
         <button class="tab" role="tab" data-tab="access" aria-selected="false">כפתורים וגישה</button>
         <button class="tab" role="tab" data-tab="game" aria-selected="false">כבוש את השמים</button>
         <button class="tab" role="tab" data-tab="globe" aria-selected="false">המבנה הכדורי</button>
@@ -200,6 +213,24 @@ td.num{font-variant-numeric:tabular-nums}
         <h2>מבקרים אחרונים</h2>
         <p class="faint">כל שורה היא דפדפן אחד. המזהה אקראי ואין בו שום פרט אישי.</p>
         <div class="tbl-wrap"><table id="recentTbl"></table></div>
+      </div>
+    </section>
+
+    <!-- messages -->
+    <section role="tabpanel" id="tab-messages" hidden>
+      <div class="card" id="mailSetup" hidden>
+        <h2>שליחה למייל עדיין לא פעילה</h2>
+        <p class="muted">כל פנייה נשמרת כאן בכל מקרה. כדי שהיא תגיע גם למייל, צריך מפתח (חינמי) משירות השליחה Resend. מגדירים פעם אחת:</p>
+        <ol class="steps" style="margin-top:8px">
+          <li>נכנסים ל־<a href="https://resend.com/signup" target="_blank" rel="noopener">resend.com</a> ונרשמים עם המייל <code>bz0556799161@gmail.com</code> (חשוב: אותו מייל שאליו יגיעו הפניות).</li>
+          <li>בתפריט נכנסים ל־<b>API Keys</b>, לוחצים <b>Create API Key</b>, נותנים שם (למשל "אופק אפס") ומעתיקים את המפתח שמתחיל ב־<code>re_</code>.</li>
+          <li>נכנסים ל־<a href="https://app.netlify.com/projects/ofek-efes/configuration/env" target="_blank" rel="noopener">משתני הסביבה ב־Netlify</a>, לוחצים <b>Add a variable</b>, בשם כותבים <code>RESEND_API_KEY</code> ובערך מדביקים את המפתח. שומרים.</li>
+          <li>המפתח ייכנס לתוקף בהעלאה הבאה של האתר.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <div class="row"><h2 style="margin:0;margin-inline-end:auto">פניות מהאתר</h2><span class="faint" id="msgCount"></span><button class="btn small" id="msgRefresh">רענון</button></div>
+        <div id="msgList" style="margin-top:12px"></div>
       </div>
     </section>
 
@@ -379,6 +410,7 @@ td.num{font-variant-numeric:tabular-nums}
   function loadAll(){
     loadStats();
     pendingImport();
+    loadMessages();
     api("config").then(function(j){ PUB = j.public; CODES_SET = j.codesSet || {}; GAME_PLAIN = j.gameCodesPlain || {}; renderAccess(); renderChapters(); renderFonts(); renderGame(); renderGlobe(); renderTextsTab(); });
   }
 
@@ -469,6 +501,28 @@ td.num{font-variant-numeric:tabular-nums}
       b.onclick = function(){ pendingCodes[b.dataset.delcode] = null; markDirty(); renderAccess(); };
     });
   }
+
+  /* =================== messages =================== */
+  function loadMessages(){
+    api("messages").then(function(j){
+      $("mailSetup").hidden = j.emailOn;
+      var unread = j.items.filter(function(m){ return !m.read; }).length;
+      $("msgBadge").hidden = !unread; $("msgBadge").textContent = unread;
+      $("msgCount").textContent = j.total ? j.total + " פניות" + (unread ? ", " + unread + " חדשות" : "") : "";
+      $("msgList").innerHTML = j.items.length ? j.items.map(function(m){
+        return '<div class="msg' + (m.read ? '' : ' unread') + '" data-id="' + esc(m.id) + '"><div class="mhead"><span class="mname">' + esc(m.name) + '</span><span class="mtopic">' + esc(m.topic || "") + '</span><span class="mwhen">' + fmtDate(m.at) + (m.mail === "sent" ? " · נשלח למייל" : "") + '</span></div>' +
+          '<div class="mways">' + (m.email ? '<a href="mailto:' + esc(m.email) + '">' + esc(m.email) + '</a>' : '') + (m.phone ? '<a href="tel:' + esc(m.phone) + '">' + esc(m.phone) + '</a>' : '') + '</div>' +
+          '<div class="mbody">' + esc(m.message) + '</div>' +
+          '<div class="mtools"><button class="btn small" data-read="' + (m.read ? 0 : 1) + '">' + (m.read ? "סמן כלא נקראה" : "סמן כנקראה") + '</button><button class="btn small danger" data-del>מחיקה</button></div></div>';
+      }).join("") : '<p class="faint">עדיין אין פניות.</p>';
+      $("msgList").querySelectorAll(".msg").forEach(function(row){
+        var id = encodeURIComponent(row.dataset.id);
+        row.querySelector("[data-read]").onclick = function(){ api("messages?id=" + id + "&read=" + this.dataset.read, { method:"PATCH" }).then(loadMessages); };
+        row.querySelector("[data-del]").onclick = function(){ var b = this; if (b.dataset.sure !== "1") { b.dataset.sure = "1"; b.textContent = "בטוח? לחץ שוב"; return; } api("messages?id=" + id, { method:"DELETE" }).then(loadMessages); };
+      });
+    }).catch(function(e){ $("msgList").innerHTML = '<p class="status err">' + esc(e.message) + '</p>'; });
+  }
+  $("msgRefresh").onclick = loadMessages;
 
   /* =================== texts (edited on the site) =================== */
   function openSitePage(path){
