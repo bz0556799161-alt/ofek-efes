@@ -395,7 +395,7 @@ td.num{font-variant-numeric:tabular-nums}
   };
 
   /* =================== stats =================== */
-  var PAGE_NAMES = { home:"דף הבית", book:"הספר", game:"דף כבוש את השמים", globe:"דף המבנה", site:"אחר" };
+  var PAGE_NAMES = { home:"דף הבית", book:"הספר", game:"דף כבוש את השמים", globe:"דף המבנה", contact:"צור קשר", site:"אחר" };
   function kpis(el, items){ el.innerHTML = items.map(function(i){ return '<div class="kpi"><b>'+i[1]+'</b><span>'+esc(i[0])+'</span></div>'; }).join(""); }
   function hbars(el, rows, labelFn){
     var max = Math.max.apply(null, rows.map(function(r){return r.n;}).concat([1]));

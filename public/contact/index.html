@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>צור קשר · אופק אפס</title>
+<meta name="description" content="יצירת קשר עם כותב אופק אפס: מייל, טלפון וטופס פנייה.">
+<meta property="og:title" content="צור קשר · אופק אפס">
+<meta property="og:description" content="יצירת קשר עם כותב אופק אפס: מייל, טלפון וטופס פנייה.">
+<meta property="og:image" content="/assets/og.jpg">
+<meta name="theme-color" content="#050d10">
+<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body data-page="contact">
+
+<canvas id="sky" aria-label="תפוס כוכב: שמי לילה. לחצו על כוכבי הקבוצה המבוקשת"></canvas>
+
+<div class="page">
+  <div class="topbar wrap">
+    <a class="home-link" href="/" aria-label="לדף הבית"><picture><source type="image/webp" srcset="/assets/logo-640.webp 640w, /assets/logo-1100.webp 1100w, /assets/logo-2200.webp 2200w" sizes="92px"><img src="/assets/logo.png" alt="אופק אפס" class="" width="1100" height="659" decoding="async"></picture></a>
+    <nav class="topnav" aria-label="ניווט"><a class="btn" href="/book/" data-section="book" data-gate>הספר</a><a class="btn" href="/game/" data-section="game" data-role="card">כבוש את השמים</a><a class="btn" href="/globe/" data-section="globe" data-role="card">המבנה</a><a class="btn" href="/contact/" aria-current="page">צור קשר</a></nav>
+  </div>
+  <header class="page-head wrap" data-solid>
+    <h1 data-t="contact.title">צור קשר</h1>
+    <p class="lede" data-t="contact.lede">שאלה על הספר, רעיון לפרק, תקלה במשחק או סתם מילה טובה. אשמח לשמוע.</p>
+  </header>
+  <main class="wrap contact">
+    <section class="contact-ways" aria-label="דרכים ליצירת קשר">
+      <div class="panel way" data-solid>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="11" width="36" height="26" rx="5"/><path d="M8 14l16 12 16-12"/></svg>
+        <div class="way-body">
+          <span class="way-label" data-t="contact.mail.label">מייל</span>
+          <a class="way-value" href="mailto:bz0556799161@gmail.com" dir="ltr">bz0556799161@gmail.com</a>
+        </div>
+        <button class="copy" type="button" data-copy="bz0556799161@gmail.com" aria-label="העתקת המייל" title="העתקה"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button>
+      </div>
+      <div class="panel way" data-solid>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M15 7h7l3 9-5 3a24 24 0 0 0 9 9l3-5 9 3v7a4 4 0 0 1-4 4C21 37 11 27 11 11a4 4 0 0 1 4-4z"/></svg>
+        <div class="way-body">
+          <span class="way-label" data-t="contact.phone.label">טלפון</span>
+          <a class="way-value" href="tel:+972556799161" dir="ltr">055-679-9161</a>
+        </div>
+        <button class="copy" type="button" data-copy="0556799161" aria-label="העתקת הטלפון" title="העתקה"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button>
+      </div>
+    </section>
+
+    <section class="panel form-panel" data-solid aria-labelledby="formTitle">
+      <h2 id="formTitle" data-t="contact.form.title">השארת פנייה</h2>
+      <p class="sub" data-t="contact.form.sub">ממלאים, שולחים, והפנייה מגיעה אליי למייל. אחזור אליך בהקדם.</p>
+      <form name="contact" id="contactForm" method="POST" action="/contact/?sent=1" data-netlify="true" netlify-honeypot="bot-field" novalidate>
+        <input type="hidden" name="form-name" value="contact">
+        <p class="hp" aria-hidden="true"><label>לא למילוי <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+        <div class="fields">
+          <label class="field"><span>שם <b aria-hidden="true">*</b></span><input id="fName" name="name" type="text" autocomplete="name" required maxlength="80"></label>
+          <label class="field"><span>נושא</span>
+            <select id="fTopic" name="topic">
+              <option>שאלה על הספר</option><option>המשחק כבוש את השמים</option><option>תפוס כוכב</option><option>המבנה הכדורי</option><option>תקלה באתר</option><option>אחר</option>
+            </select></label>
+          <label class="field"><span>מייל לחזרה</span><input id="fEmail" name="email" type="email" autocomplete="email" dir="ltr" maxlength="120"></label>
+          <label class="field"><span>טלפון לחזרה</span><input id="fPhone" name="phone" type="tel" autocomplete="tel" dir="ltr" maxlength="30"></label>
+          <label class="field wide"><span>ההודעה <b aria-hidden="true">*</b></span><textarea id="fMsg" name="message" rows="6" required maxlength="4000"></textarea></label>
+        </div>
+        <p class="form-note">צריך למלא שם, הודעה, ומייל או טלפון כדי שאוכל לחזור אליך.</p>
+        <p class="form-err" id="formErr" role="alert"></p>
+        <button class="btn primary send" type="submit" id="sendBtn">שליחת הפנייה</button>
+      </form>
+      <div class="sent" id="sentBox" hidden>
+        <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6l5 17 17 5-17 5-5 17-5-17-17-5 17-5z"/></svg>
+        <h3 data-t="contact.sent.title">הפנייה נשלחה!</h3>
+        <p data-t="contact.sent.text">תודה. קיבלתי את ההודעה ואחזור אליך בהקדם.</p>
+        <button class="btn" type="button" id="againBtn">פנייה נוספת</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span data-t="footer.name">אופק אפס</span>
+      <a class="foot-link" href="/contact/" data-t="footer.contact">צור קשר</a>
+      <span data-t="footer.privacy">האתר שומר נתוני שימוש אנונימיים בלבד, בלי פרטים אישיים.</span>
+    </div>
+  </footer>
+</div>
+
+<aside class="hud" id="hud" aria-label="תפוס כוכב" data-solid>
+  <p class="hud-toast" id="hudToast" hidden aria-live="polite"></p>
+  <div class="hud-grip" aria-hidden="true" title="גרור כדי להזיז את הלוח"></div>
+  <button class="hud-fold" id="hudFold" aria-expanded="true" aria-label="הקטן או הגדל את לוח תפוס כוכב" title="הקטן את לוח המשחק"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="hud-top">
+    <canvas id="hudShape" width="64" height="64" aria-hidden="true"></canvas>
+    <div class="hud-info">
+      <div class="hud-ask"><b class="hud-game">תפוס כוכב</b> · מצאו בשמיים את</div>
+      <div class="hud-name" id="hudName">…</div>
+      <div class="hud-prog" id="hudProgress" aria-live="polite"></div>
+      <div class="hud-note" id="hudNote"></div>
+    </div>
+    <div class="hud-score"><b id="hudScore">0</b><span>נקודות</span></div>
+  </div>
+  <div class="hud-lv"><div class="hud-lvbar"><i id="hudLvBar"></i></div><div class="hud-lvtext"><b id="hudRank" class="hud-rank"></b> · <span id="hudLvText"></span></div></div>
+  <div class="hud-row">
+    <div class="lv" role="group" aria-label="שלב">
+      <button class="hb" id="lvPrev" aria-label="שלב קודם" title="שלב קודם"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      <span id="hudLevel">שלב 1</span>
+      <button class="hb" id="lvNext" aria-label="שלב הבא" title="שלב הבא (נפתח כל 100 נקודות)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    </div>
+    <button class="hb" id="btnHint" title="רמז נחשב כטעות אחת">רמז</button>
+    <button class="hb" id="btnSwap">החלף</button>
+    <button class="hb" id="btnSkyOnly" aria-pressed="false">רק שמיים</button>
+  </div>
+</aside>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  document.querySelectorAll("[data-copy]").forEach(function(b){
+    b.addEventListener("click", function(){
+      var t = b.getAttribute("data-copy");
+      var done = function(){ b.classList.add("ok"); b.title = "הועתק"; setTimeout(function(){ b.classList.remove("ok"); b.title = "העתקה"; }, 1800); };
+      if (navigator.clipboard) navigator.clipboard.writeText(t).then(done).catch(function(){ var r = document.createRange(); r.selectNodeContents(b.parentNode.querySelector(".way-value")); var sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); });
+      else done();
+    });
+  });
+  var form = $("contactForm"), err = $("formErr"), btn = $("sendBtn");
+  function showSent(){ form.hidden = true; $("sentBox").hidden = false; }
+  if (/[?&]sent=1/.test(location.search)) showSent();
+  $("againBtn").onclick = function(){ form.reset(); form.hidden = false; $("sentBox").hidden = true; err.textContent = ""; };
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    var name = $("fName").value.trim(), msg = $("fMsg").value.trim(), mail = $("fEmail").value.trim(), phone = $("fPhone").value.trim();
+    if (!name) { err.textContent = "כתוב את שמך."; $("fName").focus(); return; }
+    if (!msg) { err.textContent = "כתוב את ההודעה."; $("fMsg").focus(); return; }
+    if (!mail && !phone) { err.textContent = "השאר מייל או טלפון, כדי שאוכל לחזור אליך."; $("fEmail").focus(); return; }
+    if (mail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) { err.textContent = "כתובת המייל לא נראית תקינה."; $("fEmail").focus(); return; }
+    err.textContent = ""; btn.disabled = true; btn.textContent = "שולח…";
+    var body = new URLSearchParams(new FormData(form)).toString();
+    fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body })
+      .then(function(r){ if (!r.ok) throw new Error(r.status); showSent(); if (window.ofekTrack) ofekTrack("contact", {}); })
+      .catch(function(){ err.textContent = "השליחה לא הצליחה. נסה שוב, או כתוב ישירות למייל שלמעלה."; })
+      .then(function(){ btn.disabled = false; btn.textContent = "שליחת הפנייה"; });
+  });
+})();
+</script>
+<script src="/assets/site.js"></script>
+<script src="/assets/sky-figures.js"></script>
+<script src="/assets/sky.js"></script>
+</body>
+</html>

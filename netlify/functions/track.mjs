@@ -3,7 +3,7 @@ import { visitorStore, json, israelDay, isAdmin } from "../lib/common.mjs";
 
 const BOT_RE = /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|preview|screenshot|puppeteer|playwright|selenium|phantom|prerender|facebookexternalhit|whatsapp|telegram|discord|skype|embedly|bing|yandex|baidu|duckduck|semrush|ahrefs|mj12|petal|gptbot|claude|anthropic|chatgpt|perplexity|netlify/i;
 
-const PAGES = ["home", "book", "game", "globe", "site"];
+const PAGES = ["home", "book", "game", "globe", "contact", "site"];
 const num = (v, max = 1e6) => {
   const n = Math.round(Number(v));
   return Number.isFinite(n) ? Math.max(0, Math.min(max, n)) : 0;

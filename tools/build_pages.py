@@ -31,6 +31,7 @@ def topbar(current):
     nav = "".join(
         f'<a class="btn" href="{h}" data-section="{k}"{" data-gate" if k == "book" else " data-role=\"card\""}{" aria-current=\"page\"" if k == current else ""}>{t}</a>'
         for k, h, t in links)
+    nav += f'<a class="btn" href="/contact/"{" aria-current=\"page\"" if current == "contact" else ""}>צור קשר</a>'
     return f'''  <div class="topbar wrap">
     <a class="home-link" href="/" aria-label="לדף הבית">{LOGO.format(cls="", sizes="92px")}</a>
     <nav class="topnav" aria-label="ניווט">{nav}</nav>
@@ -68,6 +69,7 @@ HUD = '''<aside class="hud" id="hud" aria-label="תפוס כוכב" data-solid>
 FOOT = '''  <footer>
     <div class="wrap">
       <span data-t="footer.name">אופק אפס</span>
+      <a class="foot-link" href="/contact/" data-t="footer.contact">צור קשר</a>
       <span data-t="footer.privacy">האתר שומר נתוני שימוש אנונימיים בלבד, בלי פרטים אישיים.</span>
     </div>
   </footer>
@@ -238,10 +240,98 @@ globe_body = topbar("globe") + '''  <header class="page-head wrap" data-solid>
   </main>
 '''
 
+contact_body = topbar("contact") + """  <header class="page-head wrap" data-solid>
+    <h1 data-t="contact.title">צור קשר</h1>
+    <p class="lede" data-t="contact.lede">שאלה על הספר, רעיון לפרק, תקלה במשחק או סתם מילה טובה. אשמח לשמוע.</p>
+  </header>
+  <main class="wrap contact">
+    <section class="contact-ways" aria-label="דרכים ליצירת קשר">
+      <div class="panel way" data-solid>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="11" width="36" height="26" rx="5"/><path d="M8 14l16 12 16-12"/></svg>
+        <div class="way-body">
+          <span class="way-label" data-t="contact.mail.label">מייל</span>
+          <a class="way-value" href="mailto:bz0556799161@gmail.com" dir="ltr">bz0556799161@gmail.com</a>
+        </div>
+        <button class="copy" type="button" data-copy="bz0556799161@gmail.com" aria-label="העתקת המייל" title="העתקה"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button>
+      </div>
+      <div class="panel way" data-solid>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M15 7h7l3 9-5 3a24 24 0 0 0 9 9l3-5 9 3v7a4 4 0 0 1-4 4C21 37 11 27 11 11a4 4 0 0 1 4-4z"/></svg>
+        <div class="way-body">
+          <span class="way-label" data-t="contact.phone.label">טלפון</span>
+          <a class="way-value" href="tel:+972556799161" dir="ltr">055-679-9161</a>
+        </div>
+        <button class="copy" type="button" data-copy="0556799161" aria-label="העתקת הטלפון" title="העתקה"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button>
+      </div>
+    </section>
+
+    <section class="panel form-panel" data-solid aria-labelledby="formTitle">
+      <h2 id="formTitle" data-t="contact.form.title">השארת פנייה</h2>
+      <p class="sub" data-t="contact.form.sub">ממלאים, שולחים, והפנייה מגיעה אליי למייל. אחזור אליך בהקדם.</p>
+      <form name="contact" id="contactForm" method="POST" action="/contact/?sent=1" data-netlify="true" netlify-honeypot="bot-field" novalidate>
+        <input type="hidden" name="form-name" value="contact">
+        <p class="hp" aria-hidden="true"><label>לא למילוי <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+        <div class="fields">
+          <label class="field"><span>שם <b aria-hidden="true">*</b></span><input id="fName" name="name" type="text" autocomplete="name" required maxlength="80"></label>
+          <label class="field"><span>נושא</span>
+            <select id="fTopic" name="topic">
+              <option>שאלה על הספר</option><option>המשחק כבוש את השמים</option><option>תפוס כוכב</option><option>המבנה הכדורי</option><option>תקלה באתר</option><option>אחר</option>
+            </select></label>
+          <label class="field"><span>מייל לחזרה</span><input id="fEmail" name="email" type="email" autocomplete="email" dir="ltr" maxlength="120"></label>
+          <label class="field"><span>טלפון לחזרה</span><input id="fPhone" name="phone" type="tel" autocomplete="tel" dir="ltr" maxlength="30"></label>
+          <label class="field wide"><span>ההודעה <b aria-hidden="true">*</b></span><textarea id="fMsg" name="message" rows="6" required maxlength="4000"></textarea></label>
+        </div>
+        <p class="form-note">צריך למלא שם, הודעה, ומייל או טלפון כדי שאוכל לחזור אליך.</p>
+        <p class="form-err" id="formErr" role="alert"></p>
+        <button class="btn primary send" type="submit" id="sendBtn">שליחת הפנייה</button>
+      </form>
+      <div class="sent" id="sentBox" hidden>
+        <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6l5 17 17 5-17 5-5 17-5-17-17-5 17-5z"/></svg>
+        <h3 data-t="contact.sent.title">הפנייה נשלחה!</h3>
+        <p data-t="contact.sent.text">תודה. קיבלתי את ההודעה ואחזור אליך בהקדם.</p>
+        <button class="btn" type="button" id="againBtn">פנייה נוספת</button>
+      </div>
+    </section>
+  </main>
+"""
+
+CONTACT_SCRIPT = """<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  document.querySelectorAll("[data-copy]").forEach(function(b){
+    b.addEventListener("click", function(){
+      var t = b.getAttribute("data-copy");
+      var done = function(){ b.classList.add("ok"); b.title = "הועתק"; setTimeout(function(){ b.classList.remove("ok"); b.title = "העתקה"; }, 1800); };
+      if (navigator.clipboard) navigator.clipboard.writeText(t).then(done).catch(function(){ var r = document.createRange(); r.selectNodeContents(b.parentNode.querySelector(".way-value")); var sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); });
+      else done();
+    });
+  });
+  var form = $("contactForm"), err = $("formErr"), btn = $("sendBtn");
+  function showSent(){ form.hidden = true; $("sentBox").hidden = false; }
+  if (/[?&]sent=1/.test(location.search)) showSent();
+  $("againBtn").onclick = function(){ form.reset(); form.hidden = false; $("sentBox").hidden = true; err.textContent = ""; };
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    var name = $("fName").value.trim(), msg = $("fMsg").value.trim(), mail = $("fEmail").value.trim(), phone = $("fPhone").value.trim();
+    if (!name) { err.textContent = "כתוב את שמך."; $("fName").focus(); return; }
+    if (!msg) { err.textContent = "כתוב את ההודעה."; $("fMsg").focus(); return; }
+    if (!mail && !phone) { err.textContent = "השאר מייל או טלפון, כדי שאוכל לחזור אליך."; $("fEmail").focus(); return; }
+    if (mail && !/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(mail)) { err.textContent = "כתובת המייל לא נראית תקינה."; $("fEmail").focus(); return; }
+    err.textContent = ""; btn.disabled = true; btn.textContent = "שולח…";
+    var body = new URLSearchParams(new FormData(form)).toString();
+    fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body })
+      .then(function(r){ if (!r.ok) throw new Error(r.status); showSent(); if (window.ofekTrack) ofekTrack("contact", {}); })
+      .catch(function(){ err.textContent = "השליחה לא הצליחה. נסה שוב, או כתוב ישירות למייל שלמעלה."; })
+      .then(function(){ btn.disabled = false; btn.textContent = "שליחת הפנייה"; });
+  });
+})();
+</script>
+"""
+
 files = {
   "index.html": page("home", "אופק אפס", "אופק אפס: ספר בהמשכים על שמיים וכוכבים, משחק כבוש את השמים, וסיור במבנה הכדורי.", home_body),
   "book/index.html": page("book", "אופק אפס · הספר", "כל פרקי הספר אופק אפס. פרק חדש בכל מוצאי שבת.", book_body, BOOK_SCRIPT),
   "game/index.html": page("game", "כבוש את השמים · אופק אפס", "משחק שמלמד לזהות קבוצות כוכבים ולמצוא את כוכב הצפון.", game_body),
+  "contact/index.html": page("contact", "צור קשר · אופק אפס", "יצירת קשר עם כותב אופק אפס: מייל, טלפון וטופס פנייה.", contact_body, CONTACT_SCRIPT),
   "globe/index.html": page("globe", "המבנה הכדורי · אופק אפס", "סיור תלת־ממדי בתוך כדור השמיים, חדר לכל קבוצת כוכבים.", globe_body),
 }
 for path, html in files.items():
