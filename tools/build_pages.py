@@ -339,3 +339,28 @@ for path, html in files.items():
     os.makedirs(os.path.dirname(full), exist_ok=True)
     open(full, "w", encoding="utf8").write(html)
     print("wrote", path)
+
+# ---- cache busting: every page asks for the current version of the shared files ----
+import hashlib, re
+ASSETS = ["site.css", "site.js", "sky.js", "sky-figures.js", "chapters.js", "editor.js"]
+ver = {a: hashlib.md5(open(os.path.join(ROOT, "assets", a), "rb").read()).hexdigest()[:8] for a in ASSETS}
+for dirpath, _, names in os.walk(ROOT):
+    for n in names:
+        if not n.endswith(".html"): continue
+        f = os.path.join(dirpath, n); html = open(f, encoding="utf8").read()
+        new = re.sub(r'/assets/(' + "|".join(re.escape(a) for a in ASSETS) + r')(\?v=[0-9a-f]+)?(?=["\'])', lambda m: "/assets/" + m.group(1) + "?v=" + ver[m.group(1)], html)
+        if new != html: open(f, "w", encoding="utf8").write(new)
+# site.js loads the editor itself
+sj = os.path.join(ROOT, "assets", "site.js"); t = open(sj, encoding="utf8").read()
+t2 = re.sub(r'"/assets/editor\.js(\?v=[0-9a-f]+)?"', '"/assets/editor.js?v=' + ver["editor.js"] + '"', t)
+if t2 != t:
+    open(sj, "w", encoding="utf8").write(t2)
+    # site.js changed, so its own version changes: run once more for the pages
+    v2 = hashlib.md5(t2.encode("utf8")).hexdigest()[:8]
+    for dirpath, _, names in os.walk(ROOT):
+        for n in names:
+            if n.endswith(".html"):
+                f = os.path.join(dirpath, n); html = open(f, encoding="utf8").read()
+                new = re.sub(r'/assets/site\.js\?v=[0-9a-f]+', "/assets/site.js?v=" + v2, html)
+                if new != html: open(f, "w", encoding="utf8").write(new)
+print("versions", ver)

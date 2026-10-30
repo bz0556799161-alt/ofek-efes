@@ -233,7 +233,7 @@
 
   /* כלי המנהל (עריכת טקסטים במקום) נטענים רק במכשיר שנכנס לניהול */
   if (APP === "site" && lsGet("ofek-admin-device") === "1") {
-    var ed = document.createElement("script"); ed.src = "/assets/editor.js"; ed.defer = true;
+    var ed = document.createElement("script"); ed.src = "/assets/editor.js?v=1e2697dd"; ed.defer = true;
     document.head.appendChild(ed);
   }
 })();
