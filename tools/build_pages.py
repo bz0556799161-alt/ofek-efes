@@ -150,7 +150,8 @@ BOOK_SCRIPT = '''<script src="/assets/chapters.js"></script>
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, function(m){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]; }); }
   var CK = "ofek-chapters-v1";
   var live = null, ready = false;   // the chapters read from prog.co.il
-  try { var c = JSON.parse(localStorage.getItem(CK) || "null"); if (c && c.length) { live = c; ready = true; } } catch (e) {}
+  if (window.OFEK_CH && window.OFEK_CH.length) { live = window.OFEK_CH; ready = true; }   // filled in by the server: always current
+  else try { var c = JSON.parse(localStorage.getItem(CK) || "null"); if (c && c.length) { live = c; ready = true; } } catch (e) {}
   function list(){
     if (live && live.length) return live;
     var cfg = window.OFEK_CONFIG || {};
@@ -187,6 +188,7 @@ BOOK_SCRIPT = '''<script src="/assets/chapters.js"></script>
   }
   render();
   document.addEventListener("ofek:config", render);
+  if (window.OFEK_CH && window.OFEK_CH.length) { try { localStorage.setItem(CK, JSON.stringify(live)); } catch (e) {} return; }
   var fallback = setTimeout(function(){ if (!ready) { ready = true; render(); } }, 4000);
   fetch("/api/chapters").then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
     clearTimeout(fallback);

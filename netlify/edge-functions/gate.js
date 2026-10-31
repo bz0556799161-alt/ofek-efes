@@ -27,14 +27,37 @@ export default async (req, context) => {
     data = await res.json().catch(() => ({}));
   } catch (e) {
     // if the check itself fails, don't lock people out of the section (the game still leaves out its locked chapters)
-    return contentSec === "game" ? gameForVisitor(req, url, context) : context.next();
+    return pass(contentSec, req, url, context);
   }
-  if (res.status === 200) return contentSec === "game" ? gameForVisitor(req, url, context) : context.next();
-  if (res.status !== 403) return contentSec === "game" ? gameForVisitor(req, url, context) : context.next();
+  if (res.status === 200) return pass(contentSec, req, url, context);
+  if (res.status !== 403) return pass(contentSec, req, url, context);
   if (infoSec) return data.mode === "hidden" ? Response.redirect(new URL("/?blocked=1", url), 302) : context.next();
   const back = data.mode === "hidden" ? "/" : BACK[section];
   return Response.redirect(new URL(back + "?blocked=1", url), 302);
 };
+
+function pass(sec, req, url, context) {
+  if (sec === "game") return gameForVisitor(req, url, context);
+  if (sec === "book") return bookWithChapters(req, url, context);
+  return context.next();
+}
+
+// The book page arrives with the current chapter list already inside it, so it never shows an older list first.
+async function bookWithChapters(req, url, context) {
+  const h = new Headers(req.headers);
+  h.delete("if-none-match"); h.delete("if-modified-since");
+  const [res, ch] = await Promise.all([
+    context.next(new Request(req.url, { method: "GET", headers: h })),
+    fetch(new URL("/api/chapters", url)).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+  ]);
+  if (res.status !== 200 || !ch || !Array.isArray(ch.items) || !ch.items.length) return res;
+  const html = (await res.text()).replace("</head>",
+    "<script>window.OFEK_CH=" + JSON.stringify(ch.items).replace(/</g, "\\u003c") + ";</script>\n</head>");
+  const headers = new Headers(res.headers);
+  ["content-length", "etag", "last-modified", "content-encoding"].forEach((k) => headers.delete(k));
+  headers.set("cache-control", "public, max-age=0, must-revalidate");
+  return new Response(html, { status: 200, headers });
+}
 
 // כבוש את השמים: the page is sent without the levels of every chapter this visitor may not open.
 // In the game source each chapter's levels sit between the markers  /*@key*\/[ ... ]/*@end*\/  (its medium levels: /*@m:key*\/);
