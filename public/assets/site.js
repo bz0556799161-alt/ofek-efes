@@ -61,7 +61,7 @@
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") flush(true); });
   window.addEventListener("pagehide", function () { flush(true); });
 
-  var pageKey = (document.body && document.body.getAttribute("data-page")) || APP;
+  var pageKey = (document.body && document.body.getAttribute("data-page")) || (APP === "game" ? "game-play" : APP === "globe" ? "globe-tour" : APP);
   window.ofekTrack("view", { page: pageKey });
 
   /* ---------------- פונטים ---------------- */
