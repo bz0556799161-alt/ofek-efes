@@ -34,19 +34,6 @@ header.bar h1{font-size:18px;font-weight:600;margin:0;margin-inline-end:auto}
 main{padding-block:18px 80px}
 section[role="tabpanel"]{display:flex;flex-direction:column;gap:16px}
 .card{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:18px}
-.credit-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.credit-top b{font-size:34px;color:var(--gold);font-weight:600;line-height:1}
-.gauge{height:14px;border-radius:99px;background:var(--panel-2);border:1px solid var(--edge);overflow:hidden;margin:12px 0 6px}
-.gauge i{display:block;height:100%;background:var(--ok);border-radius:99px;transition:width .4s}
-.gauge.warn i{background:var(--warn)} .gauge.bad i{background:var(--bad)}
-.credit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
-.credit-box{background:var(--panel-2);border:1px solid var(--edge);border-radius:12px;padding:12px 14px}
-.credit-box h3{margin:0 0 6px;font-size:15px;font-weight:600}
-.credit-box ul{margin:0;padding:0;list-style:none;font-size:14px;color:var(--soft)}
-.credit-box li{display:flex;justify-content:space-between;gap:8px;padding:2px 0}
-.credit-calib{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-top:12px}
-.credit-calib label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--soft)}
-.credit-calib input{width:110px;background:var(--panel-2);border:1px solid var(--edge);border-radius:8px;padding:6px 8px}
 .card h2{font-size:19px;font-weight:600;margin:0 0 4px}
 .card h3{font-size:16px;font-weight:600;margin:14px 0 6px}
 .muted{color:var(--soft)} .faint{color:var(--faint);font-size:13.5px}
@@ -200,22 +187,6 @@ td.num{font-variant-numeric:tabular-nums}
     <!-- stats -->
     <section role="tabpanel" id="tab-stats">
       <div class="row"><p class="faint" id="statsWhen" style="margin:0;margin-inline-end:auto"></p><span class="status" id="resetStatus" aria-live="polite"></span><button class="btn small" id="statsRefresh">רענון</button><button class="btn small danger" id="statsReset">איפוס כל הסטטיסטיקה</button></div>
-      <div class="card" id="creditCard">
-        <h2>כמה עוד אפשר לבזבז</h2>
-        <div class="credit-top"><b id="crLeft">…</b><span id="crOf" class="faint"></span></div>
-        <div class="gauge" id="crGauge"><i style="width:0"></i></div>
-        <p class="faint" id="crCycle" style="margin:0"></p>
-        <div class="credit-grid">
-          <div class="credit-box"><h3>קרדיטים של Netlify (אומדן)</h3><ul id="crParts"></ul></div>
-          <div class="credit-box"><h3>מיילים מטופס צור קשר</h3><ul id="crMail"></ul></div>
-        </div>
-        <p class="faint" style="margin:12px 0 0">Netlify לא מאפשר לקרוא את היתרה מבחוץ, לכן זה אומדן לפי מספר ההעלאות והצפיות. המספר המדויק נמצא ב־<a href="https://app.netlify.com/teams/bz0556799161" target="_blank" rel="noopener">Netlify ← Usage &amp; billing ↗</a>. כדי שהאומדן יהיה מדויק, העתק משם את מספר הקרדיטים שכבר נוצלו ולחץ "עדכון".</p>
-        <div class="credit-calib">
-          <label>נוצלו לפי Netlify<input id="crUsed" type="number" min="0" max="10000" step="0.1" inputmode="decimal" placeholder="למשל 165"></label>
-          <label>יום החידוש בחודש<input id="crDay" type="number" min="1" max="31" step="1"></label>
-          <button class="btn small" id="crSave">עדכון</button><span class="status" id="crStatus" aria-live="polite"></span>
-        </div>
-      </div>
       <div class="card"><h2>מבקרים</h2><div class="kpis" id="kpiVisitors"></div></div>
       <div class="card"><h2>מבקרים בכל יום, 30 הימים האחרונים</h2><div class="bars" id="dailyBars"></div><div class="bars-x" id="dailyX"></div></div>
       <div class="card"><h2>דפים</h2><div class="tbl-wrap"><table id="pagesTbl"></table></div></div>
@@ -457,40 +428,13 @@ td.num{font-variant-numeric:tabular-nums}
   };
 
   /* =================== stats =================== */
-  var PAGE_NAMES = { home:"דף הבית", book:"הספר", game:"דף כבוש את השמים", globe:"דף המבנה", contact:"צור קשר", "game-play":"כבוש את השמים (המשחק)", "globe-tour":"המבנה הכדורי (הסיור)", site:"אחר" };
+  var PAGE_NAMES = { home:"דף הבית", book:"הספר", game:"דף כבוש את השמים", globe:"דף המבנה", contact:"צור קשר", site:"אחר" };
   function kpis(el, items){ el.innerHTML = items.map(function(i){ return '<div class="kpi"><b>'+i[1]+'</b><span>'+esc(i[0])+'</span></div>'; }).join(""); }
   function hbars(el, rows, labelFn){
     var max = Math.max.apply(null, rows.map(function(r){return r.n;}).concat([1]));
     el.innerHTML = rows.length ? rows.map(function(r){ return '<div class="hbar"><span>'+esc(labelFn(r))+'</span><div class="track"><i style="width:'+(100*r.n/max)+'%"></i></div><span class="v">'+fmtN(r.n)+'</span></div>'; }).join("") : '<p class="faint">אין עדיין נתונים.</p>';
   }
-  function renderUsage(u){
-    var pct = Math.max(0, Math.min(100, 100*u.left/u.plan));
-    $("crLeft").textContent = "נשארו בערך " + fmtN(Math.floor(u.left));
-    $("crOf").textContent = "מתוך " + fmtN(u.plan) + " קרדיטים החודש · כ־" + fmtN(Math.floor(u.left/15)) + " העלאות לאתר החי";
-    $("crGauge").className = "gauge" + (pct < 15 ? " bad" : pct < 40 ? " warn" : "");
-    $("crGauge").firstChild.style.width = pct + "%";
-    var d = function(ts){ return new Date(ts).toLocaleDateString("he-IL",{day:"numeric",month:"numeric"}); };
-    $("crCycle").textContent = "החודש התחיל ב־" + d(u.cycleStart) + " ומתחדש ב־" + d(u.renewsAt) + (u.calib ? " · כויל לפי Netlify ב־" + fmtDate(u.calib.at) + " (" + fmtN(u.calib.used) + " נוצלו אז)" : " · לא כויל עדיין");
-    var P = u.since.parts, li = function(a,b){ return '<li><span>'+esc(a)+'</span><span>'+b+'</span></li>'; };
-    $("crParts").innerHTML = (u.calib ? li("נוצלו עד הכיול", fmtN(u.calib.used)) : "") +
-      li("העלאות לאתר החי (" + fmtN(u.since.deploys) + " × 15)", fmtN(P.deploys)) +
-      li("תעבורה (" + fmtN(u.since.views) + " צפיות)", fmtN(P.bandwidth)) +
-      li("בקשות לשרת", fmtN(P.requests)) + li("פונקציות", fmtN(P.functions)) +
-      '<li style="color:var(--ink);border-top:1px solid var(--edge);margin-top:4px;padding-top:4px"><span>סך הכול נוצלו</span><span>' + fmtN(u.used) + '</span></li>';
-    var m = u.mail;
-    $("crMail").innerHTML = li("היום", fmtN(m.today) + " / " + fmtN(m.dayLimit)) + li("החודש", fmtN(m.month) + " / " + fmtN(m.monthLimit)) +
-      li("נשארו היום", fmtN(Math.max(0, m.dayLimit - m.today))) + '<li><span class="faint">חינם ב־Resend; הפניות נשמרות כאן גם אם המייל לא נשלח.</span></li>';
-    if (document.activeElement !== $("crDay")) $("crDay").value = u.renewDay;
-  }
-  function loadUsage(){ api("usage").then(renderUsage).catch(function(err){ $("crLeft").textContent = "—"; $("crOf").textContent = err.message; }); }
-  $("crSave").onclick = function(){
-    var body = { renewDay: $("crDay").value }; if ($("crUsed").value !== "") body.used = $("crUsed").value;
-    $("crStatus").textContent = "שומר…"; $("crStatus").className = "status";
-    api("usage", { method:"POST", body: JSON.stringify(body) }).then(function(u){ renderUsage(u); $("crUsed").value = ""; $("crStatus").textContent = "עודכן"; $("crStatus").className = "status ok"; })
-      .catch(function(err){ $("crStatus").textContent = err.message; $("crStatus").className = "status err"; });
-  };
   function loadStats(){
-    loadUsage();
     $("statsWhen").textContent = "טוען…";
     api("stats").then(renderStats).catch(function(err){ $("statsWhen").textContent = err.message; });
   }

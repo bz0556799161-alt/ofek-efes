@@ -1,9 +1,9 @@
 // Anonymous usage stats. Each browser has a random id; nothing personal is stored.
-import { visitorStore, siteStore, json, israelDay, isAdmin } from "../lib/common.mjs";
+import { visitorStore, json, israelDay, isAdmin } from "../lib/common.mjs";
 
 const BOT_RE = /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|preview|screenshot|puppeteer|playwright|selenium|phantom|prerender|facebookexternalhit|whatsapp|telegram|discord|skype|embedly|bing|yandex|baidu|duckduck|semrush|ahrefs|mj12|petal|gptbot|claude|anthropic|chatgpt|perplexity|netlify/i;
 
-const PAGES = ["home", "book", "game", "globe", "contact", "game-play", "globe-tour", "site"];
+const PAGES = ["home", "book", "game", "globe", "contact", "site"];
 const num = (v, max = 1e6) => {
   const n = Math.round(Number(v));
   return Number.isFinite(n) ? Math.max(0, Math.min(max, n)) : 0;
@@ -21,22 +21,7 @@ function emptyDoc(now) {
   };
 }
 
-// remembers every upload to the live site (each costs credits), the first time a visit reaches it
-const seenDeploys = new Set();
-async function noteDeploy(context) {
-  const d = context && context.deploy;
-  if (!d || d.context !== "production" || !d.id || seenDeploys.has(d.id)) return;
-  seenDeploys.add(d.id);
-  const st = siteStore();
-  const data = (await st.get("deploys", { type: "json" })) || { list: [] };
-  if (data.list.some((x) => x.id === d.id)) return;
-  data.list.push({ id: d.id, at: Date.now() });
-  data.list = data.list.slice(-200);
-  await st.setJSON("deploys", data);
-}
-
-export default async (req, context) => {
-  try { await noteDeploy(context); } catch (e) {}
+export default async (req) => {
   if (req.method !== "POST") return json({ error: "method" }, 405);
   // robots and the site's admin are not counted
   if (BOT_RE.test(req.headers.get("user-agent") || "")) return json({ ok: true, skipped: "bot" });
@@ -63,13 +48,6 @@ export default async (req, context) => {
       case "view": {
         const p = PAGES.includes(e.page) ? e.page : "site";
         doc.views[p] = (doc.views[p] || 0) + 1;
-        // per day, for the credit estimate: views, and the heavy first load of the structure
-        doc.vd = doc.vd || {};
-        const vd = doc.vd[day] = doc.vd[day] || [0, 0];
-        vd[0]++;
-        if (p === "globe-tour" && !doc.tourLoaded) { vd[1]++; doc.tourLoaded = true; }
-        const keys = Object.keys(doc.vd).sort();
-        if (keys.length > 45) keys.slice(0, keys.length - 45).forEach((k) => delete doc.vd[k]);
         break;
       }
       case "sky": {

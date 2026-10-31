@@ -1,7 +1,7 @@
 // Admin API: login, settings, fonts and stats. Every route except login needs the admin cookie.
 import { purgeCache } from "@netlify/functions";
 import {
-  loadConfig, saveConfig, isAdmin, adminCookie, adminPassword, cookie, json, sleep, safeEqual, siteStore,
+  loadConfig, saveConfig, isAdmin, adminCookie, adminPassword, cookie, json, sleep, safeEqual,
   sha256, randomHex, hashCode, visitorStore, fontStore, messageStore, israelDay, SECTIONS, MODES
 } from "../lib/common.mjs";
 import { syncProg, loadProg, importProg } from "../lib/prog.mjs";
@@ -175,66 +175,6 @@ async function stats() {
   return out;
 }
 
-/* ---------------- credits estimate ---------------- */
-const PLAN_CREDITS = 300;
-function cycleStart(renewDay, now) {
-  const parts = new Date(now).toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" }).split("-").map(Number);
-  let [y, m] = parts; const d = parts[2];
-  if (d < renewDay) { m -= 1; if (m < 1) { m = 12; y -= 1; } }
-  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  return { y, m, d: Math.min(renewDay, last), ms: Date.UTC(y, m - 1, Math.min(renewDay, last)) - 2 * 3600e3 };
-}
-async function usage() {
-  const now = Date.now();
-  const cfg = await loadConfig();
-  const u = Object.assign({ renewDay: 27 }, cfg.private.usage || {});
-  const cs = cycleStart(u.renewDay, now);
-  const next = new Date(Date.UTC(cs.m === 12 ? cs.y + 1 : cs.y, cs.m === 12 ? 0 : cs.m, Math.min(u.renewDay, 28)));
-  const calibIn = u.calib && u.calib.at >= cs.ms;
-  const base = calibIn ? u.calib.at : cs.ms;
-  const baseUsed = calibIn ? u.calib.used : 0;
-  const baseDay = israelDay(base);
-  // uploads to the live site since the base moment
-  const dep = (await siteStore().get("deploys", { type: "json" })) || { list: [] };
-  const deploys = dep.list.filter((x) => x.at > base).length;
-  // views since the base day
-  const store = visitorStore();
-  const keys = [];
-  for await (const page of store.list({ paginate: true })) page.blobs.forEach((b) => keys.push(b.key));
-  let views = 0, tours = 0, fresh = 0;
-  for (let i = 0; i < keys.length; i += 40) {
-    const docs = await Promise.all(keys.slice(i, i + 40).map((k) => store.get(k, { type: "json" }).catch(() => null)));
-    for (const d of docs) {
-      if (!d) continue;
-      if (d.first >= base) fresh++;
-      for (const [day, v] of Object.entries(d.vd || {})) if (day >= baseDay) { views += v[0] || 0; tours += v[1] || 0; }
-    }
-  }
-  const mb = fresh * 0.45 + Math.max(0, views - fresh) * 0.06 + tours * 6;
-  const parts = {
-    deploys: deploys * 15,
-    bandwidth: Math.round((mb / 1024) * 20 * 10) / 10,
-    requests: Math.round(((views * 14) / 10000) * 2 * 10) / 10,
-    functions: Math.round((views / 1000) * 0.5 * 10) / 10
-  };
-  const since = parts.deploys + parts.bandwidth + parts.requests + parts.functions;
-  const used = Math.round((baseUsed + since) * 10) / 10;
-  // emails from the contact form (Resend free: 100 a day, 3,000 a month)
-  const ms = messageStore(), mk = [];
-  for await (const page of ms.list({ paginate: true })) page.blobs.forEach((b) => mk.push(b.key));
-  const today = new Date(now).toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" }).replace(/-/g, "");
-  const month = today.slice(0, 6);
-  let mailToday = 0, mailMonth = 0;
-  const msgs = await Promise.all(mk.filter((k) => k.startsWith(month)).map((k) => ms.get(k, { type: "json" }).catch(() => null)));
-  msgs.forEach((m) => { if (m && m.mail === "sent") { mailMonth++; if (m.id.startsWith(today)) mailToday++; } });
-  return {
-    plan: PLAN_CREDITS, used, left: Math.max(0, Math.round((PLAN_CREDITS - used) * 10) / 10),
-    renewDay: u.renewDay, cycleStart: cs.ms, renewsAt: next.getTime(),
-    calib: calibIn ? u.calib : null, since: { deploys, views, tours, fresh, parts },
-    mail: { today: mailToday, dayLimit: 100, month: mailMonth, monthLimit: 3000 }
-  };
-}
-
 /* ---------------- router ---------------- */
 export default async (req, context) => {
   const url = new URL(req.url);
@@ -370,20 +310,6 @@ export default async (req, context) => {
   }
 
   if (route === "stats" && method === "GET") return json(await stats());
-
-  // credits: an estimate (Netlify has no public way to read the balance), corrected by the number the admin copies from Netlify
-  if (route === "usage" && method === "GET") return json(await usage());
-  if (route === "usage" && method === "POST") {
-    let b = {};
-    try { b = await req.json(); } catch (e) {}
-    const cfg = await loadConfig();
-    const u = Object.assign({ renewDay: 27 }, cfg.private.usage || {});
-    if (Number.isFinite(+b.renewDay) && +b.renewDay >= 1 && +b.renewDay <= 31) u.renewDay = Math.round(+b.renewDay);
-    if (b.used !== undefined && b.used !== "" && Number.isFinite(+b.used) && +b.used >= 0) u.calib = { used: Math.round(+b.used * 10) / 10, at: Date.now() };
-    cfg.private.usage = u;
-    await saveConfig(cfg);
-    return json(await usage());
-  }
 
   // messages sent through the contact page
   if (route === "messages" && method === "GET") {
