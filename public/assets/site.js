@@ -231,6 +231,15 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
 
+  /* בתצוגה המקדימה: תווית קטנה, כדי שלא יתבלבלו עם האתר החי */
+  if (/^preview--/.test(location.hostname) && APP === "site") {
+    var tag = document.createElement("a");
+    tag.href = "https://ofek-efes.netlify.app" + location.pathname;
+    tag.textContent = "תצוגה מקדימה · לאתר החי ↗";
+    tag.style.cssText = "position:fixed;z-index:39;bottom:calc(14px + env(safe-area-inset-bottom,0px));right:calc(14px + env(safe-area-inset-right,0px));padding:6px 12px;border-radius:99px;background:#d6b46c;color:#1b1407;font:700 13px Rubik,Arial,sans-serif;text-decoration:none;box-shadow:0 6px 20px rgba(0,0,0,.4)";
+    (document.body ? Promise.resolve() : new Promise(function (r) { document.addEventListener("DOMContentLoaded", r); })).then(function () { document.body.appendChild(tag); });
+  }
+
   /* כלי המנהל (עריכת טקסטים במקום) נטענים רק במכשיר שנכנס לניהול */
   if (APP === "site" && lsGet("ofek-admin-device") === "1") {
     var ed = document.createElement("script"); ed.src = "/assets/editor.js?v=1e2697dd"; ed.defer = true;
