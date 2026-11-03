@@ -61,7 +61,7 @@ addEventListener("resize", () => {
 const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
 const load = (u) => new Promise((ok, bad) => loader.load(u, ok, undefined, bad));
 const [, roomGltf, kidGltf, meta] = await Promise.all([
-  RAPIER.init(), load("./assets/orion.glb?v=5"), load("./assets/kid.glb"), fetch("./assets/orion.json?v=5").then((r) => r.json())
+  RAPIER.init(), load("./assets/orion.glb?v=6"), load("./assets/kid.glb"), fetch("./assets/orion.json?v=6").then((r) => r.json())
 ]);
 
 /* ---------------- the room ---------------- */
@@ -140,22 +140,29 @@ function nearestDoor(pos) {
   return best;
 }
 
-/* ---------------- ladders: the only things that can be climbed ---------------- */
-const ladders = (meta.ladders || []).map((l) => {
-  const a = B(l.a), b = B(l.b), n = B(l.n).normalize();
-  const axis = b.clone().sub(a), len = axis.length(); axis.normalize();
-  return { a, b, n, axis, len };
+/* ---------------- ladders: one connected network, the only way to move on a wall ---------------- */
+const segs = [];
+(meta.ladders || []).forEach((l, li) => {
+  const pts = l.pts.map(B), ns = l.n.map((v) => B(v).normalize());
+  const count = l.closed ? pts.length : pts.length - 1;
+  for (let k = 0; k < count; k++) {
+    const a = pts[k], b = pts[(k + 1) % pts.length], axis = b.clone().sub(a), len = axis.length();
+    if (len < 1e-3) continue;
+    segs.push({ li, k, a, b, n: ns[k], axis: axis.normalize(), len, closed: l.closed, count });
+  }
 });
-// a ladder can be climbed when it stands on a wall (not a floor or a ceiling) and runs mostly up and down
-const climbable = (l) => surfaceClass(l.n) === 1 && Math.abs(l.axis.dot(UP)) > 0.45;
-function ladderNear(pos) {
-  let best = null, bd = 0.75;
-  for (const l of ladders) {
-    if (!climbable(l)) continue;
-    const s = THREE.MathUtils.clamp(pos.clone().sub(l.a).dot(l.axis), 0, l.len);
-    const q = l.a.clone().addScaledVector(l.axis, s);
-    const d = q.distanceTo(pos);
-    if (d < bd) { bd = d; best = { l, s }; }
+const segOf = (li, k) => segs.find((g) => g.li === li && g.k === k);
+const wallUpOf = (n) => { const u = UP.clone().addScaledVector(n, -UP.dot(n)); return u.lengthSq() > 1e-4 ? u.normalize() : null; };
+function closestOn(g, pos) {
+  const s = THREE.MathUtils.clamp(pos.clone().sub(g.a).dot(g.axis), 0, g.len);
+  return { s, q: g.a.clone().addScaledVector(g.axis, s) };
+}
+function ladderNear(pos, r = 0.75, cls = 1) {
+  let best = null, bd = r;
+  for (const g of segs) {
+    if (surfaceClass(g.n) !== cls) continue;
+    const c = closestOn(g, pos), d = c.q.distanceTo(pos);
+    if (d < bd) { bd = d; best = { g, s: c.s }; }
   }
   return best;
 }
@@ -294,7 +301,7 @@ let hh = P.standHH, eyeH = P.eyeStand, bobPhase = 0, bobAmp = 0, dip = 0, dipV =
 let climb = null, faceTo = 0, faceT = 0;
 const clock = new THREE.Clock();
 const fwd = new THREE.Vector3(), right = new THREE.Vector3();
-window.__walk = { body, world, doors, ladders, setView(y, p) { yaw = y; pitch = p; }, get climb() { return climb; }, get state() { return { vel: vel.toArray().map(v => +v.toFixed(2)), vy: +vy.toFixed(2), grounded, yaw: +yaw.toFixed(2), keys: [...keys], rot: +kid.rotation.y.toFixed(2) }; } };     // for testing
+window.__walk = { body, world, doors, segs, setView(y, p) { yaw = y; pitch = p; }, get climb() { return climb; }, get state() { return { vel: vel.toArray().map(v => +v.toFixed(2)), vy: +vy.toFixed(2), grounded, yaw: +yaw.toFixed(2), keys: [...keys], rot: +kid.rotation.y.toFixed(2) }; } };     // for testing
 
 function frame() {
   const dt = Math.min(clock.getDelta(), 1 / 30);
@@ -348,39 +355,73 @@ function update(dt) {
     d.col.setEnabled(d.open < 0.08);
   }
 
-  // ---- climbing: walk into a ladder ----
-  if (!climb && lockT <= 0) {
-    const near = ladderNear(pos);
-    if (near && iz > 0.5) {
-      const flat = new THREE.Vector3(near.l.n.x, 0, near.l.n.z);
+  // ---- climbing: on a wall you move only along the ladders ----
+  if (!climb && lockT <= 0 && iz > 0.5) {
+    const near = ladderNear(pos.clone().addScaledVector(UP, 0.2), 1.0);
+    if (near) {
+      const flat = new THREE.Vector3(near.g.n.x, 0, near.g.n.z);
       if (flat.lengthSq() < 0.01 || fwd.dot(flat.normalize()) < -0.3) {
-        climb = { l: near.l, s: near.s }; vy = 0; vel.set(0, 0, 0); play("ladder", 0.2);
-        hint("סולם · W/S לטפס ולרדת, רווח לעזוב");
+        climb = { g: near.g, s: near.s }; vy = 0; vel.set(0, 0, 0); play("ladder", 0.2);
+        hint("סולם · W/S למעלה ולמטה, A/D לצדדים לאורך הסולמות, רווח לעזוב");
       }
     }
   }
   if (climb) {
-    const l = climb.l, upSign = l.axis.dot(UP) >= 0 ? 1 : -1;
-    const want = iz * P.climb * upSign;
-    climb.s = THREE.MathUtils.clamp(climb.s + want * dt, 0.2, l.len - 0.15);
-    const atTop = (upSign > 0 ? climb.s >= l.len - 0.16 : climb.s <= 0.21) && iz > 0;
-    const atBottom = (upSign > 0 ? climb.s <= 0.21 : climb.s >= l.len - 0.16) && iz < 0;
-    const spot = l.a.clone().addScaledVector(l.axis, climb.s).addScaledVector(l.n, 0.36).addScaledVector(UP, -0.35);
+    let g = climb.g;
+    const wallUp = wallUpOf(g.n) || g.axis;
+    const wallSide = new THREE.Vector3().crossVectors(wallUp, g.n).normalize();
+    const want = new THREE.Vector3().addScaledVector(wallUp, iz).addScaledVector(wallSide, ix);
+    const hands = g.a.clone().addScaledVector(g.axis, climb.s);
+    // where ladders cross, take the one that goes the way you push
+    if (want.lengthSq() > 0.1) {
+      let best = Math.abs(want.dot(g.axis)), pick = null;
+      for (const o of segs) {
+        if (o.li === g.li || surfaceClass(o.n) !== 1) continue;
+        const c = closestOn(o, hands);
+        if (c.q.distanceTo(hands) > 0.2) continue;
+        const v = Math.abs(want.dot(o.axis));
+        if (v > best + 0.25) { best = v; pick = { g: o, s: c.s }; }
+      }
+      if (pick) { climb.g = g = pick.g; climb.s = pick.s; }
+    }
+    const v = want.dot(g.axis) * P.climb;
+    let sNew = climb.s + v * dt, exit = null;
+    if (sNew > g.len || sNew < 0) {
+      // step onto the next piece of the same ladder, if it goes on
+      const fwdEnd = sNew > g.len;
+      const nk = fwdEnd ? g.k + 1 : g.k - 1;
+      const next = g.closed ? segOf(g.li, (nk + g.count) % g.count) : (nk >= 0 && nk < g.count ? segOf(g.li, nk) : null);
+      if (next) {
+        const cls = surfaceClass(next.n);
+        if (cls === 1) { climb.g = g = next; sNew = fwdEnd ? 0.001 : next.len - 0.001; }
+        else if (cls === 0) {                               // the ladder runs on into a floor: step off onto it
+          const e = fwdEnd ? next.a : next.b, stand = e.clone().addScaledVector(next.n, 0.25).addScaledVector(UP, hh + P.radius + 0.05);
+          body.setTranslation({ x: stand.x, y: stand.y, z: stand.z }, true);
+          climb = null; playOnce("ladder_top", 0.8, 0.15); clank(1, 900); world.step(); return;
+        }
+        else sNew = THREE.MathUtils.clamp(sNew, 0, g.len);  // into a ceiling: no further
+      } else { sNew = THREE.MathUtils.clamp(sNew, 0, g.len); exit = "end"; }
+    }
+    climb.s = THREE.MathUtils.clamp(sNew, 0, g.len);
+    const h = g.a.clone().addScaledVector(g.axis, climb.s);
+    const wu = wallUpOf(g.n) || wallUp;
+    const spot = h.clone().addScaledVector(g.n, 0.34).addScaledVector(wu, -0.42);
     body.setNextKinematicTranslation({ x: spot.x, y: spot.y, z: spot.z });
-    const moving = Math.abs(want) > 0.02 && !atTop && !atBottom;
-    play("ladder", 0.15, moving ? Math.sign(want * upSign) * Math.max(0.3, Math.abs(want) / P.climb) : 0.0001);
-    if (moving && Math.floor((bobPhase += dt * 4) / Math.PI) !== lastStep) { lastStep = Math.floor(bobPhase / Math.PI); clank(0.6, 1600, 0.06); }
-    if (atTop) {                                          // the end of the ladder: onto the floor above, if there is one
-      const over = spot.clone().addScaledVector(UP, 1.0).addScaledVector(l.n, -0.7);
-      const fl = ray({ x: over.x, y: over.y + 0.6, z: over.z }, { x: 0, y: -1, z: 0 }, 2.2);
+    climb.wu = wu;
+    const upward = v * g.axis.dot(wu);
+    const moving = Math.abs(v) > 0.03;
+    play("ladder", 0.15, moving ? (upward >= -0.01 ? 1 : -1) * Math.max(0.35, Math.abs(v) / P.climb) : 0.0001);
+    if (moving && Math.floor((bobPhase += dt * 4.5) / Math.PI) !== lastStep) { lastStep = Math.floor(bobPhase / Math.PI); clank(0.55, 1600, 0.06); }
+    if (exit && moving) {
+      // over the top onto a floor, or off the bottom onto the ground
+      const over = h.clone().addScaledVector(wu, upward > 0 ? 0.9 : -0.6).addScaledVector(g.n, upward > 0 ? -0.6 : 0.5);
+      const fl = ray({ x: over.x, y: over.y + 0.8, z: over.z }, { x: 0, y: -1, z: 0 }, 2.6);
       if (fl && surfaceClass(fl.n) === 0) {
-        body.setTranslation({ x: over.x, y: over.y + 0.6 - fl.t + hh + P.radius + 0.05, z: over.z }, true);
-        climb = null; playOnce("ladder_top", 0.9, 0.15); clank(1, 900); world.step(); return;
+        body.setTranslation({ x: over.x, y: over.y + 0.8 - fl.t + hh + P.radius + 0.05, z: over.z }, true);
+        climb = null; if (upward > 0) playOnce("ladder_top", 0.9, 0.15); clank(1, 900); world.step(); return;
       }
     }
-    if (jumpKey || atBottom) {
-      climb = null; vel.copy(l.n).multiplyScalar(jumpKey ? 1.6 : 0.6); vel.y = 0; vy = jumpKey ? 1.5 : 0;
-    }
+    if (jumpKey) { climb = null; vel.copy(g.n).multiplyScalar(1.5); vel.y = 0; vy = 1.2; }
     grounded = false;
   } else {
     // ---- walking ----
@@ -448,9 +489,12 @@ function update(dt) {
   const feet = new THREE.Vector3(np.x, np.y - hh - P.radius, np.z);
   kid.position.set(feet.x, feet.y + footOffset - 0.02, feet.z);
   if (faceT > 0) faceT -= dt;
-  const faceYaw = climb ? Math.atan2(-climb.l.n.x, -climb.l.n.z) : faceT > 0 ? faceTo : yaw + Math.PI;
-  let dyaw = faceYaw - kid.rotation.y; dyaw = Math.atan2(Math.sin(dyaw), Math.cos(dyaw));
-  kid.rotation.y += dyaw * (1 - Math.exp(-12 * dt));
+  let qT;
+  if (climb) {
+    const z = climb.g.n.clone().negate(), y = (climb.wu || UP).clone(), x = new THREE.Vector3().crossVectors(y, z).normalize();
+    qT = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y.crossVectors(z, x).normalize(), z));
+  } else qT = new THREE.Quaternion().setFromAxisAngle(UP, faceT > 0 ? faceTo : yaw + Math.PI);
+  kid.quaternion.slerp(qT, 1 - Math.exp(-12 * dt));
   kid.visible = third;
   const down = ray({ x: feet.x, y: feet.y + 0.3, z: feet.z }, { x: 0, y: -1, z: 0 }, 3);
   blob.visible = third && !!down && !climb;
@@ -492,7 +536,7 @@ function update(dt) {
   if (!climb && hintT <= 0) {
     const d = nearestDoor(pos);
     if (d) hint(`E · לפתוח את הדלת ל${d.name}`, 0.6);
-    else if (ladderNear(pos)) hint("סולם · כדי לטפס התקרב והמשך ללכת קדימה", 0.6);
+    else if (ladderNear(pos.clone().addScaledVector(UP, 0.2), 1.0)) hint("סולם · כדי לטפס התקרב והמשך ללכת קדימה", 0.6);
   }
 }
 play("idle", 0);
