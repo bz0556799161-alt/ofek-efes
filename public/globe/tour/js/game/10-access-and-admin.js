@@ -151,7 +151,7 @@ function setAdminPanelVisible(v){
   let flag = null; try{ flag = localStorage.getItem('ofek-admin-device'); }catch(e){}
   if(flag !== '1') return;
   fetch('/api/admin/me', {cache:'no-store', credentials:'same-origin'}).then(r=>r.json()).then(me=>{
-    if(!me || !me.admin) return;
+    if(!me || !(me.staff || me.admin)) return;
     roomAccess.isAdmin = true;
     $('btnAdmin').style.display = 'block';
     enforceAccessNow();

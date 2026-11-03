@@ -240,6 +240,12 @@
     (document.body ? Promise.resolve() : new Promise(function (r) { document.addEventListener("DOMContentLoaded", r); })).then(function () { document.body.appendChild(tag); });
   }
 
+  /* an editor whose permission was taken back: this device stops being an admin device */
+  if (lsGet("ofek-role") === "editor") {
+    fetch("/api/admin/me", { cache: "no-store", credentials: "same-origin" }).then(function (r) { return r.json(); }).then(function (me) {
+      if (me && !me.staff) ["ofek-admin-device", "ofek-notrack", "ofek-role"].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
+    }).catch(function () {});
+  }
   /* כלי המנהל (עריכת טקסטים במקום) נטענים רק במכשיר שנכנס לניהול */
   if (APP === "site" && lsGet("ofek-admin-device") === "1") {
     var ed = document.createElement("script"); ed.src = "/assets/editor.js?v=1e2697dd"; ed.defer = true;

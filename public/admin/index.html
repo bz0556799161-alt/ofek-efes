@@ -130,6 +130,19 @@ td.num{font-variant-numeric:tabular-nums}
 .status.err{color:var(--bad)} .status.ok{color:var(--ok)}
 .login{max-width:420px;margin:12vh auto 0;display:flex;flex-direction:column;gap:12px}
 .login img{width:220px;height:auto;align-self:center}
+.login-switch{display:flex;gap:4px;padding:4px;border:1px solid var(--edge);border-radius:99px;align-self:center}
+.login-switch button{border:0;background:transparent;border-radius:99px;padding:6px 16px;cursor:pointer;color:var(--soft);font-weight:600}
+.login-switch button[aria-pressed="true"]{background:var(--gold);color:#1b1407}
+.linkbtn{background:none;border:0;padding:0;color:var(--gold);cursor:pointer;text-decoration:underline;font:inherit}
+.hp{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
+.who{color:var(--soft);font-size:13.5px}
+.ed{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:12px 0;border-top:1px solid var(--edge)}
+.ed:first-child{border-top:0}
+.ed .ename{font-weight:600;min-width:120px}
+.ed .eways{display:flex;gap:12px;flex-wrap:wrap;color:var(--soft);font-size:14px}
+.ed .eways a{color:var(--soft)}
+.ed .enote{flex-basis:100%;color:var(--soft);font-size:14px;white-space:pre-wrap}
+.ed .etools{display:flex;gap:6px;margin-inline-start:auto}
 .steps{margin:0;padding-inline-start:20px;display:grid;gap:4px;color:var(--soft)}
 .steps code,.muted code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:6px;direction:ltr;unicode-bidi:isolate}
 [hidden]{display:none!important}
@@ -152,10 +165,33 @@ td.num{font-variant-numeric:tabular-nums}
         <li>אחרי דקה חוזרים לכאן ונכנסים עם הסיסמה.</li>
       </ol>
     </div>
+    <div class="login-switch" role="group" aria-label="סוג כניסה">
+      <button type="button" id="asOwner" aria-pressed="true">מנהל האתר</button>
+      <button type="button" id="asEditor" aria-pressed="false">עורך</button>
+    </div>
+    <div id="emailRow" hidden>
+      <label for="em">מייל</label>
+      <input type="text" id="em" inputmode="email" autocomplete="username" dir="ltr">
+    </div>
     <label for="pw">סיסמה</label>
     <input type="password" id="pw" autocomplete="current-password" required>
     <p class="status" id="loginStatus" aria-live="polite"></p>
     <button class="btn primary" type="submit">כניסה</button>
+    <p class="faint" id="askLine" hidden style="margin:0;text-align:center">אין לך עדיין הרשאה? <button type="button" class="linkbtn" id="askOpen">בקשת הרשאת עריכה</button></p>
+  </form>
+  <form class="login card" id="askForm" hidden novalidate>
+    <h2>בקשת הרשאת עריכה</h2>
+    <p class="muted" style="margin:0">ממלאים את הפרטים ובוחרים סיסמה. אחרי שמנהל האתר יאשר, נכנסים כאן עם המייל והסיסמה.</p>
+    <label for="askName">שם מלא</label><input type="text" id="askName" autocomplete="name" maxlength="60" required>
+    <label for="askEmail">מייל</label><input type="text" id="askEmail" inputmode="email" autocomplete="email" dir="ltr" maxlength="120" required>
+    <label for="askPhone">טלפון (לא חובה)</label><input type="text" id="askPhone" inputmode="tel" autocomplete="tel" dir="ltr" maxlength="30">
+    <label for="askPw">סיסמה (8 תווים לפחות)</label><input type="password" id="askPw" autocomplete="new-password" minlength="8" required>
+    <label for="askPw2">הסיסמה שוב</label><input type="password" id="askPw2" autocomplete="new-password" minlength="8" required>
+    <label for="askNote">כמה מילים על עצמך (לא חובה)</label><textarea id="askNote" rows="2" maxlength="300"></textarea>
+    <div class="hp" aria-hidden="true"><label for="askWeb">אתר</label><input type="text" id="askWeb" tabindex="-1" autocomplete="off"></div>
+    <p class="status" id="askStatus" aria-live="polite"></p>
+    <button class="btn primary" type="submit" id="askSend">שליחת הבקשה</button>
+    <p class="faint" style="margin:0;text-align:center"><button type="button" class="linkbtn" id="askBack">חזרה לכניסה</button></p>
   </form>
 </div>
 
@@ -164,7 +200,7 @@ td.num{font-variant-numeric:tabular-nums}
   <header class="bar">
     <div class="wrap">
       <a href="/" title="לאתר"><img src="/assets/logo-640.webp" alt="אופק אפס"></a>
-      <h1>ניהול</h1>
+      <h1>ניהול <span class="who" id="whoAmI"></span></h1>
       <a class="btn small" id="liveLink" href="https://ofek-efes.netlify.app/" target="_blank" rel="noopener">לאתר החי ↗</a>
       <a class="btn small" id="previewLink" href="https://preview--ofek-efes.netlify.app/" target="_blank" rel="noopener" title="השינויים שעוד לא עלו לאתר החי. נכנסים עם החשבון של Netlify.">לתצוגה המקדימה ↗</a>
       <button class="btn small" id="logout">יציאה</button>
@@ -179,6 +215,7 @@ td.num{font-variant-numeric:tabular-nums}
         <button class="tab" role="tab" data-tab="texts" aria-selected="false">עריכת טקסטים</button>
         <button class="tab" role="tab" data-tab="chapters" aria-selected="false">פרקים</button>
         <button class="tab" role="tab" data-tab="fonts" aria-selected="false">פונטים</button>
+        <button class="tab" role="tab" data-tab="editors" aria-selected="false">עורכים <span class="badge" id="edBadge" hidden></span></button>
       </nav>
     </div>
   </header>
@@ -324,6 +361,17 @@ td.num{font-variant-numeric:tabular-nums}
     </section>
 
     <!-- fonts -->
+    <section role="tabpanel" id="tab-editors" hidden>
+      <div class="card">
+        <h2>עורכים</h2>
+        <p class="faint" style="margin-top:0">עורך נכנס לניהול עם המייל והסיסמה שלו, ויכול לעשות הכול חוץ מסטטיסטיקה, פניות, עריכת טקסטים ופונטים. הוא נכנס גם לחלקים הנעולים (הספר, כבוש את השמים, המבנה הכדורי) ויכול לדלג בין הרמות בתפוס כוכב. מי שרוצה להיות עורך שולח בקשה מדף הכניסה לניהול (בוחר "עורך" ואז "בקשת הרשאת עריכה"), והיא מופיעה כאן.</p>
+        <p class="faint">הקישור לשלוח לו: <a href="/admin/#editor" id="edLink" dir="ltr">/admin/#editor</a> <button class="btn small" id="edCopy" type="button">העתקה</button></p>
+      </div>
+      <div class="card"><h2>ממתינים לאישור</h2><div id="edPending"></div></div>
+      <div class="card"><h2>עורכים פעילים</h2><div id="edActive"></div></div>
+      <div class="card" id="edRevokedCard"><h2>הרשאות שבוטלו</h2><div id="edRevoked"></div></div>
+    </section>
+
     <section role="tabpanel" id="tab-fonts" hidden>
       <div class="card">
         <h2>תצוגה מקדימה</h2>
@@ -381,18 +429,63 @@ td.num{font-variant-numeric:tabular-nums}
     try {
       localStorage.setItem("ofek-notrack", "1"); localStorage.setItem("ofek-admin-device", "1");
       var vid = localStorage.getItem("ofek-vid");
-      if (vid) api("visitor?vid=" + encodeURIComponent(vid), { method:"DELETE" }).catch(function(){});
+      if (vid && isOwner()) api("visitor?vid=" + encodeURIComponent(vid), { method:"DELETE" }).catch(function(){});
     } catch (e) {}
   }
+  var ME = { role: "owner" }, OWNER_TABS = ["stats","messages","texts","fonts","editors"];
+  var isOwner = function(){ return ME.role === "owner"; };
+  function enter(){
+    return api("me").then(function(me){
+      if (!me.staff) { showLogin(); return; }
+      ME = me;
+      try { localStorage.setItem("ofek-role", me.role); } catch (e) {}
+      $("whoAmI").textContent = me.role === "editor" ? "· עורך: " + me.name : "";
+      if ($("previewLink")) $("previewLink").hidden = !isOwner();
+      OWNER_TABS.forEach(function(t){ var b = document.querySelector('.tab[data-tab="' + t + '"]'); if (b) b.hidden = !isOwner(); });
+      var sel = document.querySelector('.tab[aria-selected="true"]');
+      if (!sel || sel.hidden) document.querySelector('.tab[data-tab="' + (isOwner() ? "stats" : "access") + '"]').click();
+      showApp(); loadAll();
+    });
+  }
+  var asEditor = false;
+  function setMode(ed){
+    asEditor = ed;
+    $("asOwner").setAttribute("aria-pressed", ed ? "false" : "true"); $("asEditor").setAttribute("aria-pressed", ed ? "true" : "false");
+    $("emailRow").hidden = !ed; $("askLine").hidden = !ed; $("em").required = ed;
+    $("noPassword").hidden = ed || $("noPassword").dataset.set === "1";
+    $("loginStatus").textContent = "";
+  }
+  $("asOwner").onclick = function(){ setMode(false); };
+  $("asEditor").onclick = function(){ setMode(true); $("em").focus(); };
+  $("askOpen").onclick = function(){ $("loginForm").hidden = true; $("askForm").hidden = false; $("askName").focus(); };
+  $("askBack").onclick = function(){ $("askForm").hidden = true; $("loginForm").hidden = false; };
+  $("askForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var st = $("askStatus"); st.className = "status err";
+    if ($("askName").value.trim().length < 2) { st.textContent = "חסר שם."; return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test($("askEmail").value.trim())) { st.textContent = "כתובת המייל לא תקינה."; return; }
+    if ($("askPw").value.length < 8) { st.textContent = "הסיסמה צריכה להיות באורך 8 תווים לפחות."; return; }
+    if ($("askPw").value !== $("askPw2").value) { st.textContent = "שתי הסיסמאות לא זהות."; return; }
+    st.className = "status"; st.textContent = "שולח…"; $("askSend").disabled = true;
+    api("editor-request", { method:"POST", body: JSON.stringify({ name:$("askName").value, email:$("askEmail").value, phone:$("askPhone").value, password:$("askPw").value, note:$("askNote").value, website:$("askWeb").value }) })
+      .then(function(){
+        $("askForm").innerHTML = '<h2>הבקשה נשלחה</h2><p class="muted" style="margin:0">מנהל האתר יראה אותה בקרוב. אחרי האישור נכנסים כאן עם המייל והסיסמה שבחרת.</p><p style="margin:0;text-align:center"><a class="btn" href="/admin/#editor" onclick="setTimeout(function(){location.reload()},0)">לכניסה</a></p>';
+      })
+      .catch(function(err){ st.className = "status err"; st.textContent = err.message; $("askSend").disabled = false; });
+  });
   api("me").then(function(me){
-    if (me.admin) { showApp(); loadAll(); }
-    else { showLogin(); $("noPassword").hidden = me.passwordSet; }
+    $("noPassword").dataset.set = me.passwordSet ? "1" : "";
+    if (me.staff) return enter();
+    // a former editor's device: stop treating it as an admin device
+    try { if (localStorage.getItem("ofek-role") === "editor") { localStorage.removeItem("ofek-admin-device"); localStorage.removeItem("ofek-notrack"); localStorage.removeItem("ofek-role"); } } catch (e) {}
+    showLogin(); setMode(location.hash === "#editor");
   }).catch(function(){ showLogin(); });
   $("loginForm").addEventListener("submit", function(e){
     e.preventDefault();
     $("loginStatus").textContent = "בודק…"; $("loginStatus").className = "status";
-    api("login", { method:"POST", body: JSON.stringify({ password: $("pw").value }) })
-      .then(function(){ $("pw").value=""; $("loginStatus").textContent=""; showApp(); loadAll(); })
+    (asEditor ? api("editor-login", { method:"POST", body: JSON.stringify({ email: $("em").value, password: $("pw").value }) })
+              : api("login", { method:"POST", body: JSON.stringify({ password: $("pw").value }) }))
+      .then(function(){ $("pw").value=""; $("loginStatus").textContent=""; return enter(); })
       .catch(function(err){ $("loginStatus").textContent = err.message === "nopassword" ? "עדיין לא נקבעה סיסמה. ראה את ההוראות למעלה." : err.message; $("loginStatus").className="status err"; if(err.message==="nopassword") $("noPassword").hidden=false; });
   });
   $("logout").onclick = function(){ api("logout",{method:"POST"}).finally(function(){ location.reload(); }); };
@@ -408,10 +501,38 @@ td.num{font-variant-numeric:tabular-nums}
   });
   (function(){ var h = (location.hash || "").slice(1); var t = h && document.querySelector('.tab[data-tab="' + h + '"]'); if (t) t.click(); })();
 
+  /* =================== editors (owner only) =================== */
+  function edRow(e){
+    var tools = e.status === "pending" ? '<button class="btn small primary" data-act="approve">אישור</button><button class="btn small danger" data-act="delete">דחייה</button>'
+      : e.status === "active" ? '<button class="btn small danger" data-act="revoke">ביטול ההרשאה</button>'
+      : '<button class="btn small" data-act="approve">החזרת ההרשאה</button><button class="btn small danger" data-act="delete">מחיקה</button>';
+    var when = e.status === "pending" ? "ביקש ב־" + fmtDate(e.askedAt) : e.status === "active" ? "אושר ב־" + fmtDate(e.approvedAt) + (e.lastLogin ? " · נכנס לאחרונה ב־" + fmtDate(e.lastLogin) : " · עוד לא נכנס") : "בוטל";
+    return '<div class="ed" data-id="' + esc(e.id) + '"><span class="ename">' + esc(e.name) + '</span><div class="eways"><a href="mailto:' + esc(e.email) + '" dir="ltr">' + esc(e.email) + '</a>' + (e.phone ? '<a href="tel:' + esc(e.phone) + '" dir="ltr">' + esc(e.phone) + '</a>' : '') + '<span>' + when + '</span></div><div class="etools">' + tools + '</div>' + (e.note ? '<div class="enote">' + esc(e.note) + '</div>' : '') + '</div>';
+  }
+  function renderEditors(list){
+    var by = function(st){ return list.filter(function(e){ return e.status === st; }); };
+    var pend = by("pending"), act = by("active"), rev = by("revoked");
+    $("edBadge").hidden = !pend.length; $("edBadge").textContent = pend.length;
+    $("edPending").innerHTML = pend.length ? pend.map(edRow).join("") : '<p class="faint" style="margin:0">אין בקשות חדשות.</p>';
+    $("edActive").innerHTML = act.length ? act.map(edRow).join("") : '<p class="faint" style="margin:0">עדיין אין עורכים.</p>';
+    $("edRevoked").innerHTML = rev.map(edRow).join(""); $("edRevokedCard").hidden = !rev.length;
+    document.querySelectorAll("#tab-editors .ed [data-act]").forEach(function(b){
+      b.onclick = function(){
+        var act = b.dataset.act;
+        if ((act === "revoke" || act === "delete") && b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "בטוח? לחץ שוב"; return; }
+        b.disabled = true;
+        api("editors", { method:"POST", body: JSON.stringify({ id: b.closest(".ed").dataset.id, action: act }) }).then(function(j){ renderEditors(j.list); })
+          .catch(function(err){ b.disabled = false; b.textContent = err.message; });
+      };
+    });
+  }
+  function loadEditors(){ api("editors").then(function(j){ renderEditors(j.list); }).catch(function(){}); }
+  $("edLink").href = location.origin + "/admin/#editor"; $("edLink").textContent = location.origin.replace(/^https?:\/\//, "") + "/admin/#editor";
+  $("edCopy").onclick = function(){ try { navigator.clipboard.writeText($("edLink").href); $("edCopy").textContent = "הועתק"; } catch (e) {} };
+
   function loadAll(){
-    loadStats();
+    if (isOwner()) { loadStats(); loadMessages(); loadEditors(); }
     pendingImport();
-    loadMessages();
     api("config").then(function(j){ PUB = j.public; CODES_SET = j.codesSet || {}; GAME_PLAIN = j.gameCodesPlain || {}; renderAccess(); renderChapters(); renderFonts(); renderGame(); renderGlobe(); renderTextsTab(); });
   }
 

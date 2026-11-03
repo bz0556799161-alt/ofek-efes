@@ -2,7 +2,7 @@
 import { purgeCache } from "@netlify/functions";
 import {
   loadConfig, saveConfig, isAdmin, adminCookie, adminPassword, cookie, json, sleep, safeEqual,
-  sha256, randomHex, hashCode, visitorStore, fontStore, messageStore, israelDay, SECTIONS, MODES
+  sha256, randomHex, hashCode, staffOf, loadEditors, saveEditors, hashPassword, editorCookie, visitorStore, fontStore, messageStore, israelDay, SECTIONS, MODES
 } from "../lib/common.mjs";
 import { syncProg, loadProg, importProg } from "../lib/prog.mjs";
 
@@ -10,6 +10,32 @@ const FONT_EXT = ["woff2", "woff", "ttf", "otf"];
 const FONT_FORMAT = { woff2: "woff2", woff: "woff", ttf: "truetype", otf: "opentype" };
 const MAX_FONT = 4 * 1024 * 1024;
 const failed = new Map();
+const asked = new Map();   // ip -> times an editor request was sent (per warm instance)
+const env = (k) => (globalThis.Netlify && Netlify.env && Netlify.env.get(k)) || process.env[k] || "";
+const escH = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+// the parts of the admin only the owner sees
+const OWNER_ONLY = ["stats", "visitor", "stats-reset", "messages", "texts", "font", "editors"];
+
+// tells the owner by email that someone asked to become an editor (only when the email key is set)
+async function tellOwner(ed) {
+  const key = env("RESEND_API_KEY");
+  if (!key) return;
+  const rows = [["שם", ed.name], ["מייל", ed.email], ["טלפון", ed.phone], ["הערה", ed.note]].filter((r) => r[1]);
+  const html = '<div dir="rtl" style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#1b1b1b">' +
+    '<h2 style="margin:0 0 12px">בקשה חדשה להרשאת עריכה באתר אופק אפס</h2>' +
+    rows.map((r) => "<p style=\"margin:0\"><b>" + r[0] + ":</b> " + escH(r[1]) + "</p>").join("") +
+    '<p style="margin-top:16px">מאשרים או דוחים בניהול האתר, בלשונית עורכים: <a href="https://ofek-efes.netlify.app/admin/#editors">ofek-efes.netlify.app/admin</a></p></div>';
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST", headers: { authorization: "Bearer " + key, "content-type": "application/json" },
+      body: JSON.stringify({ from: env("CONTACT_FROM") || "אופק אפס <onboarding@resend.dev>", to: [env("CONTACT_TO") || "bz0556799161@gmail.com"],
+        subject: "בקשת הרשאת עריכה: " + ed.name, html })
+    });
+  } catch (e) {}
+}
+const publicEditor = (e) => ({ id: e.id, name: e.name, email: e.email, phone: e.phone || "", note: e.note || "", status: e.status,
+  askedAt: e.askedAt, approvedAt: e.approvedAt || 0, lastLogin: e.lastLogin || 0 });
 
 const s = (v, max) => String(v == null ? "" : v).slice(0, max);
 
@@ -196,10 +222,84 @@ export default async (req, context) => {
     }
     return json({ ok: true }, 200, { "set-cookie": await adminCookie() });
   }
-  if (route === "logout") return json({ ok: true }, 200, { "set-cookie": cookie("ofek_admin", "", 0) });
-  if (route === "me") return json({ admin: await isAdmin(req), passwordSet: !!adminPassword() });
+  if (route === "logout") {
+    const h = new Headers({ "content-type": "application/json; charset=utf-8", "cache-control": "no-store" });
+    h.append("set-cookie", cookie("ofek_admin", "", 0)); h.append("set-cookie", cookie("ofek_ed", "", 0));
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: h });
+  }
+  if (route === "me") {
+    const who = await staffOf(req);
+    return json({ admin: !!who && who.role === "owner", staff: !!who, role: who ? who.role : null, name: who && who.name || "", passwordSet: !!adminPassword() });
+  }
 
-  if (!(await isAdmin(req))) return json({ error: "צריך להיכנס מחדש." }, 401);
+  // an editor signs in with their email and their own password
+  if (route === "editor-login" && method === "POST") {
+    const ip = (context && context.ip) || "x", now = Date.now();
+    const list = (failed.get(ip) || []).filter((t) => now - t < 15 * 60e3);
+    if (list.length >= 8) return json({ error: "יותר מדי ניסיונות. נסה שוב בעוד רבע שעה." }, 429);
+    let body = {};
+    try { body = await req.json(); } catch (e) {}
+    const email = s(body.email, 120).trim().toLowerCase();
+    const data = await loadEditors();
+    const ed = data.list.find((x) => x.email === email);
+    const ok = ed && safeEqual(await hashPassword(s(body.password, 200), ed.salt), ed.hash);
+    if (!ok) { list.push(now); failed.set(ip, list); await sleep(800); return json({ error: "המייל או הסיסמה לא נכונים." }, 403); }
+    if (ed.status === "pending") return json({ error: "הבקשה שלך עוד ממתינה לאישור של מנהל האתר." }, 403);
+    if (ed.status !== "active") return json({ error: "אין לך כרגע הרשאת עריכה." }, 403);
+    ed.lastLogin = now;
+    await saveEditors(data);
+    return json({ ok: true }, 200, { "set-cookie": await editorCookie(ed) });
+  }
+
+  // someone asks to become an editor: their details are kept, waiting for the owner
+  if (route === "editor-request" && method === "POST") {
+    const ip = (context && context.ip) || "x", now = Date.now();
+    const times = (asked.get(ip) || []).filter((t) => now - t < 60 * 60e3);
+    if (times.length >= 5) return json({ error: "נשלחו כבר כמה בקשות. נסה שוב בעוד שעה." }, 429);
+    let b = {};
+    try { b = await req.json(); } catch (e) { return json({ error: "השליחה לא הצליחה." }, 400); }
+    if (b.website) return json({ ok: true });
+    const name = s(b.name, 60).trim(), email = s(b.email, 120).trim().toLowerCase(), phone = s(b.phone, 30).trim(), note = s(b.note, 300).trim();
+    const pw = s(b.password, 200);
+    if (name.length < 2) return json({ error: "חסר שם." }, 400);
+    if (!EMAIL_RE.test(email)) return json({ error: "כתובת המייל לא תקינה." }, 400);
+    if (phone && !/^[0-9+\-\s()]{7,20}$/.test(phone)) return json({ error: "מספר הטלפון לא תקין." }, 400);
+    if (pw.length < 8) return json({ error: "הסיסמה צריכה להיות באורך 8 תווים לפחות." }, 400);
+    const data = await loadEditors();
+    const old = data.list.find((x) => x.email === email);
+    if (old && old.status === "active") return json({ error: "כבר יש עורך עם המייל הזה. אפשר פשוט להיכנס." }, 409);
+    if (!old && data.list.filter((x) => x.status === "pending").length >= 50) return json({ error: "יש כרגע יותר מדי בקשות שממתינות. נסה שוב מאוחר יותר." }, 429);
+    times.push(now); asked.set(ip, times);
+    const salt = randomHex(16);
+    const ed = Object.assign(old || { id: randomHex(8), askedAt: now }, { name, email, phone, note, salt, hash: await hashPassword(pw, salt), ver: randomHex(8), status: "pending", askedAt: now });
+    if (!old) data.list.push(ed);
+    await saveEditors(data);
+    await tellOwner(ed);
+    return json({ ok: true });
+  }
+
+  const who = await staffOf(req);
+  if (!who) return json({ error: "צריך להיכנס מחדש." }, 401);
+  if (who.role !== "owner" && OWNER_ONLY.includes(route)) return json({ error: "לחלק הזה נכנס רק מנהל האתר." }, 403);
+
+  // the owner: who may edit
+  if (route === "editors" && method === "GET") {
+    const data = await loadEditors();
+    return json({ list: data.list.map(publicEditor) });
+  }
+  if (route === "editors" && method === "POST") {
+    let b = {};
+    try { b = await req.json(); } catch (e) { return json({ error: "bad" }, 400); }
+    const data = await loadEditors();
+    const ed = data.list.find((x) => x.id === b.id);
+    if (!ed) return json({ error: "העורך לא נמצא." }, 404);
+    if (b.action === "approve") { ed.status = "active"; ed.approvedAt = Date.now(); }
+    else if (b.action === "revoke") { ed.status = "revoked"; ed.ver = randomHex(8); }
+    else if (b.action === "delete") data.list = data.list.filter((x) => x !== ed);
+    else return json({ error: "bad" }, 400);
+    await saveEditors(data);
+    return json({ list: data.list.map(publicEditor) });
+  }
 
   if (route === "config" && method === "GET") {
     const cfg = await loadConfig();
@@ -248,6 +348,7 @@ export default async (req, context) => {
     let body = {};
     try { body = await req.json(); } catch (e) { return json({ error: "bad" }, 400); }
     const cfg = await loadConfig();
+    if (who.role !== "owner" && body.public) ["texts", "fonts", "textStyles", "customFonts"].forEach((k) => delete body.public[k]);
     cfg.public = cleanPublic(body.public || {}, cfg.public);
     if (body.gameCodesPlain && typeof body.gameCodesPlain === "object") {
       const keep = new Set(((cfg.public.game || {}).codes || []).map((c) => c.h));

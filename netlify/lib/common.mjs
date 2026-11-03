@@ -115,6 +115,39 @@ export async function adminCookie() {
   return cookie("ofek_admin", await adminToken(exp), ADMIN_DAYS * 86400);
 }
 
+/* ---------------- editors ----------------
+   People the owner lets into the admin. They ask for it with their details and a password of their own;
+   the owner approves, and can take it back at any time (their "ver" changes, so every session of theirs ends). */
+const EDITOR_DAYS = 30;
+export async function loadEditors() {
+  return (await siteStore().get("editors", { type: "json" })) || { list: [] };
+}
+export async function saveEditors(data) { await siteStore().setJSON("editors", data); }
+export async function hashPassword(pw, salt) {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(String(pw)), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: new TextEncoder().encode(salt), iterations: 120000 }, key, 256);
+  return [...new Uint8Array(bits)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+async function editorSig(id, exp, ver) { return hmac(await getSecret(), "editor:" + id + ":" + exp + ":" + ver); }
+export async function editorCookie(ed) {
+  const exp = Date.now() + EDITOR_DAYS * 864e5;
+  return cookie("ofek_ed", ed.id + "." + exp + "." + (await editorSig(ed.id, exp, ed.ver)), EDITOR_DAYS * 86400);
+}
+// who is this: the owner, an approved editor, or nobody
+export async function staffOf(req) {
+  if (await isAdmin(req)) return { role: "owner" };
+  const c = readCookies(req).ofek_ed;
+  if (!c) return null;
+  const [id, expS, sig] = c.split(".");
+  const exp = parseInt(expS, 10);
+  if (!id || !exp || exp < Date.now() || !sig) return null;
+  const ed = (await loadEditors()).list.find((x) => x.id === id);
+  if (!ed || ed.status !== "active") return null;
+  if (!safeEqual(sig, await editorSig(id, exp, ed.ver))) return null;
+  return { role: "editor", id: ed.id, name: ed.name };
+}
+export async function isStaff(req) { return !!(await staffOf(req)); }
+
 /* ---------------- section access ---------------- */
 export async function unlockToken(section, codeHash) {
   return hmac(await getSecret(), "unlock:" + section + ":" + codeHash);
@@ -122,7 +155,7 @@ export async function unlockToken(section, codeHash) {
 export async function canAccess(req, cfg, section) {
   const mode = (cfg.public.sections[section] || {}).mode || "open";
   if (mode === "open") return true;
-  if (await isAdmin(req)) return true;
+  if (await isStaff(req)) return true;
   if (mode !== "locked") return false;
   const code = cfg.private.codes[section];
   if (!code) return true; // locked without a code means nothing to check
@@ -185,7 +218,7 @@ export async function gameGrantCookie(hashes) {
 }
 // which chapters this visitor may open now
 export async function gameAccess(req, cfg) {
-  if (await isAdmin(req)) return { admin: true, all: true, open: [], keys: [], free: [] };
+  if (await isStaff(req)) return { admin: true, all: true, open: [], keys: [], free: [] };
   const g = await gameSettings(cfg, req), now = Date.now();
   const open = new Set(g.open || []);
   (g.schedule || []).forEach((e) => { if (e.at <= now) open.add(e.key); });
