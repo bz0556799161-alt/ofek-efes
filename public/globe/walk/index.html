@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="robots" content="noindex">
+<title>המבנה הכדורי · חדר אוריון</title>
+<link rel="icon" href="/favicon.ico">
+<style>
+:root{--gold:#d6b46c;--ink:#e8eeee;--soft:#a8b9bc;--bg:#050607}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:15px/1.5 "Rubik","Segoe UI",Arial,sans-serif;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+canvas{display:block}
+#start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,rgba(10,14,20,.55),rgba(3,4,6,.92));z-index:5}
+#start .box{max-width:460px;margin:16px;text-align:center}
+#start h1{font-size:26px;margin:0 0 6px;color:var(--gold);font-weight:600}
+#start p{color:var(--soft);margin:6px 0}
+#start button{margin-top:14px;font:inherit;font-weight:600;background:var(--gold);color:#1b1407;border:0;border-radius:99px;padding:10px 28px;cursor:pointer}
+#start button:disabled{opacity:.5;cursor:wait}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;text-align:right;margin:14px auto 0;max-width:340px;font-size:13.5px;color:var(--soft)}
+.keys b{color:var(--ink);font-weight:600;direction:ltr;text-align:left}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:3}
+#dot{position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:rgba(255,255,255,.55)}
+#hint{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);border:1px solid rgba(214,180,108,.35);color:var(--ink);padding:6px 14px;border-radius:99px;font-size:14px;opacity:0;transition:opacity .25s;white-space:nowrap}
+#hint.on{opacity:1}
+#room{position:absolute;top:12px;right:14px;color:var(--soft);font-size:13px;text-shadow:0 1px 2px #000}
+#back{position:absolute;top:10px;left:12px;pointer-events:auto;color:var(--soft);font-size:13px;text-decoration:none;background:rgba(0,0,0,.4);padding:4px 10px;border-radius:99px}
+/* touch controls */
+#touch{position:fixed;inset:0;z-index:4;display:none}
+.touch #touch{display:block}
+#stick{position:absolute;left:28px;bottom:36px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15)}
+#knob{position:absolute;left:40px;top:40px;width:40px;height:40px;border-radius:50%;background:rgba(214,180,108,.55)}
+.tbtn{position:absolute;width:58px;height:58px;border-radius:50%;background:rgba(0,0,0,.45);border:1px solid rgba(214,180,108,.45);color:var(--ink);font:600 12px/58px inherit;text-align:center}
+.tbtn.on{background:rgba(214,180,108,.5);color:#1b1407}
+</style>
+<script type="importmap">
+{"imports":{"three":"./vendor/three.module.min.js","three/addons/":"./vendor/addons/"}}
+</script>
+</head>
+<body>
+<div id="start"><div class="box">
+  <h1>חדר אוריון</h1>
+  <p>אתה בתוך המבנה הכדורי. הרצפה נטויה, הדלתות בכל הגבהים, והכוכבים בוערים בקיר.</p>
+  <div class="keys">
+    <b>W A S D</b><span>הליכה</span>
+    <b>Shift</b><span>ריצה</span>
+    <b>C</b><span>כריעה</span>
+    <b>Space</b><span>קפיצה</span>
+    <b>Q / E</b><span>הצצה מעבר לפינה</span>
+    <b>F</b><span>פנס</span>
+    <b>V</b><span>מבט מבחוץ / מבט מהעיניים</span>
+    <b>W ליד יתדות</b><span>טיפוס</span>
+  </div>
+  <button id="go" disabled>טוען…</button>
+</div></div>
+<div id="hud"><div id="dot"></div><div id="hint"></div><div id="room">אוריון</div><a id="back" href="/globe/">חזרה ›</a></div>
+<div id="touch">
+  <div id="stick"><div id="knob"></div></div>
+  <div class="tbtn" id="tJump" style="right:24px;bottom:110px">קפיצה</div>
+  <div class="tbtn" id="tCrouch" style="right:96px;bottom:40px">כריעה</div>
+  <div class="tbtn" id="tRun" style="right:24px;bottom:40px">ריצה</div>
+  <div class="tbtn" id="tLight" style="right:96px;bottom:110px">פנס</div>
+  <div class="tbtn" id="tView" style="right:24px;bottom:180px">מבט</div>
+</div>
+<script type="module" src="./walk.js"></script>
+</body>
+</html>
