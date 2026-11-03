@@ -61,7 +61,7 @@ addEventListener("resize", () => {
 const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
 const load = (u) => new Promise((ok, bad) => loader.load(u, ok, undefined, bad));
 const [, roomGltf, kidGltf, meta] = await Promise.all([
-  RAPIER.init(), load("./assets/orion.glb?v=3"), load("./assets/kid.glb"), fetch("./assets/orion.json?v=3").then((r) => r.json())
+  RAPIER.init(), load("./assets/orion.glb?v=5"), load("./assets/kid.glb"), fetch("./assets/orion.json?v=5").then((r) => r.json())
 ]);
 
 /* ---------------- the room ---------------- */
@@ -95,8 +95,9 @@ const doorNodes = {};
 room.traverse((o) => {
   if (!o.isMesh) return;
   const nm = o.name || (o.parent && o.parent.name) || "";
-  const dm = nm.match(/^door(handle)?_([A-Za-z]+)/);
+  const dm = nm.match(/^door(handle|plate|text)?_([A-Za-z]+)/);
   if (dm) { (doorNodes[dm[2]] = doorNodes[dm[2]] || []).push(o); return; }    // doors get their own moving collider
+  if (/^ladders/.test(nm)) return;                       // ladders are climbed, not stood on
   const g = o.geometry, pos = g.attributes.position;
   if (!g.boundingSphere) g.computeBoundingSphere();
   if (g.boundingSphere.radius < 0.2) return;            // bulbs and bolts
@@ -139,10 +140,25 @@ function nearestDoor(pos) {
   return best;
 }
 
-/* ---------------- pegs: what can be climbed ---------------- */
-const pegs = (meta.pegs || []).map((p) => ({ p: B(p.p), n: B(p.n).normalize() }));
-function pegsNear(pos, r) { return pegs.filter((g) => g.p.distanceTo(pos) < r && surfaceClass(g.n) === 1); }
-
+/* ---------------- ladders: the only things that can be climbed ---------------- */
+const ladders = (meta.ladders || []).map((l) => {
+  const a = B(l.a), b = B(l.b), n = B(l.n).normalize();
+  const axis = b.clone().sub(a), len = axis.length(); axis.normalize();
+  return { a, b, n, axis, len };
+});
+// a ladder can be climbed when it stands on a wall (not a floor or a ceiling) and runs mostly up and down
+const climbable = (l) => surfaceClass(l.n) === 1 && Math.abs(l.axis.dot(UP)) > 0.45;
+function ladderNear(pos) {
+  let best = null, bd = 0.75;
+  for (const l of ladders) {
+    if (!climbable(l)) continue;
+    const s = THREE.MathUtils.clamp(pos.clone().sub(l.a).dot(l.axis), 0, l.len);
+    const q = l.a.clone().addScaledVector(l.axis, s);
+    const d = q.distanceTo(pos);
+    if (d < bd) { bd = d; best = { l, s }; }
+  }
+  return best;
+}
 /* ---------------- the boy ---------------- */
 const kid = kidGltf.scene;
 kid.updateMatrixWorld(true);
@@ -275,10 +291,10 @@ function hint(text, secs = 2.2) { $("hint").textContent = text; $("hint").classL
 const vel = new THREE.Vector3();
 let vy = 0, grounded = false, airTime = 0, fallSpeed = 0, jumped = false;
 let hh = P.standHH, eyeH = P.eyeStand, bobPhase = 0, bobAmp = 0, dip = 0, dipV = 0, leanCur = 0, fovCur = P.fov, lastStep = 0;
-let climb = null;
+let climb = null, faceTo = 0, faceT = 0;
 const clock = new THREE.Clock();
 const fwd = new THREE.Vector3(), right = new THREE.Vector3();
-window.__walk = { body, world, get climb() { return climb; }, get state() { return { vel: vel.toArray().map(v => +v.toFixed(2)), vy: +vy.toFixed(2), grounded, yaw: +yaw.toFixed(2), keys: [...keys], rot: +kid.rotation.y.toFixed(2) }; } };     // for testing
+window.__walk = { body, world, doors, ladders, setView(y, p) { yaw = y; pitch = p; }, get climb() { return climb; }, get state() { return { vel: vel.toArray().map(v => +v.toFixed(2)), vy: +vy.toFixed(2), grounded, yaw: +yaw.toFixed(2), keys: [...keys], rot: +kid.rotation.y.toFixed(2) }; } };     // for testing
 
 function frame() {
   const dt = Math.min(clock.getDelta(), 1 / 30);
@@ -312,12 +328,19 @@ function update(dt) {
     useKey = false;
     const d = nearestDoor(pos);
     if (d) {
-      d.target = d.target ? 0 : 1;
-      if (d.target) { playOnce(d.hatch ? "opening" : "door_out", 1.2); hint(`הדלת ל${d.name} נפתחת · החדר שמאחוריה עוד נבנה`); clank(1.2, 380, 0.3); }
-      else clank(1.4, 300, 0.25);
+      const willOpen = !d.target;
+      const to = d.c.clone().sub(pos); faceTo = Math.atan2(to.x, to.z); faceT = 1.4;
+      playOnce(d.hatch ? "opening" : "door_out", 1.3);
+      d.wait = d.hatch ? 0.8 : 0.6;                         // the hand reaches the handle first
+      d.pending = willOpen ? 1 : 0;
+      if (willOpen) hint(`הדלת ל${d.name} נפתחת · החדר שמאחוריה עוד נבנה`);
     } else hint("אין כאן דלת");
   }
   for (const d of doors) {
+    if (d.pending !== undefined) {
+      d.wait -= dt;
+      if (d.wait <= 0) { d.target = d.pending; d.pending = undefined; clank(1.3, d.target ? 380 : 300, 0.3); }
+    }
     if (d.open === d.target) continue;
     d.open = THREE.MathUtils.clamp(d.open + Math.sign(d.target - d.open) * dt / 0.9, 0, 1);
     const e = d.open * d.open * (3 - 2 * d.open);
@@ -325,49 +348,40 @@ function update(dt) {
     d.col.setEnabled(d.open < 0.08);
   }
 
-  // ---- climbing on pegs: walk into a wall that has pegs ----
-  if (!climb) {
-    const near = pegsNear(pos, 0.95);
-    if (near.length && iz > 0.5) {
-      const n = near[0].n, flat = new THREE.Vector3(n.x, 0, n.z);
-      if (flat.lengthSq() > 0.01 && fwd.dot(flat.normalize()) < -0.35) {
-        climb = { n: n.clone() }; vy = 0; vel.set(0, 0, 0); play("ladder", 0.2);
-        hint("טיפוס ביתדות · W/S למעלה ולמטה, A/D לצדדים, רווח לעזוב");
+  // ---- climbing: walk into a ladder ----
+  if (!climb && lockT <= 0) {
+    const near = ladderNear(pos);
+    if (near && iz > 0.5) {
+      const flat = new THREE.Vector3(near.l.n.x, 0, near.l.n.z);
+      if (flat.lengthSq() < 0.01 || fwd.dot(flat.normalize()) < -0.3) {
+        climb = { l: near.l, s: near.s }; vy = 0; vel.set(0, 0, 0); play("ladder", 0.2);
+        hint("סולם · W/S לטפס ולרדת, רווח לעזוב");
       }
     }
   }
   if (climb) {
-    const n = climb.n;
-    const wallUp = UP.clone().addScaledVector(n, -UP.dot(n)).normalize();
-    const wallSide = new THREE.Vector3().crossVectors(wallUp, n).normalize();
-    const hands = pos.clone().addScaledVector(wallUp, 0.5);
-    const near = pegsNear(hands, 1.0);
-    const wantUp = iz * P.climb, wantSide = ix * P.climb * 0.6;
-    const above = pegsNear(hands.clone().addScaledVector(wallUp, 0.45), 0.7).length > 0;
-    const m = new THREE.Vector3();
-    if (near.length) {
-      const g = near.reduce((a, b) => (a.p.distanceTo(hands) < b.p.distanceTo(hands) ? a : b));
-      const dist = pos.clone().sub(g.p).dot(n);
-      m.addScaledVector(n, (0.33 - dist) * Math.min(1, 10 * dt));
-      if (wantUp > 0 && !above) {                          // the top of the pegs: over onto the floor above, if there is one
-        const over = pos.clone().addScaledVector(wallUp, 1.2).addScaledVector(n, -0.6);
-        const fl = ray({ x: over.x, y: over.y + 0.5, z: over.z }, { x: 0, y: -1, z: 0 }, 2.0);
-        if (fl && surfaceClass(fl.n) === 0) {
-          body.setTranslation({ x: over.x, y: over.y + 0.5 - fl.t + hh + P.radius + 0.05, z: over.z }, true);
-          climb = null; playOnce("ladder_top", 0.9, 0.15); clank(1, 900);
-          world.step(); return;
-        }
-      } else m.addScaledVector(wallUp, wantUp * dt);
-      m.addScaledVector(wallSide, wantSide * dt);
-    } else m.addScaledVector(wallUp, -1.5 * dt);            // no pegs under the hands: slip down
-    moveBody(p, m);
-    const speed = Math.abs(wantUp) + Math.abs(wantSide);
-    play("ladder", 0.15, speed < 0.05 ? 0.0001 : (wantUp >= 0 ? 1 : -1) * Math.max(0.3, speed / P.climb));
-    if (speed > 0.05 && Math.floor((bobPhase += dt * speed * 3) / Math.PI) !== lastStep) { lastStep = Math.floor(bobPhase / Math.PI); clank(0.6, 1600, 0.06); }
-    grounded = ctrl.computedGrounded();
-    if (jumpKey || (iz < 0 && grounded)) {
-      climb = null; vel.copy(n).multiplyScalar(jumpKey ? 1.8 : 0.4); vel.y = 0; vy = jumpKey ? 2.2 : 0;
+    const l = climb.l, upSign = l.axis.dot(UP) >= 0 ? 1 : -1;
+    const want = iz * P.climb * upSign;
+    climb.s = THREE.MathUtils.clamp(climb.s + want * dt, 0.2, l.len - 0.15);
+    const atTop = (upSign > 0 ? climb.s >= l.len - 0.16 : climb.s <= 0.21) && iz > 0;
+    const atBottom = (upSign > 0 ? climb.s <= 0.21 : climb.s >= l.len - 0.16) && iz < 0;
+    const spot = l.a.clone().addScaledVector(l.axis, climb.s).addScaledVector(l.n, 0.36).addScaledVector(UP, -0.35);
+    body.setNextKinematicTranslation({ x: spot.x, y: spot.y, z: spot.z });
+    const moving = Math.abs(want) > 0.02 && !atTop && !atBottom;
+    play("ladder", 0.15, moving ? Math.sign(want * upSign) * Math.max(0.3, Math.abs(want) / P.climb) : 0.0001);
+    if (moving && Math.floor((bobPhase += dt * 4) / Math.PI) !== lastStep) { lastStep = Math.floor(bobPhase / Math.PI); clank(0.6, 1600, 0.06); }
+    if (atTop) {                                          // the end of the ladder: onto the floor above, if there is one
+      const over = spot.clone().addScaledVector(UP, 1.0).addScaledVector(l.n, -0.7);
+      const fl = ray({ x: over.x, y: over.y + 0.6, z: over.z }, { x: 0, y: -1, z: 0 }, 2.2);
+      if (fl && surfaceClass(fl.n) === 0) {
+        body.setTranslation({ x: over.x, y: over.y + 0.6 - fl.t + hh + P.radius + 0.05, z: over.z }, true);
+        climb = null; playOnce("ladder_top", 0.9, 0.15); clank(1, 900); world.step(); return;
+      }
     }
+    if (jumpKey || atBottom) {
+      climb = null; vel.copy(l.n).multiplyScalar(jumpKey ? 1.6 : 0.6); vel.y = 0; vy = jumpKey ? 1.5 : 0;
+    }
+    grounded = false;
   } else {
     // ---- walking ----
     const wish = new THREE.Vector3().addScaledVector(fwd, iz).addScaledVector(right, ix);
@@ -433,7 +447,8 @@ function update(dt) {
   const np = body.translation();
   const feet = new THREE.Vector3(np.x, np.y - hh - P.radius, np.z);
   kid.position.set(feet.x, feet.y + footOffset - 0.02, feet.z);
-  const faceYaw = climb ? Math.atan2(climb.n.x, climb.n.z) : yaw + Math.PI;
+  if (faceT > 0) faceT -= dt;
+  const faceYaw = climb ? Math.atan2(-climb.l.n.x, -climb.l.n.z) : faceT > 0 ? faceTo : yaw + Math.PI;
   let dyaw = faceYaw - kid.rotation.y; dyaw = Math.atan2(Math.sin(dyaw), Math.cos(dyaw));
   kid.rotation.y += dyaw * (1 - Math.exp(-12 * dt));
   kid.visible = third;
@@ -477,7 +492,7 @@ function update(dt) {
   if (!climb && hintT <= 0) {
     const d = nearestDoor(pos);
     if (d) hint(`E · לפתוח את הדלת ל${d.name}`, 0.6);
-    else if (pegsNear(pos, 0.95).length) hint("יתדות · כדי לטפס התקרב לקיר והמשך ללכת קדימה", 0.6);
+    else if (ladderNear(pos)) hint("סולם · כדי לטפס התקרב והמשך ללכת קדימה", 0.6);
   }
 }
 play("idle", 0);
