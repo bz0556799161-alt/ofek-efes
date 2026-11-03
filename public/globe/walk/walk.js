@@ -54,7 +54,7 @@ let composer = null;
 if (!LITE) {
   composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.55, 0.35, 0.9));
+  composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.22, 0.25, 0.95));
   composer.addPass(new OutputPass());
 }
 addEventListener("resize", () => {
@@ -75,7 +75,8 @@ room.traverse((o) => {
   if (!o.isMesh) return;
   const m = o.material;
   if (m && m.emissive && m.emissiveIntensity > 0 && m.emissive.getHex() !== 0) {
-    m.toneMapped = false;                                   // bulbs glow
+    m.emissiveIntensity *= 0.18;                           // a soft glow, like plain small bulbs
+    m.toneMapped = true;
   } else {
     o.receiveShadow = true; o.castShadow = !LITE;
     if (m && m.map) { m.metalness = Math.min(m.metalness, 0.45); m.roughness = 1; }
@@ -84,7 +85,7 @@ room.traverse((o) => {
 scene.add(room);
 // the strongest lamps light the room
 meta.lights.sort((a, b) => b.e - a.e).slice(0, LITE ? 4 : 8).forEach((l) => {
-  const L = new THREE.PointLight(new THREE.Color(...l.c), l.e * 0.55, 14, 2);
+  const L = new THREE.PointLight(new THREE.Color(...l.c), l.e * 0.3, 12, 2);
   L.position.copy(B(l.p)); scene.add(L);
 });
 $("room").textContent = meta.nameHe;
@@ -149,7 +150,7 @@ function playOnce(name, hold = 0) { if (!clips[name]) return; cur = null; play(n
 
 /* ---------------- input ---------------- */
 const keys = new Set();
-let yaw = 0, pitch = 0, third = false, crouch = false, runToggle = false;
+let yaw = 0, pitch = -0.18, third = true, crouch = false, runToggle = false;
 { // face the star wall at the start
   const d = B(meta.lookAt).sub(spawn); yaw = Math.atan2(-d.x, -d.z);
 }
@@ -385,11 +386,13 @@ function update(dt) {
   head.addScaledVector(right, leanCur * P.lean + Math.sin(bobPhase) * 0.022 * bobAmp);
   head.y += Math.abs(Math.cos(bobPhase)) * 0.045 * bobAmp - 0.02 * bobAmp;
   if (third) {
-    const back = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch) * 0.6 + 0.35, Math.cos(yaw) * Math.cos(pitch)).normalize();
-    const want = 2.6;
-    const hit = rayHit({ x: head.x, y: head.y, z: head.z }, { x: back.x, y: back.y, z: back.z }, want);
-    const d = hit === null ? want : Math.max(0.3, hit - 0.15);
-    camera.position.copy(head).addScaledVector(back, d);
+    // over the shoulder: behind the boy, a little to the right, orbiting with the mouse
+    const back = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)).normalize();
+    const pivot = head.clone().addScaledVector(right, 0.38).add(new THREE.Vector3(0, 0.12, 0));
+    const want = 2.3;
+    const hit = rayHit({ x: pivot.x, y: pivot.y, z: pivot.z }, { x: back.x, y: back.y, z: back.z }, want);
+    const d = hit === null ? want : Math.max(0.25, hit - 0.15);
+    camera.position.copy(pivot).addScaledVector(back, d);
   } else camera.position.copy(head);
   camera.rotation.set(pitch, yaw, -leanCur * P.leanRoll + Math.sin(bobPhase) * 0.004 * bobAmp);
   torch.visible = torchOn;
