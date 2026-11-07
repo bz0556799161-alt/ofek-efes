@@ -5,7 +5,7 @@
 const CONTENT = {
   book: ["/book", "/book/", "/book/index.html"],
   game: ["/game/play", "/game/play/", "/game/play/index.html"],
-  globe: ["/globe/tour", "/globe/tour/", "/globe/tour/index.html"]
+  globe: ["/globe/tour", "/globe/tour/", "/globe/tour/index.html", "/globe/walk", "/globe/walk/", "/globe/walk/index.html"]
 };
 const INFO = {
   game: ["/game", "/game/", "/game/index.html"],
